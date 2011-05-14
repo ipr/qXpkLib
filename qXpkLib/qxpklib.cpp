@@ -12,13 +12,8 @@ void QXpkLib::PrepareMaster()
 	{
 		delete m_pMaster;
 	}
-	if (m_pProgress != nullptr)
-	{
-		delete m_pProgress;
-	}
 	
 	m_pMaster = new CXpkMaster(this);
-	m_pProgress = new XpkProgress();
 
 	// connect emitted signals from master-handler
 	// to output from this library
@@ -57,6 +52,13 @@ bool QXpkLib::xpkPack()
 {
 	try
 	{
+		// new status-container
+		if (m_pProgress != nullptr)
+		{
+			delete m_pProgress;
+		}
+		m_pProgress = new XpkProgress();
+		
 		return m_pMaster->xpkPack(m_pProgress);
 	}
 	catch (std::exception &exp)
@@ -71,6 +73,13 @@ bool QXpkLib::xpkUnpack()
 {
 	try
 	{
+		// new status-container
+		if (m_pProgress != nullptr)
+		{
+			delete m_pProgress;
+		}
+		m_pProgress = new XpkProgress();
+		
 		return m_pMaster->xpkUnpack(m_pProgress);
 	}
 	catch (std::exception &exp)
