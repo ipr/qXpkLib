@@ -14,8 +14,6 @@
 #include <QByteArray>
 #include <QLibrary>
 
-#include <string>
-
 #include "AnsiFile.h"
 
 // pure virtual interface
@@ -24,10 +22,15 @@
 #include "xpkLibraryBase.h"
 #include "XpkProgress.h"
 
+
+
 // container/loader of derunching libraries?
 //
 class CXpkLibrarian : public QObject
 {
+protected:
+	typedef xpkLibraryBase *GetXpkInstance();
+	
 public:
 	static QList<QString> availableLibraries();
 	

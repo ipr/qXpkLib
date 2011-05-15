@@ -6,6 +6,13 @@
 // from master-project (fulfill fwd. decl.)
 #include "XpkProgress.h"
 
+// (see header)
+xpkDummy g_Instance;
+xpkLibraryBase *GetXpkInstance(void)
+{
+	return &g_Instance;
+}
+
 
 xpkDummy::xpkDummy()
  : xpkLibraryBase()

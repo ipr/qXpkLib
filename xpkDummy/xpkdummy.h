@@ -38,4 +38,9 @@ public:
 	virtual bool Decrunch(XpkProgress *pProgress);
 };
 
+// need this for caller to locate instance dynamically,
+// library needs to have one global instance of the cruncher (has no members anyway..)
+//
+XPKDUMMYSHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
+
 #endif // XPKDUMMY_H

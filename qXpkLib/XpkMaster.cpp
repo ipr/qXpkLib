@@ -58,37 +58,25 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 	
 	// TODO: use plugins-path?
 	
-	// expected name of DLL..
-	//
-	std::string szCruncher = "xpk";
-	//szCruncher += szType;
+	szFileName.append("xpk");
+	//szFileName.append(szType);
 	// temp, use dummy for testing
-	szCruncher += "Dummy";
-	
-	szFileName.append(QString::fromStdString(szCruncher));
+	szFileName.append("Dummy");
 	szFileName.append(".dll");
-	
-	
+
 	lib.setFileName(szFileName);
 	if (lib.load() == false)
 	{
-		return nullptr;
+		throw ArcException("Failed locating library", szFileName.toStdString());
 	}
 	
-	// too much fucking pain, use std::string and get it done
-	/*	
-	return lib.resolve(szClassName.toAscii();
-	*/
-
-	// for some reason, this can't resolve library interface-object ("xpkDummy")
-	// 
-	void *pClass = lib.resolve(szCruncher.c_str());
-	if (pClass == nullptr)
+	GetXpkInstance *pGetInstance = (GetXpkInstance*)lib.resolve("GetXpkInstance");
+	if (pGetInstance == nullptr)
 	{
 		QString szError = lib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
-	return (xpkLibraryBase*)pClass;
+	return (xpkLibraryBase*)(*pGetInstance)();
 
 	// temp: use dummy
 	//return new XpkDummy();
