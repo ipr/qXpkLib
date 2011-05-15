@@ -3,7 +3,17 @@
 #include <exception>
 #include <string>
 
-#include <QDir>
+//#include <QDir>
+
+// fix missing definition
+#ifdef UNICODE
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+#endif
+
+#include <tchar.h>
+#include <Windows.h>
 
 
 QList<QString> CXpkLibrarian::availableLibraries()
@@ -18,9 +28,29 @@ QList<QString> CXpkLibrarian::availableLibraries()
 
 xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 {
+	// we want module-path, not working directory
+	
+	TCHAR szModulePath[_MAX_PATH + 1];
+	DWORD dwRes = ::GetModuleFileName(NULL, // TODO: get handle to this lib somewhere..
+	                    (LPTSTR)&szModulePath,
+	                    _MAX_PATH + 1);
+	szModulePath[dwRes] = 0x000; // 
+	
+	QString szFileName;
+#ifdef _UNICODE
+	szFileName = QString::fromWCharArray(szModulePath, dwRes);
+#else
+	szFileName = QString::fromLocal8Bit(szModulePath, dwRes);
+#endif
+
+	// NOT THIS: we want dll path not working path
+	//
 	// load library of given type
-	QString szFileName = QDir::currentPath();
+	//QString szFileName = QDir::currentPath();
 	szFileName.replace('\\', "/"); // fix MSDOS pathnames if any
+	
+	int iIndex = szFileName.lastIndexOf('/');
+	szFileName = szFileName.left(iIndex); // remove module name
 	if (szFileName.at(szFileName.length() -1) != '/')
 	{
 		szFileName += "/";
@@ -49,8 +79,16 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 	/*	
 	return lib.resolve(szClassName.toAscii();
 	*/
-	
-	return (xpkLibraryBase*)lib.resolve(szCruncher.c_str());
+
+	// for some reason, this can't resolve library interface-object ("xpkDummy")
+	// 
+	void *pClass = lib.resolve(szCruncher.c_str());
+	if (pClass == nullptr)
+	{
+		QString szError = lib.errorString();
+		throw ArcException("Failed locating symbol", szError.toStdString());
+	}
+	return (xpkLibraryBase*)pClass;
 
 	// temp: use dummy
 	//return new XpkDummy();
