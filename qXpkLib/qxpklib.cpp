@@ -1,7 +1,7 @@
 #include "qxpklib.h"
 
+#include "AnsiFile.h"
 #include "XpkMaster.h"
-
 
 //////////////// protected methods
 
@@ -90,6 +90,17 @@ bool QXpkLib::xpkUnpack()
 	return false;
 }
 
+// if user wants result to buffer?
+void QXpkLib::getToBuffer(QByteArray &Array)
+{
+	CReadBuffer *pOut = m_pMaster->getResult();
+	
+	// reserve out-buffer and copy what we have
+	Array.reserve(pOut->GetCurrentPos());
+	::memcpy(Array.data(), pOut->GetBegin(), pOut->GetCurrentPos());
+	
+}
+
 //////////////// public slots
 
 // file to process
@@ -104,14 +115,5 @@ void QXpkLib::setOutputFile(QString &szFile)
 {
 	// temp, change to on instance creation
 	m_pMaster->setOutputFile(szFile);
-}
-
-// if user wants some buffer-to-buffer handling?
-void QXpkLib::setInputBuffer(QByteArray *pArray)
-{
-}
-
-void QXpkLib::setOutputBuffer(QByteArray *pArray)
-{
 }
 

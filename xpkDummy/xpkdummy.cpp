@@ -7,17 +7,17 @@
 #include "XpkProgress.h"
 
 
-XpkDummy::XpkDummy()
+xpkDummy::xpkDummy()
  : xpkLibraryBase()
 {
 }
 
-XpkDummy::~XpkDummy()
+xpkDummy::~xpkDummy()
 {
 }
 
 // this is dummy: output is same as input
-bool XpkDummy::Decrunch(XpkProgress *pProgress)
+bool xpkDummy::Decrunch(XpkProgress *pProgress)
 {
 	// get size of chunk in read-buffer
 	size_t nChunkSize = pProgress->pInputBuffer->GetCurrentPos();

@@ -1,12 +1,12 @@
 #include "XpkMaster.h"
 
 #include <exception>
+#include <string>
 
 #include <QDir>
-#include <QLibrary>
 
 
-static QList<QString> CXpkLibrarian::availableLibraries()
+QList<QString> CXpkLibrarian::availableLibraries()
 {
 	QList<QString> lstTypes;
 	
@@ -16,7 +16,7 @@ static QList<QString> CXpkLibrarian::availableLibraries()
 	return lstTypes;
 }
 
-static xpkLibraryBase *CXpkLibrarian::getDecruncher(QString szType)
+xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 {
 	// load library of given type
 	QString szFileName = QDir::currentPath();
@@ -25,43 +25,36 @@ static xpkLibraryBase *CXpkLibrarian::getDecruncher(QString szType)
 	{
 		szFileName += "/";
 	}
+	
+	// TODO: use plugins-path?
+	
 	// expected name of DLL..
-	//szFileName.append("xpk").append(szType).append(".dll");
-	// temp: use dummy
-	szFileName += "xpkDummy.dll"; 
-
-	/* TODO: finish handling
-	QLibrary lib(szFileName);
+	//
+	std::string szCruncher = "xpk";
+	//szCruncher += szType;
+	// temp, use dummy for testing
+	szCruncher += "Dummy";
+	
+	szFileName.append(QString::fromStdString(szCruncher));
+	szFileName.append(".dll");
+	
+	
+	lib.setFileName(szFileName);
 	if (lib.load() == false)
 	{
 		return nullptr;
 	}
-	*/
-
-	/*
-	// or something simpler..? -> see above
-	if (szType == "NUKE")
-	{
-		//return new xpkNUKE();
-	}
-	else if (szType == "SQSH")
-	{
-		//return new xpkSQSH();
-	}
-	else if (szType == "PP20")
-	{
-		//return new xpkPowerPacker();
-	}
-	else if (szType == "GZIP")
-	{
-		//return new xpkGzip();
-	}
+	
+	// too much fucking pain, use std::string and get it done
+	/*	
+	return lib.resolve(szClassName.toAscii();
 	*/
 	
+	return (xpkLibraryBase*)lib.resolve(szCruncher.c_str());
+
 	// temp: use dummy
 	//return new XpkDummy();
 	
-	return nullptr;
 }
 
 
@@ -75,17 +68,21 @@ void CXpkMaster::PrepareUnpacker()
 	
 	//QList<QString> lstLibs = CXpkLibrarian::availableLibraries();
 	
-	QString szSubType;
+	//QString szSubType;
+	
+	// simplify, use std::string and get it done
+	std::string szSubType;
 	
 	unsigned char *pBuf = m_InputBuffer.GetBegin();
 	if (::memcmp(pBuf, "XPKF", 4) == 0)
 	{
 		// XPK -> sub-library type needed
 		//
-		szSubType = QString::fromAscii(m_InputBuffer.GetAt(8), 4);
-		
+		//szSubType = QString::fromAscii(m_InputBuffer.GetAt(8), 4);
+		char *pBuf = (char*)m_InputBuffer.GetAt(8);
+		szSubType.assign(pBuf, 4);
 	}
-	else if (::memcmp(pbuf, "PP20", 4) == 0)
+	else if (::memcmp(pBuf, "PP20", 4) == 0)
 	{
 		// Amiga PowerPacker:
 		// not XPK-file but we may have support for it..
@@ -94,21 +91,18 @@ void CXpkMaster::PrepareUnpacker()
 	}
 	else
 	{
-		// detect GZIP ?
+		// detect GZIP ? others?
 	}
 	
 	// load suitable sub-library?
 	
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType);
-	if (m_pSubLibrary != nullptr)
+	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
+	if (m_pSubLibrary == nullptr)
 	{
-		return true;
+		// not supported/can't load -> can't decrunch it
+		throw ArcException("Unsupported cruncher type", szSubType);
 	}
 	
-	// otherwise not supported, can't decrunch it
-	throw ArcException("Unsupprted cruncher", szSubType);
-	
-	//return false;
 }
 
 void CXpkMaster::PreparePacker()
@@ -121,7 +115,13 @@ void CXpkMaster::PreparePacker()
 
 CXpkMaster::CXpkMaster(QObject *parent)
 	: QObject(parent)
+    , m_SubLib(parent)
+    , m_InputName()
     , m_nInputFileSize(0)
+    , m_InputBuffer(1024)
+    , m_OutputName()
+    , m_OutputBuffer(2048)
+    , m_pSubLibrary(nullptr)
 {
 }
 
@@ -201,6 +201,19 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	}
 	
 	// meh.. write all at once when done..
+	
+	if (m_OutputName.length() == 0)
+	{
+		// no output-file -> done
+		// (user wants buffer-only?)
+		return true;
+	}
+	
+	// overwrite existing file?
+	if (m_InputName == m_OutputName)
+	{
+		InFile.Close();
+	}
 	
 	CAnsiFile OutFile;
 	if (OutFile.Open(m_OutputName.toStdString(), true) == false)

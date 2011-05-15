@@ -43,6 +43,9 @@ public:
 	// pack/unpack to/from given input&output
 	bool xpkPack();
 	bool xpkUnpack();
+
+	// if user wants result to buffer?
+	void getToBuffer(QByteArray &Array);
 	
 signals:
 	void message(QString);
@@ -56,12 +59,7 @@ public slots:
 	// set filename and path
 	void setInputFile(QString &szFile);
 	void setOutputFile(QString &szFile);
-	
-	// if user wants some buffer-to-buffer handling?
-	void setInputBuffer(QByteArray *pArray);
-	void setOutputBuffer(QByteArray *pArray);
 
-	
 };
 
 #endif // QXPKLIB_H

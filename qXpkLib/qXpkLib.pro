@@ -10,6 +10,7 @@ TARGET = qXpkLib
 TEMPLATE = lib
 
 DEFINES += QXPKLIB_LIBRARY
+DEFINES += _CRT_SECURE_NO_WARNINGS
 
 SOURCES += qxpklib.cpp \
     XpkMaster.cpp \

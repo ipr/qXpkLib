@@ -9,12 +9,12 @@
 #include "xpkLibraryBase.h"
 
 
-class XPKDUMMYSHARED_EXPORT XpkDummy : public xpkLibraryBase
+class XPKDUMMYSHARED_EXPORT xpkDummy : public xpkLibraryBase
 {
 public:
-    XpkDummy();
-    virtual ~XpkDummy();
-
+	xpkDummy();
+	virtual ~xpkDummy();
+	
 	// temp
 	/*
 	typedef struct XpkMode

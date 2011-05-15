@@ -32,16 +32,13 @@ public:
 		, m_szData(szData)
 	{
 	}
-	/*
 	ArcException(const char *szMessage, const size_t nData)
 		: std::exception(szMessage)
 		, m_szData()
 	{
 		// TODO:
 		//m_szData = std::lexical_cast<std::string>(nData);
-		//m_szData = ltoa(nData;
 	}
-	*/
 	std::string GetData()
 	{
 		return m_szData;

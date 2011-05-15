@@ -11,7 +11,10 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QByteArray>
+#include <QLibrary>
 
+#include <string>
 
 #include "AnsiFile.h"
 
@@ -28,7 +31,8 @@ class CXpkLibrarian : public QObject
 public:
 	static QList<QString> availableLibraries();
 	
-	static xpkLibraryBase *getDecruncher(QString szType);
+	//static xpkLibraryBase *getDecruncher(QString szType, QLibrary &lib);
+	static xpkLibraryBase *getDecruncher(std::string &szType, QLibrary &lib);
 };
 
 
@@ -44,13 +48,16 @@ private:
 	QString m_OutputName;
 	CReadBuffer m_OutputBuffer;
 	
+	// wrapper for loading/unloading
+	QLibrary m_SubLib;
+	
 	// base-pointer (virtual) 
 	// -> load proper by file/packer type
 	xpkLibraryBase *m_pSubLibrary;
 	
 	// some flags (no idea what..)
-	bool m_bIgnore;
-	bool m_bNoClobber;
+	//bool m_bIgnore;
+	//bool m_bNoClobber;
 
 protected:
 	void PrepareUnpacker();
@@ -63,8 +70,12 @@ public:
 	
 	bool xpkPack(XpkProgress *pProgress);
 	bool xpkUnpack(XpkProgress *pProgress);
-	
 
+	CReadBuffer *getResult()
+	{
+		return &m_OutputBuffer;
+	}
+	
 public slots:
 	// TODO: only on instance-creation?
 	void setInputFile(QString &szFile) 
