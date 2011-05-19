@@ -15,6 +15,7 @@
 #include <QLibrary>
 
 #include "AnsiFile.h"
+#include "IoContext.h"
 
 // pure virtual interface
 // for lower-level library (level 0)
@@ -22,6 +23,8 @@
 #include "xpkLibraryBase.h"
 #include "XpkProgress.h"
 
+// temp..
+#include "XpkTags.h"
 
 
 // container/loader of derunching libraries?
@@ -44,12 +47,12 @@ class CXpkMaster : public QObject
 	Q_OBJECT
 
 private:
+	//CIoContext m_Input;
 	QString m_InputName;
 	CReadBuffer m_InputBuffer;
 	size_t m_nInputFileSize;
 	
-	QString m_OutputName;
-	CReadBuffer m_OutputBuffer;
+	CIoContext m_Output;
 	
 	// wrapper for loading/unloading
 	QLibrary m_SubLib;
@@ -62,10 +65,12 @@ private:
 	//bool m_bIgnore;
 	//bool m_bNoClobber;
 
+	// temp for testing
+	XpkTags m_Tags;
+	
 protected:
 	void PrepareUnpacker();
 	void PreparePacker();
-	
 	
 public:
     CXpkMaster(QObject *parent = 0);
@@ -76,7 +81,7 @@ public:
 
 	CReadBuffer *getResult()
 	{
-		return &m_OutputBuffer;
+		return m_Output.GetBuffer();
 	}
 	
 public slots:
@@ -87,7 +92,8 @@ public slots:
 	}
 	void setOutputFile(QString &szFile) 
 	{
-		m_OutputName = szFile;
+		m_Output.setName(szFile);
+		//m_OutputName = szFile;
 	}
 	
 signals:

@@ -121,14 +121,14 @@ void CXpkMaster::PrepareUnpacker()
 	}
 	
 	// load suitable sub-library?
-	
+	/* disabled for testing
 	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it
 		throw ArcException("Unsupported cruncher type", szSubType);
 	}
-	
+	*/
 }
 
 void CXpkMaster::PreparePacker()
@@ -145,8 +145,7 @@ CXpkMaster::CXpkMaster(QObject *parent)
     , m_InputName()
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
-    , m_OutputName()
-    , m_OutputBuffer(2048)
+    , m_Output()
     , m_pSubLibrary(nullptr)
 {
 }
@@ -197,7 +196,9 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	// determine file type from header, try to load decruncher for it:
 	// throws exception on failure
 	PrepareUnpacker();
-	
+
+	// TODO: do we keep entire file in buffer when unpacking in chunks..
+	// this is simplest..
 	// read rest of it anyway.. prepare buffer (grow)
 	m_InputBuffer.PrepareBuffer(m_nInputFileSize, true);
 	if (InFile.Read(m_InputBuffer.GetAt(16), m_nInputFileSize - 16) == false)
@@ -208,15 +209,32 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	
 	// setup info for decrunch
 	pProgress->pInputBuffer = &m_InputBuffer;
-	pProgress->pOutputBuffer = &m_OutputBuffer;
+	pProgress->pOutputBuffer = m_Output.GetBuffer();
+	
 
 	// just decrunch all at once, write file when done
-	while (pProgress->xp_PackedProcessed < m_nInputFileSize)
+	bool bRet = true;
+	while (pProgress->xp_PackedProcessed < m_nInputFileSize
+	       && bRet == true)
 	{
+		/*disabled for testing
 		if (m_pSubLibrary->Decrunch(pProgress) == false)
 		{
-			throw ArcException("Decrunching failed", "");
+			//throw ArcException("Decrunching failed", "");
+			bRet = false;
+			break;
 		}
+		*/
+
+		// temp, testing
+		if (m_Tags.IsXpkFile(m_InputBuffer) == true)
+		{
+			m_Tags.ParseToNodeList(m_InputBuffer);
+		}
+		
+		// temp, testing
+		pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
+		pProgress->xp_PackedProcessed = m_nInputFileSize;
 		
 		// since we have all in buffer already, just update position if necessary
 		size_t nPos = pProgress->pInputBuffer->GetCurrentPos();
@@ -224,11 +242,12 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 		{
 			pProgress->pInputBuffer->SetCurrentPos(pProgress->xp_PackedProcessed);
 		}
+		
 	}
 	
 	// meh.. write all at once when done..
 	
-	if (m_OutputName.length() == 0)
+	if (m_Output.getName().length() == 0)
 	{
 		// no output-file -> done
 		// (user wants buffer-only?)
@@ -236,25 +255,11 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	}
 	
 	// overwrite existing file?
-	if (m_InputName == m_OutputName)
+	if (m_InputName == m_Output.getName())
 	{
 		InFile.Close();
 	}
-	
-	CAnsiFile OutFile;
-	if (OutFile.Open(m_OutputName.toStdString(), true) == false)
-	{
-		throw ArcException("Failed to open output", m_OutputName.toStdString());
-	}
-	if (OutFile.Write(m_OutputBuffer.GetBegin(), m_OutputBuffer.GetCurrentPos()) == false)
-	{
-		throw ArcException("Failed to write output", m_OutputName.toStdString());
-	}
-	if (OutFile.Flush() == false)
-	{
-		throw ArcException("Failed to flush output", m_OutputName.toStdString());
-	}
-	OutFile.Close();
+	m_Output.WriteFile();
 		
 	return true;
 }

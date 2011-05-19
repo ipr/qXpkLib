@@ -28,4 +28,5 @@ GPL v2, see COPYING.txt
 
 
 In progress, details later..
+This is more of rewrite as reusable library than actual porting, progress may be slow..
 

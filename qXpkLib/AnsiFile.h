@@ -177,6 +177,34 @@ public:
 	{
 		return GetAt(m_nCurrentPos);
 	}
+
+	// inlinable helper to track reads
+	unsigned char *GetNext(const size_t nBytes)
+	{
+		
+#ifdef _DEBUG
+		//if ((m_nReadBufferSize - m_nCurrentPos) < nBytes)
+		
+		// better for unsigned variables?
+		if ((m_nReadBufferSize - nBytes) < m_nCurrentPos)
+		{
+			return nullptr;
+		}
+#endif
+		
+		unsigned char *pCur = GetAt(m_nCurrentPos);
+		m_nCurrentPos += nBytes;
+		return pCur;
+	}
+	
+	bool IsEnd() const
+	{
+		if (m_nCurrentPos < m_nReadBufferSize)
+		{
+			return true;
+		}
+		return false;
+	}
 	
 	// current allocation,
 	// used size may be less (see current pos)
@@ -197,7 +225,7 @@ public:
 	}
 	
 	// copy given, start at current
-	bool Append(unsigned char *pData, size_t nSize)
+	bool Append(const unsigned char *pData, const size_t nSize)
 	{
 		if (nSize > (m_nReadBufferSize - m_nCurrentPos))
 		{
