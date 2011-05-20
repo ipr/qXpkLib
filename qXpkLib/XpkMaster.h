@@ -88,6 +88,7 @@ public slots:
 	// TODO: only on instance-creation?
 	void setInputFile(QString &szFile) 
 	{
+		// TODO: read metadata when this is set or later only?
 		m_InputName = szFile;
 	}
 	void setOutputFile(QString &szFile) 

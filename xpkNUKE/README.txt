@@ -14,4 +14,6 @@ Original author: TODO: add
 
 In progress..
 
+Note: unsure if this will be done ever,
+original in m68k assembler and not sure I want to start converting to C..
 
