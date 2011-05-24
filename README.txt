@@ -7,7 +7,8 @@ Contact ilkka.prusi@gmail.com
 
 
 Summary:
-Reusable XPK-decrunching library in Qt&C++, port from Amiga&Unix versions.
+Reusable XPK-decrunching library in Qt&C++.
+More rewrite&redesign than just a port from Amiga&Unix versions.
 
 
 Description:
@@ -28,5 +29,4 @@ GPL v2, see COPYING.txt
 
 
 In progress, details later..
-This is more of rewrite as reusable library than actual porting, progress may be slow..
 
