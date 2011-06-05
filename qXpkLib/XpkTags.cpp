@@ -56,9 +56,10 @@ void XpkTags::ReadStreamHeader(CReadBuffer &Buffer)
 /////////////
 // these may be tricky to convert..
 //
-TagItem *XpkTags::NextTagItem(CReadBuffer &Buffer, TagItem *pCurrent)
+XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
 {
 	// first tag
+	/*
 	if (pCurrent == nullptr)
 	{
 		pCurrent = new TagItem();
@@ -68,28 +69,53 @@ TagItem *XpkTags::NextTagItem(CReadBuffer &Buffer, TagItem *pCurrent)
 		pCurrent->next = new TagItem();
 		pCurrent = pCurrent->next;
 	}
-
-	pCurrent->ti_Tag = (TagType)GetUWord(Buffer.GetNext(2));
-	pCurrent->ti_Data = (void*)Buffer.GetAtCurrent();
+	*/
 	
-    switch (pCurrent->ti_Tag) 
+	if (pPrevious != nullptr)
 	{
-    case TAG_SKIP:
-      *tagItemPtr+=(unsigned int)(current->ti_Data)+1;
-      break;
-    case TAG_IGNORE:
-      *tagItemPtr+=1;
-      break;
-    case TAG_MORE:
-      *tagItemPtr=(struct TagItem *)current->ti_Data;
-      break;
-    case TAG_DONE:
-      *tagItemPtr=0;
-      break;
-    default:
-      *tagItemPtr+=1;
-      break;
-    }
+		// amount to change offset:
+		// don't cast directly to struct
+		// since ptr size may vary (4/8 bytes)
+		size_t nToOffset = 0;
+		
+		switch (pPrevious->m_Item.ti_Tag) 
+		{
+		case TAG_SKIP: 
+			// just tag ID ?
+			nToOffset += sizeof(uint32_t);
+			//*tagItemPtr+=(unsigned int)(current->ti_Data)+1;
+			break;
+		case TAG_IGNORE:
+			// ignore tag
+			//*tagItemPtr+=1;
+			nToOffset += sizeof(uint32_t)*2;
+			break;
+		case TAG_MORE:
+			// tag data is another tag..?
+			//*tagItemPtr=(struct TagItem *)current->ti_Data;
+			nToOffset += sizeof(uint32_t);
+			break;
+		case TAG_DONE:
+			// no more tags
+			return nullptr;
+		default:
+			// unknown tag (user-tag?)
+			//*tagItemPtr+=1;
+			nToOffset += sizeof(uint32_t)*2;
+			break;
+		}
+		
+		Buffer.SetCurrentPos(Buffer.GetCurrentPos()+nToOffset);
+	}
+	
+	XpkTag *pCurrent = new XpkTag();
+	if (pPrevious != nullptr)
+	{
+		pPrevious->next = pCurrent;
+	}
+	
+	pCurrent->m_Item.ti_Tag = (uint32_t)GetULong(Buffer.GetNext(4)); // tag ID
+	pCurrent->m_Item.ti_Data = (void*)Buffer.GetAtCurrent(); // data of tag in buffer
 	
 	return pCurrent;
 }
@@ -99,11 +125,16 @@ void XpkTags::ParseTags(CReadBuffer &Buffer)
 	TagItem *pCurrent = nullptr;
 	while (Buffer.IsEnd() == false)
 	{
-		pCurrent = NextTagItem(Buffer, pCurrent);
-		if (pCurrent == nullptr)
+		TagItem *pNext = NextTagItem(Buffer, pCurrent);
+		if (pNext == nullptr)
 		{
 			break;
 		}
+		if (pCurrent == nullptr)
+		{
+			m_pFirstTag = pNext;
+		}
+		pCurrent = pNext;
 	}
 	
 }
@@ -135,8 +166,9 @@ void XpkTags::ParseToNodeList(CReadBuffer &Buffer)
 	ReadFileInfo(Buffer);
 	
 	//ReadStreamHeader(Buffer);
-	//ParseTags(Buffer);
 	
+	
+	ParseTags(Buffer);
 
 
 	// set original position

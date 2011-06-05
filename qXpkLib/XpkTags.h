@@ -36,18 +36,31 @@ enum TagType
 
 };
 
-struct TagItem;
+// note: can't cast directly to this
+// since ptr is 8 bytes on 64-bit build..
+// -> offset would be wrong
 struct TagItem
 {
   /* identifies the type of data */
-  //Tag ti_Tag;
-  TagType ti_Tag;
+  uint32_t ti_Tag;
   
   /* type-specific data	*/
   void *ti_Data;
-  
-  // next tag
-  TagItem *next;
+};
+
+class XpkTag;
+class XpkTag
+{
+public:
+	TagItem m_Item;
+	XpkTag *m_pNext;
+	
+public:
+	XpkTag(void)
+	    : m_pNext(nullptr)
+	{}
+	~XpkTag(void)
+	{}
 };
 
 
@@ -231,6 +244,10 @@ private:
 	XpkFileInfo m_FileHeader;
 	XpkChunk *m_pFirst;
 
+	// linked list of tags in XPK-file
+	// (replace by chunks later?)
+	XpkTag *m_pFirstTag;
+	
 	//XpkFib m_FileInfo;
 	//XpkStreamHeader m_Header;
 	
@@ -254,7 +271,7 @@ protected:
 	void ReadFileInfo(CReadBuffer &Buffer);
 	void ReadStreamHeader(CReadBuffer &Buffer);
 	
-	TagItem *NextTagItem(CReadBuffer &Buffer, TagItem *pCurrent);
+	XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
 	void ParseTags(CReadBuffer &Buffer);
 	
 public:
