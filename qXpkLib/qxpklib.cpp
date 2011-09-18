@@ -52,6 +52,7 @@ bool QXpkLib::xpkPack()
 {
 	try
 	{
+		/*
 		// new status-container
 		if (m_pProgress != nullptr)
 		{
@@ -60,6 +61,7 @@ bool QXpkLib::xpkPack()
 		m_pProgress = new XpkProgress();
 		
 		return m_pMaster->xpkPack(m_pProgress);
+		*/
 	}
 	catch (std::exception &exp)
 	{

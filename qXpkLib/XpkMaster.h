@@ -70,13 +70,16 @@ private:
 	
 protected:
 	void PrepareUnpacker();
-	void PreparePacker();
+	//void PreparePacker();
+
+	bool ForeignDecrunch(XpkProgress *pProgress);
+	bool OwnDecrunch(XpkProgress *pProgress);
 	
 public:
     CXpkMaster(QObject *parent = 0);
 	virtual ~CXpkMaster(void);
 	
-	bool xpkPack(XpkProgress *pProgress);
+	//bool xpkPack(XpkProgress *pProgress);
 	bool xpkUnpack(XpkProgress *pProgress);
 
 	CReadBuffer *getResult()

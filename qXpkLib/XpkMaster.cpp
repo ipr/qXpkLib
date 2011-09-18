@@ -65,9 +65,9 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 	// TODO: use plugins-path?
 	
 	szFileName.append("xpk");
-	//szFileName.append(szType);
+	szFileName.append(szType);
 	// temp, use dummy for testing
-	szFileName.append("Dummy");
+	//szFileName.append("Dummy");
 	szFileName.append(".dll");
 
 	lib.setFileName(szFileName);
@@ -101,6 +101,9 @@ void CXpkMaster::PrepareUnpacker()
 	//QList<QString> lstLibs = CXpkLibrarian::availableLibraries();
 	//QString szSubType;
 
+	// simplify, use std::string and get it done
+	std::string szSubType;
+	
 	// determine file datatype by header information
 	CFileType type(m_InputBuffer.GetBegin(), m_InputBuffer.GetSize());
 	if (type.m_enFileType == HEADERTYPE_PP20)
@@ -117,38 +120,75 @@ void CXpkMaster::PrepareUnpacker()
 		// but can use same unpacking..
 		szSubType = "IMPL";
 	}
-	
-	// simplify, use std::string and get it done
-	std::string szSubType;
-	
-	unsigned char *pBuf = m_InputBuffer.GetBegin();
-	if (::memcmp(pBuf, "XPKF", 4) == 0)
+	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH
+			 || type.m_enFileType == HEADERTYPE_XPK_NUKE
+			 || type.m_enFileType == HEADERTYPE_XPK_RLEN)
 	{
-		// XPK -> sub-library type needed
-		//
-		//szSubType = QString::fromAscii(m_InputBuffer.GetAt(8), 4);
-		char *pBuf = (char*)m_InputBuffer.GetAt(8);
-		szSubType.assign(pBuf, 4);
+		// already detected
+		// -> load sub-library
 	}
 	else
 	{
 		// detect GZIP ? others?
 	}
 	
-	// load suitable sub-library?
-	/* disabled for testing
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
-	if (m_pSubLibrary == nullptr)
+	if (szSubType.length() > 0)
 	{
-		// not supported/can't load -> can't decrunch it
-		throw ArcException("Unsupported cruncher type", szSubType);
+		// load suitable sub-library?
+		m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
+		if (m_pSubLibrary == nullptr)
+		{
+			// not supported/can't load -> can't decrunch it
+			throw ArcException("Unsupported cruncher type", szSubType);
+		}
 	}
-	*/
 }
 
+/*
 void CXpkMaster::PreparePacker()
 {
 	// user-given packer-type needed?
+}
+*/
+
+bool CXpkMaster::ForeignDecrunch(XpkProgress *pProgress)
+{
+	// we depend entirely on sub-library to do decrunching
+	// -> pass entire file to sub-library
+	
+	return m_pSubLibrary->Decrunch(pProgress);
+}
+
+bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
+{
+	// XPK-container format in file:
+	// we need to process XPK-tags in file
+	// and pass chunks to sub-library for decrunching
+	// -> not done yet..
+	
+	while (pProgress->xp_PackedProcessed < m_nInputFileSize
+	       && bRet == true)
+	{
+		// temp, testing
+		if (m_Tags.IsXpkFile(m_InputBuffer) == true)
+		{
+			m_Tags.ParseToNodeList(m_InputBuffer);
+		}
+		
+		// temp, testing
+		pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
+		pProgress->xp_PackedProcessed = m_nInputFileSize;
+		
+		// since we have all in buffer already, just update position if necessary
+		size_t nPos = pProgress->pInputBuffer->GetCurrentPos();
+		if (nPos < m_nInputFileSize)
+		{
+			pProgress->pInputBuffer->SetCurrentPos(pProgress->xp_PackedProcessed);
+		}
+		
+	}
+	
+	return false;
 }
 
 
@@ -169,9 +209,9 @@ CXpkMaster::~CXpkMaster(void)
 {
 }
 
+/*
 bool CXpkMaster::xpkPack(XpkProgress *pProgress)
 {
-	/*
 	PreparePacker();
 	  
 	CAnsiFile InFile;
@@ -182,10 +222,10 @@ bool CXpkMaster::xpkPack(XpkProgress *pProgress)
 	m_nInputFileSize = InFile.GetSize();
 	
 	//m_pSubLibrary->crunch(m_InputBuffer.GetBegin());
-	*/
 	
 	return false;
 }
+ */
 
 bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 {
@@ -213,6 +253,7 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	PrepareUnpacker();
 
 	// TODO: do we keep entire file in buffer when unpacking in chunks..
+	//
 	// this is simplest..
 	// read rest of it anyway.. prepare buffer (grow)
 	m_InputBuffer.PrepareBuffer(m_nInputFileSize, true);
@@ -226,42 +267,27 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	pProgress->pInputBuffer = &m_InputBuffer;
 	pProgress->pOutputBuffer = m_Output.GetBuffer();
 	
-
 	// just decrunch all at once, write file when done
 	bool bRet = true;
-	while (pProgress->xp_PackedProcessed < m_nInputFileSize
-	       && bRet == true)
+	if (m_Tags.IsXpkFile(m_InputBuffer) == true)
 	{
-		/*disabled for testing
-		if (m_pSubLibrary->Decrunch(pProgress) == false)
-		{
-			//throw ArcException("Decrunching failed", "");
-			bRet = false;
-			break;
-		}
-		*/
-
-		// temp, testing
-		if (m_Tags.IsXpkFile(m_InputBuffer) == true)
-		{
-			m_Tags.ParseToNodeList(m_InputBuffer);
-		}
-		
-		// temp, testing
-		pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
-		pProgress->xp_PackedProcessed = m_nInputFileSize;
-		
-		// since we have all in buffer already, just update position if necessary
-		size_t nPos = pProgress->pInputBuffer->GetCurrentPos();
-		if (nPos < m_nInputFileSize)
-		{
-			pProgress->pInputBuffer->SetCurrentPos(pProgress->xp_PackedProcessed);
-		}
-		
+		// XPK-container, process into tags
+		// and chunk-nodes
+		bRet = OwnDecrunch(pProgress);
+	}
+	else
+	{
+		// something else, 
+		// sub-library should know what do with it..
+		bRet = ForeignDecrunch(pProgress);
 	}
 	
-	// meh.. write all at once when done..
+	if (bRet == false)
+	{
+		throw ArcException("Decrunching failed", m_InputName.toStdString());
+	}
 	
+	// write all at once when done..
 	if (m_Output.getName().length() == 0)
 	{
 		// no output-file -> done
