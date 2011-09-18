@@ -1,10 +1,11 @@
 
 xpkPP20 - "PP20" PowerPacker pack/unpack library
 
+Based on PP-Tools by: David Tritscher, davidtritscher@dodo.com.au
 
-Author: Ilkka Prusi
-Contact ilkka.prusi@gmail.com
+Reworked to C++ library by: Ilkka Prusi, ilkka.prusi@gmail.com
 
+Unlimited distribution.
 
 Summary:
 "PP20" implementation for qXpkLib to load.

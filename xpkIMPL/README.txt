@@ -1,9 +1,11 @@
 
 xpkIMPL - Amiga Imploder pack/unpack library
 
+Based on Public Domain code by: Stuart Caie 
 
-Author: Ilkka Prusi
-Contact ilkka.prusi@gmail.com
+Reworked to C++ library by: Ilkka Prusi, ilkka.prusi@gmail.com
+
+This code is in Public Domain.
 
 
 Summary:
