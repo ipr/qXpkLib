@@ -1,4 +1,4 @@
-#include "xpkPP20.h"
+#include "xpkIMPL.h"
 
 // from master-project for buffer-class
 #include "AnsiFile.h"
@@ -13,31 +13,30 @@
 // (when library needs members per-user..)
 
 // (see header)
-xpkPP20 g_Instance;
+xpkIMPL g_Instance;
 xpkLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
 }
 
-
-xpkPP20::xpkPP20()
- : xpkLibraryBase()
+xpkIMPL::xpkIMPL()
+	: xpkLibraryBase()
 {
 }
 
-xpkPP20::~xpkPP20()
+xpkIMPL::~xpkIMPL()
 {
 }
 
 // no packing support for this format
-bool xpkPP20::Crunch(XpkProgress *pProgress)
+bool xpkIMPL::Crunch(XpkProgress *pProgress)
 {
 	return false;
 }
 
 // decrunching (unpacking) only supported for this format
-bool xpkPP20::Decrunch(XpkProgress *pProgress)
+bool xpkIMPL::Decrunch(XpkProgress *pProgress)
 {
 	// TODO: may be possible that this is used as sub-type of XPK
 	// or entirely stand-alone (some sub-type library exists on Amiga?)
@@ -57,7 +56,7 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 	// just use the stand-alone unpacker
 	// when not used as sub-type of XPK..
 	//
-	CPowerPacker PP;
+	CImploderExploder Impl;
 	try
 	{
 		// load from existing buffer and unpack to temporary..
@@ -65,13 +64,13 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 		// (TODO: use directly input-buffer instead of copy..
 		// also give output for direct use..)
 		//
-		PP.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
+		Impl.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
 		
 		// no exception -> keep unpacked data
 		//
 		// (TODO: get directly to output-buffer..)
 		//
-		pProgress->pOutputBuffer->Append(PP.GetUnpackedData(), PP.GetUnpackedSize());
+		pProgress->pOutputBuffer->Append(Impl.GetUnpackedData(), Impl.GetUnpackedSize());
 		
 		// no exception -> success
 		return true;
