@@ -3,6 +3,12 @@
 #include <exception>
 #include <string>
 
+// reuse type detection,
+// multiple variations etc.
+//
+#include "FileType.h"
+
+
 //#include <QDir>
 
 // fix missing definition
@@ -93,8 +99,24 @@ void CXpkMaster::PrepareUnpacker()
 	// do we have decrunching-support for it?
 	
 	//QList<QString> lstLibs = CXpkLibrarian::availableLibraries();
-	
 	//QString szSubType;
+
+	// determine file datatype by header information
+	CFileType type(m_InputBuffer.GetBegin(), m_InputBuffer.GetSize());
+	if (type.m_enFileType == HEADERTYPE_PP20)
+	{
+		// Amiga PowerPacker:
+		// not XPK-file but we may have support for it..
+		//
+		szSubType = "PP20";
+	}
+	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
+	{
+		// Amiga Imploder:
+		// multiple identifiers (clones, variations)
+		// but can use same unpacking..
+		szSubType = "IMPL";
+	}
 	
 	// simplify, use std::string and get it done
 	std::string szSubType;
@@ -107,13 +129,6 @@ void CXpkMaster::PrepareUnpacker()
 		//szSubType = QString::fromAscii(m_InputBuffer.GetAt(8), 4);
 		char *pBuf = (char*)m_InputBuffer.GetAt(8);
 		szSubType.assign(pBuf, 4);
-	}
-	else if (::memcmp(pBuf, "PP20", 4) == 0)
-	{
-		// Amiga PowerPacker:
-		// not XPK-file but we may have support for it..
-		//
-		szSubType = "PP20";
 	}
 	else
 	{

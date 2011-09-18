@@ -16,7 +16,8 @@ SOURCES += qxpklib.cpp \
     XpkMaster.cpp \
     AnsiFile.cpp \
     XpkTags.cpp \
-    IoContext.cpp
+    IoContext.cpp \
+    FileType.cpp
 
 HEADERS += qxpklib.h\
         qXpkLib_global.h \
@@ -25,4 +26,7 @@ HEADERS += qxpklib.h\
     AnsiFile.h \
     XpkProgress.h \
     XpkTags.h \
-    IoContext.h
+    IoContext.h \
+    FileType.h
+
+
