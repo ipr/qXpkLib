@@ -65,7 +65,7 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 	// TODO: use plugins-path?
 	
 	szFileName.append("xpk");
-	szFileName.append(szType);
+	szFileName.append(QString::fromStdString(szType));
 	// temp, use dummy for testing
 	//szFileName.append("Dummy");
 	szFileName.append(".dll");
@@ -165,15 +165,14 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	// we need to process XPK-tags in file
 	// and pass chunks to sub-library for decrunching
 	// -> not done yet..
+	// temp, testing
 	
+	m_Tags.ParseToNodeList(m_InputBuffer);
+	
+	bool bRet = true;
 	while (pProgress->xp_PackedProcessed < m_nInputFileSize
 	       && bRet == true)
 	{
-		// temp, testing
-		if (m_Tags.IsXpkFile(m_InputBuffer) == true)
-		{
-			m_Tags.ParseToNodeList(m_InputBuffer);
-		}
 		
 		// temp, testing
 		pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
@@ -188,7 +187,7 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 		
 	}
 	
-	return false;
+	return bRet;
 }
 
 

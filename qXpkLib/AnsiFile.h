@@ -201,9 +201,9 @@ public:
 	{
 		if (m_nCurrentPos < m_nReadBufferSize)
 		{
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	// current allocation,

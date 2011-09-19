@@ -111,7 +111,7 @@ XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
 	XpkTag *pCurrent = new XpkTag();
 	if (pPrevious != nullptr)
 	{
-		pPrevious->next = pCurrent;
+		pPrevious->m_pNext = pCurrent;
 	}
 	
 	pCurrent->m_Item.ti_Tag = (uint32_t)GetULong(Buffer.GetNext(4)); // tag ID
@@ -122,10 +122,10 @@ XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
 
 void XpkTags::ParseTags(CReadBuffer &Buffer)
 {
-	TagItem *pCurrent = nullptr;
+	XpkTag *pCurrent = nullptr;
 	while (Buffer.IsEnd() == false)
 	{
-		TagItem *pNext = NextTagItem(Buffer, pCurrent);
+		XpkTag *pNext = NextTag(Buffer, pCurrent);
 		if (pNext == nullptr)
 		{
 			break;

@@ -211,8 +211,10 @@ public:
 
 	void DetermineFileType(const uint8_t *pBuffer, const uint32_t ulLength);
 	
+	/*
 	wstring GetNameOfType();
 	wstring GetNameOfCategory();
+	*/
 
 };
 

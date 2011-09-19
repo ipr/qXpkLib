@@ -595,6 +595,7 @@ void CFileType::DetermineFileType(const uint8_t *pBuffer, const uint32_t ulLengt
 	}
 }
 
+/*
 wstring CFileType::GetNameOfType()
 {
 	switch (m_enFileType)
@@ -631,15 +632,6 @@ wstring CFileType::GetNameOfType()
 	case HEADERTYPE_Z:
 		return _T("Z-compress");
 		
-		/*
-	case HEADERTYPE_OCTAMED:
-		return _T("OctaMED");
-	case HEADERTYPE_DBM:
-		return _T("Digibooster");
-	case HEADERTYPE_DBPRO:
-		return _T("Digibooster PRO");
-	case HEADERTYPE_SYMMOD:
-		return _T("Symphonie");
 		
 	case HEADERTYPE_ADFDOS_DISK:
 		return _T("AmigaDOS disk-file");
@@ -647,12 +639,13 @@ wstring CFileType::GetNameOfType()
 		return _T("DiskMasher disk-file");
 	//case HEADERTYPE_XDM_DISK:
 		//return _T("xDM disk-file");
-		*/
 	}
 	
 	return wstring();
 }
+*/
 
+/*
 wstring CFileType::GetNameOfCategory()
 {
 	switch (m_enFileCategory)
@@ -661,23 +654,8 @@ wstring CFileType::GetNameOfCategory()
 		return _T("Archive");
 	case HEADERCAT_PACKER:
 		return _T("Packer/Compressor");
-		/*
-	case HEADERCAT_SOUND_MODULE:
-		return _T("Sound module");
-	case HEADERCAT_SOUND_VOICE:
-		return _T("Sound voice");
-	case HEADERCAT_VIDEO_ANIM:
-		return _T("Video/animation");
-	case HEADERCAT_3DOBJECT:
-		return _T("3D-Mesh object");
-	case HEADERCAT_PICIMAGE:
-		return _T("Picture-image");
-	case HEADERCAT_FILEIMAGE:
-		return _T("File-image");
-	case HEADERCAT_PROGRAM:
-		return _T("Program binary or library");
-		*/
 	}
 	return wstring();
 }
+*/
 
