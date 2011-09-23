@@ -53,7 +53,7 @@ enum TagType
 #define	TAG_SKIP   (3L)
 
 /* differentiates user tags from control tags */
-#define TAG_USER   ((unsigned int)(1L<<31))
+//#define TAG_USER   ((unsigned int)(1L<<31))
 
 // note: can't cast directly to this
 // since ptr is 8 bytes on 64-bit build..
@@ -100,7 +100,7 @@ public:
  *
  * (TRUE) or (FALSE) mean the default value given by xpkmaster.library
  */
-#define XPK_TagBase	(TAG_USER + ('X'<<8) + 'P')
+#define XPK_TagBase	((1L<<31) + ('X'<<8) + 'P')
 #define XTAG(a)		(XPK_TagBase+a)
 
 /* Caller must supply ONE of these to tell Xpk#?ack where to get data from */
@@ -343,6 +343,8 @@ struct XpkFib
 //
 // file header only
 //
+// note: don't cast directly from buffer, might not align
+//
 struct XpkFileInfo
 {
 	// first 16 bytes similar to common IFF-style
@@ -351,8 +353,11 @@ struct XpkFileInfo
 	uint32_t m_ChunkID; // IFF-style ID of cruncher (off: 8)
 	uint32_t m_ChunkLen; // first chunk length (off: 12), or uncompressed length?
 	
-	// First 16 bytes of orig. file 
+	// First 16 bytes of orig. file (or original file name?)
     char  m_Orig_Head[16];
+    
+	//int32_t m_CompressionRatio;
+	//uint32_t m_Reserved[8];
 };
 
 class XpkChunk;

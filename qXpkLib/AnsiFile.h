@@ -148,6 +148,7 @@ public:
 		{
 			// otherwise just clear existing (keep existing)
 			::memset(m_pReadBuffer, 0, m_nReadBufferSize);
+			m_nCurrentPos = 0;
 		}
 	}
 
