@@ -40,16 +40,23 @@ public:
     QXpkLib(QObject *parent = 0);
 	virtual ~QXpkLib();
 
-	/*
 	// info to caller about compressed file
 	// (metadata such as cruncher etc.)
-	class CFileInfo
+	class CXpkFileInfo
 	{
 	public:
+		CXpkFileInfo() {}
+		
+		unsigned long m_ulFileSize; // actual file size
+		unsigned long m_ulPackedDataSize; // size of compressed data
+		unsigned long m_ulUnpackedSize; // uncompressed size
+		
+		QString m_CompressionType; // cruncher type
 	};
 	
-	bool info(QXpkLib::CFileInfo &Info);
-	*/
+	// get information on selected file
+	// (compression, type etc.)
+	bool xpkInfo(QXpkLib::CXpkFileInfo &info);
 
 	// pack/unpack to/from given input&output
 	bool xpkPack();

@@ -19,6 +19,9 @@ void QXpkLib::PrepareMaster()
 	// to output from this library
 	connect(m_pMaster, SIGNAL(message(QString)), this, SIGNAL(message(QString)));
 	connect(m_pMaster, SIGNAL(warning(QString)), this, SIGNAL(warning(QString)));
+	
+	// master-instance throws exception on error -> no need for this
+	//connect(m_pMaster, SIGNAL(error(QString)), this, SIGNAL(error(QString)));
 }
 
 
@@ -45,6 +48,23 @@ QXpkLib::~QXpkLib()
 	{
 		delete m_pMaster;
 	}
+}
+
+// information on selected file
+// (compression, type etc.)
+bool QXpkLib::xpkInfo(QXpkLib::CXpkFileInfo &info)
+{
+	try
+	{
+		// get info to caller from master-instance
+		//return m_pMaster->xpkInfo(info);
+	}
+	catch (std::exception &exp)
+	{
+		// output error to user
+		emit error(exp.what());
+	}
+	return false;
 }
 
 // pack/unpack to/from given input&output

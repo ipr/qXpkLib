@@ -15,6 +15,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_lastPath(),
     m_pXpkLib(nullptr)
 {
     ui->setupUi(this);
@@ -36,16 +37,26 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
 	delete m_pXpkLib;
-	
     delete ui;
 }
 
-
 void MainWindow::on_actionFile_triggered()
 {
-	QString szFile = QFileDialog::getOpenFileName(this, tr("Open file"));
+#ifdef _DEBUG
+	m_lastPath = "C:/testdata/xpk";
+#endif
+	
+	QString szFile = QFileDialog::getOpenFileName(this, tr("Open file"), m_lastPath);
 	if (szFile != NULL)
 	{
+		// keep path
+		//
+		// note: fix path-separator if still msdos-style,
+		// it's not needed since 1999 for fucks sake..
+		//
+        szFile.replace('\\', "/"); // fix path-separator
+        m_lastPath = szFile.left(szFile.lastIndexOf('/'));
+	
 		emit FileSelection(szFile);
 	}
 }
@@ -53,11 +64,9 @@ void MainWindow::on_actionFile_triggered()
 void MainWindow::onFileSelected(QString szFile)
 {
 	m_pXpkLib->setInputFile(szFile);
-	
-	if (m_pXpkLib->xpkUnpack() == true)
-	{
-		ui->statusBar->showMessage(QString("Unpack done: ").append(szFile));
-	}
+
+	// TODO: get&show file info (compression, type etc.)
+	//m_pXpkLib->xpkInfo();	
 }
 
 void MainWindow::onMessage(QString szData)
@@ -92,4 +101,17 @@ void MainWindow::on_actionAbout_triggered()
 	pTxt->append("? = about (this dialog)");
 	pTxt->append("");
 	pTxt->show();
+}
+
+void MainWindow::on_actionDecrunch_triggered()
+{
+	if (m_pXpkLib->xpkUnpack() == true)
+	{
+		ui->statusBar->showMessage(QString("Unpack done: ").append(szFile));
+	}
+}
+
+void MainWindow::on_actionTest_triggered()
+{
+    
 }

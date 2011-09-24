@@ -31,8 +31,13 @@ private slots:
 	
 	void on_actionAbout_triggered();
 	
+	void on_actionDecrunch_triggered();
+	
+	void on_actionTest_triggered();
+	
 private:
     Ui::MainWindow *ui;
+    QString m_lastPath;
 	
 	QXpkLib *m_pXpkLib;
 };
