@@ -34,7 +34,9 @@ QList<QString> CXpkLibrarian::availableLibraries()
 
 xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 {
-	// we want module-path, not working directory
+	// we want module-path (where loaded) and not working directory!
+	// is there any way to get it on different platforms
+	// or must we assume sub-libraries will be in some global path always??
 	
 	TCHAR szModulePath[_MAX_PATH + 1];
 	DWORD dwRes = ::GetModuleFileName(NULL, // TODO: get handle to this lib somewhere..
@@ -93,14 +95,8 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 
 ///////// protected methods
 
-void CXpkMaster::PrepareUnpacker()
+std::string CXpkMaster::getCruncherType()
 {
-	// determine file type from header:
-	// do we have decrunching-support for it?
-	
-	//QList<QString> lstLibs = CXpkLibrarian::availableLibraries();
-	//QString szSubType;
-
 	// simplify, use std::string and get it done
 	std::string szSubType;
 	
@@ -110,7 +106,6 @@ void CXpkMaster::PrepareUnpacker()
 	{
 		// Amiga PowerPacker:
 		// not XPK-file but we may have support for it..
-		//
 		szSubType = "PP20";
 	}
 	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
@@ -124,18 +119,25 @@ void CXpkMaster::PrepareUnpacker()
 			 || type.m_enFileType == HEADERTYPE_XPK_NUKE
 			 || type.m_enFileType == HEADERTYPE_XPK_RLEN)
 	{
-		// already detected
-		// -> load sub-library
-		
-		// keep sub-type
+		// already detected as XPK
+		// -> load sub-library (get actual type)
 		szSubType.assign(m_InputBuffer.GetAt(8), 4);
+	}
+	else if (type.m_enFileType == HEADERTYPE_GZIP)
+	{
+		// load sub-library for handling GZIP
+		szSubType = "GZIP";
 	}
 	else
 	{
-		// detect GZIP ? others?
+		// others?
 		// -> should be as sub-libraries..
 	}
-	
+	return szSubType;
+}
+
+void CXpkMaster::PrepareUnpacker(std::string &subType)
+{
 	if (szSubType.length() > 0)
 	{
 		// load suitable sub-library?
@@ -263,7 +265,7 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	
 	// determine file type from header, try to load decruncher for it:
 	// throws exception on failure
-	PrepareUnpacker();
+	PrepareUnpacker(getCruncherType());
 
 	// TODO: do we keep entire file in buffer when unpacking in chunks..
 	//
@@ -275,6 +277,7 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 		throw ArcException("Failed reading file", (m_nInputFileSize - 16));
 	}
 	m_InputBuffer.SetCurrentPos(m_nInputFileSize); // info to decruncher
+	InFile.Close(); // not needed any more
 	
 	// setup info for decrunch
 	pProgress->pInputBuffer = &m_InputBuffer;

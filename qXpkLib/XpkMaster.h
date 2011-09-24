@@ -72,7 +72,8 @@ private:
 	XpkTags m_Tags;
 	
 protected:
-	void PrepareUnpacker();
+	std::string getCruncherType();
+	void PrepareUnpacker(std::string &subType);
 	//void PreparePacker();
 
 	bool ForeignDecrunch(XpkProgress *pProgress);

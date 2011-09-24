@@ -302,10 +302,16 @@ struct xpkFileHeader
 };
 */
 
+#define XPKMODE_UPUP  1
+#define XPKMODE_UPSTD 2
+#define XPKMODE_UPPP  3
+#define XPKMODE_UPXFD 4	
+#define XPKMODE_PKSTD 20
+
+
 /*
  * The file info block
  */
-/*
 struct XpkFib 
 {
   // Unpacked, packed, archive? 
@@ -337,7 +343,86 @@ struct XpkFib
   // For future use           
   unsigned int xf_Reserved[8];
 };
-*/
+
+#define AUTO_PASS_SIZE	50
+
+struct SeekData {
+  unsigned int sd_FilePos;
+  unsigned int sd_ULen;
+  unsigned int sd_CLen;
+};
+
+#define SEEKENTRYNUM	10
+
+struct SeekDataList {
+  struct SeekDataList *	sdl_Next;
+  unsigned int		sdl_Used;
+  struct SeekData	sdl_Data[SEEKENTRYNUM];
+};
+
+/* This is what XPK "handles" really point to */
+struct XpkBuffer {
+  struct XpkFib	xb_Fib;		/* file info about this file		*/
+  unsigned int  xb_PackingMode;	/* desired packing efficiency, 0..100   */
+  struct Headers xb_Headers;	/* global and local file header 	*/
+  unsigned int    xb_Format;	/* type of file				*/
+  int          xb_Result;	/* error code from last call		*/
+  char        *xb_ErrBuf;	/* Where user wants the error		*/
+  char       **xb_GetOutBuf;	/* Where user wants the out buf addr	*/
+  unsigned int*xb_GetOutLen;	/* Where user wants the output len	*/
+  unsigned int*xb_GetOutBufLen;	/* Where user wants the out buf len	*/
+  unsigned int xb_Secs;		/* Start time, the seconds		*/
+  unsigned int xb_Mics;		/* Start time, the micros		*/
+  struct Hook *xb_RHook;	/* input data hook			*/
+  struct Hook *xb_WHook;	/* output data hook			*/
+  struct Hook *xb_ChunkHook;	/* Hook to call between chunks		*/
+  char        *xb_Password;	/* password for de/encoding		*/
+  unsigned int xb_PasswordSize;	/* password buffer size for own password*/
+  unsigned int    xb_PassKey32;	/* password key, 32 bit			*/
+  unsigned short    xb_PassKey16;	/* password key, 16 bit			*/
+  int          xb_Priority;	/* task pri during packing		*/
+  unsigned int    xb_SubID;	/* currently active sub ID		*/
+  unsigned int xb_ChunkSize;	/* Chunk size to use for packing	*/
+  unsigned int xb_FirstChunk;	/* First chunk size - largest chunk	*/
+  unsigned int xb_Flags;	/* private for xpkmaster		*/
+  unsigned int xb_InLen;	/* Number of bytes to (un)pack		*/
+  unsigned int xb_UCur;		/* Current Uncrunched size (next chunk)	*/
+  unsigned int xb_CCur;		/* Current Crunched size (next chunk)	*/
+  unsigned int xb_InBufferPos;	/* buffer position for seek		*/
+  char        *xb_LastMsg;	/* The last progress message		*/
+  struct xfdBufferInfo *xb_xfd; /* xfdBufferInfo			*/
+  struct XpkInfo *xb_SubInfo;	/* Info of current open sub-lib		*/
+  void           *xb_SubBase;	/* Currently open sub-library		*/
+  struct XpkMasterMsg xb_RMsg;	/* Parameters for reading		*/
+  struct XpkMasterMsg xb_WMsg;	/* Parameters for writing		*/
+  struct XpkSubParams xb_PackParam;/* Parameters to (Un)PackChunk()	*/
+  struct XpkProgress  xb_Prog;	/* Parameters to progress report	*/
+  struct SeekDataList *xb_SeekDataList; /* this is used for seek	*/
+};
+
+/* Values for MasterFlags */
+#define XMF_PRIVFH	(1<< 0)	/* We opened the FH, so we close it.	*/
+#define XMF_PACKING	(1<< 1)	/* This is a packing operation.		*/
+#define XMF_PASSTHRU	(1<< 2)	/* Pass uncompressed data through	*/
+#define XMF_GETOUTBUF	(1<< 3)	/* Get output buffer when size known	*/
+#define XMF_NOCLOBBER	(1<< 4)	/* Don't overwrite			*/
+#define XMF_EOF		(1<< 5)	/* End of file				*/
+#define XMF_INITED	(1<< 6)	/* Sublib buffers have been allocted	*/
+#define XMF_GLOBHDR	(1<< 7)	/* GlobHdr is already written		*/
+#define XMF_LOSSYOK	(1<< 8)	/* Lossy compression permitted		*/
+#define XMF_OWNTASKPRI	(1<< 9) /* Altered task pri, restore		*/
+#define XMF_NOCRC	(1<<10)	/* Do not check the checksum on decomp	*/
+#define XMF_NOPREFS	(1<<11) /* Are prefs allowed ?			*/
+#define XMF_XFD		(1<<12) /* Is XFD unpacking allowed ?		*/
+#define XMF_EXTERNALS	(1<<13) /* Is extern allowed ?			*/
+#define XMF_AUTOPASSWD	(1<<14) /* Automatic password			*/
+#define XMF_AUTOPRHOOK  (1<<15) /* Automatic Progress hook		*/
+#define XMF_NOPACK	(1<<16) /* destination file equals source	*/
+#define XMF_OWNPASSWORD (1<<17) /* free password buffer later !!!	*/
+#define XMF_KEY16	(1<<18) /* got a 16 bit key (needed, as key may */
+#define XMF_KEY32	(1<<19) /* got a 32 bit key  be 0 - no check)   */
+#define XMF_SEEK	(1<<20)	/* we need to built seek buffers	*/
+
 
 // new.. hopefully more clear..
 //
