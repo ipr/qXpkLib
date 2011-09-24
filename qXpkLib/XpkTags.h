@@ -67,18 +67,15 @@ struct TagItem
   void *ti_Data;
 };
 
-class XpkTag;
 class XpkTag
 {
 public:
 	TagItem m_Item;
 	//void *m_pData;
 	
-	XpkTag *m_pNext;
-	
 public:
 	XpkTag(void)
-	    : m_pNext(nullptr)
+		: m_Item()
 		//, m_pData(nullptr)
 	{}
 	~XpkTag(void)
@@ -127,166 +124,29 @@ public:
  /* Callback Hook to get output buffers */
 #define XPK_OutHook	  XTAG(0x14)
 
-/* Other tags for Pack/Unpack */
-/* Length of data in input buffer */
-#define XPK_InLen	  XTAG(0x20)
-/* Length of output buffer     */
-#define XPK_OutBufLen	  XTAG(0x21)
-/* ti_Data pts to long to rec OutLen */
-#define XPK_GetOutLen	  XTAG(0x22)
-/* ti_Data pts to long to rec OutBufLen */
-#define XPK_GetOutBufLen  XTAG(0x23)
-/* Password for de/encoding    */
-#define XPK_Password	  XTAG(0x24)
-/* ti_Data points to buffer for errmsg */
-#define XPK_GetError	  XTAG(0x25)
-/* Memory type for output buffer */
-#define XPK_OutMemType	  XTAG(0x26)
-/* Bool: Passthru unrec. fmts on unpack */
-#define XPK_PassThru	  XTAG(0x27)
-/* Bool: Step down packmethod if nec. */
-#define XPK_StepDown	  XTAG(0x28)
-/* Call this Hook between chunks */
-#define XPK_ChunkHook	  XTAG(0x29)
-/* Do a FindMethod before packing */
-#define XPK_PackMethod	  XTAG(0x2a)
-/* Chunk size to try to pack with */
-#define XPK_ChunkSize	  XTAG(0x2b)
-/* Packing mode for sublib to use */
-#define XPK_PackMode	  XTAG(0x2c)
-/* Don't overwrite existing files */
-#define XPK_NoClobber	  XTAG(0x2d)
-/* Skip this tag               */
-#define XPK_Ignore	  XTAG(0x2e)
-/* Change priority for (un)packing */
-#define XPK_TaskPri	  XTAG(0x2f)
-/* File name for progress report */
-#define XPK_FileName	  XTAG(0x30)
-/* !!! obsolete !!!            */
-#define XPK_ShortError	  XTAG(0x31)
-/* Query available packers     */
-#define XPK_PackersQuery  XTAG(0x32)
-/* Query properties of a packer */
-#define XPK_PackerQuery	  XTAG(0x33)
-/* Query properties of packmode */
-#define XPK_ModeQuery	  XTAG(0x34)
-/* Lossy packing permitted? (FALSE)*/
-#define XPK_LossyOK	  XTAG(0x35)
-/* Ignore checksum             */
-#define XPK_NoCRC         XTAG(0x36)
-/* tags added for xfdmaster support (version 4 revision 25) */
-/* 16 bit key (unpack only)	*/
-#define XPK_Key16	  XTAG(0x37)
-/* 32 bit key (unpack only)	*/
-#define XPK_Key32	  XTAG(0x38)
 
-/* tag added to support seek (version 5) */
-#define XPK_NeedSeek	  XTAG(0x39) /* turn on Seek function usage	*/
 
-/* preference depending tags added for version 4 - their default value
- * may depend on preferences, see <xpk/xpkprefs.h> for more info */
-/* Use xfdmaster.library (FALSE) */
-#define XPK_UseXfdMaster  XTAG(0x40)
-/* Use packers in extern dir (TRUE)*/
-#define XPK_UseExternals  XTAG(0x41)
-/* automatic password req.? (FALSE)*/
-#define XPK_PassRequest   XTAG(0x42)
-/* use prefs semaphore ? (TRUE) */
-#define XPK_Preferences   XTAG(0x43)
-/* automatic chunk report ? (FALSE)*/
-#define XPK_ChunkReport	  XTAG(0x44)
-
-/* tags XTAG(0x50) to XTAG(0x6F) are for XpkPassRequest -- see below */
-#define XPK_MARGIN	256	/* Safety margin for output buffer	*/
 
 #pragma pack(push, 1)
 
-// temp
-#define MAXPACKERS 100
-
-struct XpkPackerList {
-  unsigned int xpl_NumPackers;
-/* NOTE: This isn't 100% compatible with the Amiga version! */
-  unsigned int xpl_Packer[MAXPACKERS];
-};
-struct XpkMode {
-  /* Chain to next descriptor for ModeDesc list*/
-  struct XpkMode *xm_Next;
-  /* Maximum efficiency handled by this mode */
-  unsigned int xm_Upto;
-  /* Defined below                         */
-  unsigned int xm_Flags;
-  /* Extra memory required during packing  */
-  unsigned int xm_PackMemory;
-  /* Extra memory during unpacking         */
-  unsigned int xm_UnpackMemory;
-  /* Approx packing speed in K per second  */
-  unsigned int xm_PackSpeed;
-  /* Approx unpacking speed in K per second */
-  unsigned int xm_UnpackSpeed;
-  /* CF in 0.1%				 */
-  unsigned short xm_Ratio;
-  /* Desired chunk size in K (!!) for this mode*/
-  unsigned short xm_ChunkSize;
-  /* 7 character mode description     */
-  char  xm_Description[10];
-};
-
-struct XpkPackerInfo {
-  /* Brief name of the packer      */
-  char  xpi_Name[24];
-  /* Full name of the packer       */
-  char  xpi_LongName[32];
-  /* One line description of packer */
-  char  xpi_Description[80];
-  /* Defined below                 */
-  unsigned int xpi_Flags;
-  /* Max input chunk size for packing */
-  unsigned int xpi_MaxChunk;
-  /* Default packing chunk size    */
-  unsigned int xpi_DefChunk;
-  /* Default mode on 0..100 scale  */
-  unsigned short xpi_DefMode;
-};
-
-#pragma pack(pop)
-
-// just for memory.. see how to replace..
-/* These structures define the file format for compressed streams */
-/*
-struct XpkStreamHeader 
-{
-  ULONG xsh_Pack;
-  ULONG xsh_CLen;
-  ULONG xsh_Type;
-  ULONG xsh_ULen;
-  UBYTE xsh_Initial[16];
-  UBYTE xsh_Flags;
-  UBYTE xsh_HChk;
-  UBYTE xsh_SubVrs;
-  UBYTE xsh_MasVrs;
-};
-
 struct XpkChunkHdrWord 
 {
-  UBYTE xchw_Type;
-  UBYTE xchw_HChk;
-  UWORD xchw_CChk;
-  UWORD xchw_CLen;
-  UWORD xchw_ULen;
+  uint8_t  xchw_Type;
+  uint8_t  xchw_HChk;
+  uint16_t xchw_CChk;
+  uint16_t xchw_CLen;
+  uint16_t xchw_ULen;
 };
 
 struct XpkChunkHdrLong 
 {
-  UBYTE xchl_Type;
-  UBYTE xchl_HChk;
-  UWORD xchl_CChk;
-  ULONG xchl_CLen;
-  ULONG xchl_ULen;
+  uint8_t  xchl_Type;
+  uint8_t  xchl_HChk;
+  uint16_t xchl_CChk;
+  uint32_t xchl_CLen;
+  uint32_t xchl_ULen;
 };
 
-// TODO: does this align correctly in x86/x64? (32/64 bit cpu??)
-//
 typedef union 
 {
   struct XpkChunkHdrLong xch_Long;
@@ -294,134 +154,9 @@ typedef union
 } XpkChunkHeader;
 
 
-struct xpkFileHeader
-{
-	struct XpkStreamHeader h_Glob;
-    XpkChunkHeader	 h_Loc;
-    ULONG			 h_LocSize;
-};
-*/
-
-#define XPKMODE_UPUP  1
-#define XPKMODE_UPSTD 2
-#define XPKMODE_UPPP  3
-#define XPKMODE_UPXFD 4	
-#define XPKMODE_PKSTD 20
+#pragma pack(pop)
 
 
-/*
- * The file info block
- */
-struct XpkFib 
-{
-  // Unpacked, packed, archive? 
-  unsigned int xf_Type;
-  // Uncompressed length      
-  unsigned int xf_ULen;
-  // Compressed length        
-  unsigned int xf_CLen;
-  // Next chunk len           
-  unsigned int xf_NLen;
-  // Uncompressed bytes so far 
-  unsigned int xf_UCur;
-  // Compressed bytes so far  
-  unsigned int xf_CCur;
-  // 4 letter ID of packer    
-  unsigned int xf_ID;
-  // 4 letter name of packer  
-  char  xf_Packer[6];
-  // Required sublib version     
-  unsigned short xf_SubVersion;
-  // Required masterlib version 
-  unsigned short xf_MasVersion;
-  // Password?                
-  unsigned int xf_Flags;
-  // First 16 bytes of orig. file 
-  char  xf_Head[16];
-  // Compression ratio        
-  int   xf_Ratio;
-  // For future use           
-  unsigned int xf_Reserved[8];
-};
-
-#define AUTO_PASS_SIZE	50
-
-struct SeekData {
-  unsigned int sd_FilePos;
-  unsigned int sd_ULen;
-  unsigned int sd_CLen;
-};
-
-#define SEEKENTRYNUM	10
-
-struct SeekDataList {
-  struct SeekDataList *	sdl_Next;
-  unsigned int		sdl_Used;
-  struct SeekData	sdl_Data[SEEKENTRYNUM];
-};
-
-/* This is what XPK "handles" really point to */
-struct XpkBuffer {
-  struct XpkFib	xb_Fib;		/* file info about this file		*/
-  unsigned int  xb_PackingMode;	/* desired packing efficiency, 0..100   */
-  struct Headers xb_Headers;	/* global and local file header 	*/
-  unsigned int    xb_Format;	/* type of file				*/
-  int          xb_Result;	/* error code from last call		*/
-  char        *xb_ErrBuf;	/* Where user wants the error		*/
-  char       **xb_GetOutBuf;	/* Where user wants the out buf addr	*/
-  unsigned int*xb_GetOutLen;	/* Where user wants the output len	*/
-  unsigned int*xb_GetOutBufLen;	/* Where user wants the out buf len	*/
-  unsigned int xb_Secs;		/* Start time, the seconds		*/
-  unsigned int xb_Mics;		/* Start time, the micros		*/
-  struct Hook *xb_RHook;	/* input data hook			*/
-  struct Hook *xb_WHook;	/* output data hook			*/
-  struct Hook *xb_ChunkHook;	/* Hook to call between chunks		*/
-  char        *xb_Password;	/* password for de/encoding		*/
-  unsigned int xb_PasswordSize;	/* password buffer size for own password*/
-  unsigned int    xb_PassKey32;	/* password key, 32 bit			*/
-  unsigned short    xb_PassKey16;	/* password key, 16 bit			*/
-  int          xb_Priority;	/* task pri during packing		*/
-  unsigned int    xb_SubID;	/* currently active sub ID		*/
-  unsigned int xb_ChunkSize;	/* Chunk size to use for packing	*/
-  unsigned int xb_FirstChunk;	/* First chunk size - largest chunk	*/
-  unsigned int xb_Flags;	/* private for xpkmaster		*/
-  unsigned int xb_InLen;	/* Number of bytes to (un)pack		*/
-  unsigned int xb_UCur;		/* Current Uncrunched size (next chunk)	*/
-  unsigned int xb_CCur;		/* Current Crunched size (next chunk)	*/
-  unsigned int xb_InBufferPos;	/* buffer position for seek		*/
-  char        *xb_LastMsg;	/* The last progress message		*/
-  struct xfdBufferInfo *xb_xfd; /* xfdBufferInfo			*/
-  struct XpkInfo *xb_SubInfo;	/* Info of current open sub-lib		*/
-  void           *xb_SubBase;	/* Currently open sub-library		*/
-  struct XpkMasterMsg xb_RMsg;	/* Parameters for reading		*/
-  struct XpkMasterMsg xb_WMsg;	/* Parameters for writing		*/
-  struct XpkSubParams xb_PackParam;/* Parameters to (Un)PackChunk()	*/
-  struct XpkProgress  xb_Prog;	/* Parameters to progress report	*/
-  struct SeekDataList *xb_SeekDataList; /* this is used for seek	*/
-};
-
-/* Values for MasterFlags */
-#define XMF_PRIVFH	(1<< 0)	/* We opened the FH, so we close it.	*/
-#define XMF_PACKING	(1<< 1)	/* This is a packing operation.		*/
-#define XMF_PASSTHRU	(1<< 2)	/* Pass uncompressed data through	*/
-#define XMF_GETOUTBUF	(1<< 3)	/* Get output buffer when size known	*/
-#define XMF_NOCLOBBER	(1<< 4)	/* Don't overwrite			*/
-#define XMF_EOF		(1<< 5)	/* End of file				*/
-#define XMF_INITED	(1<< 6)	/* Sublib buffers have been allocted	*/
-#define XMF_GLOBHDR	(1<< 7)	/* GlobHdr is already written		*/
-#define XMF_LOSSYOK	(1<< 8)	/* Lossy compression permitted		*/
-#define XMF_OWNTASKPRI	(1<< 9) /* Altered task pri, restore		*/
-#define XMF_NOCRC	(1<<10)	/* Do not check the checksum on decomp	*/
-#define XMF_NOPREFS	(1<<11) /* Are prefs allowed ?			*/
-#define XMF_XFD		(1<<12) /* Is XFD unpacking allowed ?		*/
-#define XMF_EXTERNALS	(1<<13) /* Is extern allowed ?			*/
-#define XMF_AUTOPASSWD	(1<<14) /* Automatic password			*/
-#define XMF_AUTOPRHOOK  (1<<15) /* Automatic Progress hook		*/
-#define XMF_NOPACK	(1<<16) /* destination file equals source	*/
-#define XMF_OWNPASSWORD (1<<17) /* free password buffer later !!!	*/
-#define XMF_KEY16	(1<<18) /* got a 16 bit key (needed, as key may */
-#define XMF_KEY32	(1<<19) /* got a 32 bit key  be 0 - no check)   */
-#define XMF_SEEK	(1<<20)	/* we need to built seek buffers	*/
 
 
 // new.. hopefully more clear..
@@ -452,6 +187,8 @@ public:
 	XpkChunk()
 	    : m_ChunkID(0)
 	    , m_ChunkLen(0)
+	    , m_pTag(nullptr)
+	    , m_pChunkHeader(nullptr)
 	    , m_pNext(nullptr)
 	    , m_pPrevious(nullptr)
 	    , m_nDataOffset(0)
@@ -461,6 +198,11 @@ public:
 	
 	uint32_t m_ChunkID; // IFF-style chunk-ID tag
 	uint32_t m_ChunkLen; // chunk length 
+	
+	XpkTag *m_pTag;
+	
+	// temp, debug
+	XpkChunkHeader *m_pChunkHeader;
 	
 	XpkChunk *m_pNext;
 	XpkChunk *m_pPrevious;
@@ -479,7 +221,7 @@ private:
 
 	// linked list of tags in XPK-file
 	// (replace by chunks later?)
-	XpkTag *m_pFirstTag;
+	//XpkTag *m_pFirstTag;
 	
 	//XpkFib m_FileInfo;
 	//XpkStreamHeader m_Header;
@@ -531,16 +273,14 @@ protected:
 	}
 	
 
-	// get size of structure following the tag..
-	// this is necessary so we can skip/use it
-	size_t getChunkSize(uint32_t tagID) const;
-	
-	void ReadFileInfo(CReadBuffer &Buffer);
-	void ReadStreamHeader(CReadBuffer &Buffer);
 	
 	XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
 	bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
 	void ParseTags(CReadBuffer &Buffer);
+
+	void ReadChunks(CReadBuffer &Buffer);
+
+	void ReadFileInfo(CReadBuffer &Buffer);
 	
 public:
     XpkTags();

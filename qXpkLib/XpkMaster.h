@@ -72,7 +72,7 @@ private:
 	XpkTags m_Tags;
 	
 protected:
-	std::string getCruncherType();
+	std::string getCruncherType(CReadBuffer *pInputBuffer) const;
 	void PrepareUnpacker(std::string &subType);
 	//void PreparePacker();
 

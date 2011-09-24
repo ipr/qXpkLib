@@ -95,13 +95,13 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
 
 ///////// protected methods
 
-std::string CXpkMaster::getCruncherType()
+std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 {
 	// simplify, use std::string and get it done
 	std::string szSubType;
 	
 	// determine file datatype by header information
-	CFileType type(m_InputBuffer.GetBegin(), m_InputBuffer.GetSize());
+	CFileType type(pInputBuffer->GetBegin(), pInputBuffer->GetSize());
 	if (type.m_enFileType == HEADERTYPE_PP20)
 	{
 		// Amiga PowerPacker:
@@ -121,7 +121,7 @@ std::string CXpkMaster::getCruncherType()
 	{
 		// already detected as XPK
 		// -> load sub-library (get actual type)
-		szSubType.assign(m_InputBuffer.GetAt(8), 4);
+		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
 	else if (type.m_enFileType == HEADERTYPE_GZIP)
 	{
@@ -138,15 +138,18 @@ std::string CXpkMaster::getCruncherType()
 
 void CXpkMaster::PrepareUnpacker(std::string &subType)
 {
-	if (szSubType.length() > 0)
+	if (subType.length < 4)
 	{
-		// load suitable sub-library?
-		m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
-		if (m_pSubLibrary == nullptr)
-		{
-			// not supported/can't load -> can't decrunch it
-			throw ArcException("Unsupported cruncher type", szSubType);
-		}
+		// should throw exception, for testing just skip
+		return;
+	}
+	
+	// load suitable sub-library?
+	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
+	if (m_pSubLibrary == nullptr)
+	{
+		// not supported/can't load -> can't decrunch it
+		throw ArcException("Unsupported cruncher type", szSubType);
 	}
 }
 
@@ -175,6 +178,7 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	
 	m_Tags.ParseToNodeList(m_InputBuffer);
 	
+	/* not this far yet..
 	bool bRet = true;
 	while (pProgress->xp_PackedProcessed < m_nInputFileSize
 	       && bRet == true)
@@ -192,8 +196,10 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 		}
 		
 	}
-	
 	return bRet;
+	*/
+	
+	return false;
 }
 
 
@@ -249,35 +255,21 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	{
 		throw ArcException("Failed to open input", m_InputName.toStdString());
 	}
-	
-	m_nInputFileSize = InFile.GetSize();
-	if (m_nInputFileSize < 16)
-	{
-		// can't determine file type for unpacking
-		// without proper header
-		throw ArcException("File too small", m_nInputFileSize);
-	}
-	
-	if (InFile.Read(m_InputBuffer.GetBegin(), 16) == false)
-	{
-		throw ArcException("Failed reading header", 16);
-	}
-	
-	// determine file type from header, try to load decruncher for it:
-	// throws exception on failure
-	PrepareUnpacker(getCruncherType());
 
-	// TODO: do we keep entire file in buffer when unpacking in chunks..
-	//
-	// this is simplest..
-	// read rest of it anyway.. prepare buffer (grow)
-	m_InputBuffer.PrepareBuffer(m_nInputFileSize, true);
-	if (InFile.Read(m_InputBuffer.GetAt(16), m_nInputFileSize - 16) == false)
+	// fuck it.. read it all at once to stop headaches..
+	// other problems to solve anyway
+	m_InputBuffer.PrepareBuffer(m_nInputFileSize, false);
+	if (InFile.Read(m_InputBuffer.GetBegin(), m_nInputFileSize) == false)
 	{
-		throw ArcException("Failed reading file", (m_nInputFileSize - 16));
+		throw IOException("Failed reading file data");
 	}
 	m_InputBuffer.SetCurrentPos(m_nInputFileSize); // info to decruncher
 	InFile.Close(); // not needed any more
+	
+	// determine file type from header, try to load decruncher for it:
+	// throws exception on failure
+	PrepareUnpacker(getCruncherType(&m_InputBuffer));
+
 	
 	// setup info for decrunch
 	pProgress->pInputBuffer = &m_InputBuffer;
