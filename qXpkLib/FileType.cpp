@@ -351,17 +351,23 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	{
 		// "BZ"
 		// variations: "BZ0", "BZh1".."BZh9"
+		// TODO: also bzip "1" ?
 		return HEADERTYPE_BZIP2;
 	}
 	else if (pBuffer[0] == 0x1F
 		&& pBuffer[1] == 0x8B
 		&& pBuffer[2] == 0x08)
 	{
+		// actually, two bytes at start for ID,
+		// third for compression mode:
+		// only "deflate" (0x8) is supported?
+		// -> see http://www.gzip.org/zlib/rfc-gzip.html
 		return HEADERTYPE_GZIP;
 	}
 	else if (pBuffer[0] == 0x1F
 		&& pBuffer[1] == 0x9D)
 	{
+		// Unix-compress (really old..)
 		return HEADERTYPE_Z;
 	}
 	/*

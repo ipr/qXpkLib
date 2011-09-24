@@ -7,6 +7,7 @@
 #include <QTextCodec>
 #include <QDateTime>
 
+#include <QListWidgetItem>
 
 #include "qxpklib.h"
 
@@ -65,8 +66,15 @@ void MainWindow::onFileSelected(QString szFile)
 {
 	m_pXpkLib->setInputFile(szFile);
 
-	// TODO: get&show file info (compression, type etc.)
-	//m_pXpkLib->xpkInfo();	
+	ui->listWidget->clear();
+	QXpkLib::CXpkFileInfo info;
+	if (m_pXpkLib->xpkInfo(info) == true)
+	{
+		// something for simple info..
+		// TODO: make column/tree based display later..?
+		//QListWidgetItem *pItem = nullptr;
+		//pItem = new QListWidgetItem(
+	}
 }
 
 void MainWindow::onMessage(QString szData)

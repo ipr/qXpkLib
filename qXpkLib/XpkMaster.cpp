@@ -126,10 +126,14 @@ void CXpkMaster::PrepareUnpacker()
 	{
 		// already detected
 		// -> load sub-library
+		
+		// keep sub-type
+		szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
 	else
 	{
 		// detect GZIP ? others?
+		// -> should be as sub-libraries..
 	}
 	
 	if (szSubType.length() > 0)
@@ -206,6 +210,16 @@ CXpkMaster::CXpkMaster(QObject *parent)
 
 CXpkMaster::~CXpkMaster(void)
 {
+}
+
+bool CXpkMaster::xpkInfo(QXpkLib::CXpkFileInfo &info)
+{
+	// TODO: get info to caller..
+	// - compressor (SQSH, NUKE... PP20, IMPL..)
+	// - unpacked size -> need sub-library to determine
+	// - what else?
+
+	return false;
 }
 
 /*

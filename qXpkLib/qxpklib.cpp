@@ -57,7 +57,7 @@ bool QXpkLib::xpkInfo(QXpkLib::CXpkFileInfo &info)
 	try
 	{
 		// get info to caller from master-instance
-		//return m_pMaster->xpkInfo(info);
+		return m_pMaster->xpkInfo(info);
 	}
 	catch (std::exception &exp)
 	{
@@ -118,7 +118,7 @@ void QXpkLib::getToBuffer(QByteArray &Array)
 	CReadBuffer *pOut = m_pMaster->getResult();
 	
 	// reserve out-buffer and copy what we have
-	Array.reserve(pOut->GetCurrentPos());
+	Array.resize(pOut->GetCurrentPos());
 	::memcpy(Array.data(), pOut->GetBegin(), pOut->GetCurrentPos());
 	
 }

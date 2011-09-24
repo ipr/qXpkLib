@@ -14,6 +14,9 @@
 #include <QByteArray>
 #include <QLibrary>
 
+// use typedefs from parent
+#include <qxpklib.h>
+
 #include "AnsiFile.h"
 #include "IoContext.h"
 
@@ -79,9 +82,12 @@ public:
     CXpkMaster(QObject *parent = 0);
 	virtual ~CXpkMaster(void);
 	
+	bool xpkInfo(QXpkLib::CXpkFileInfo &info);
+	
 	//bool xpkPack(XpkProgress *pProgress);
 	bool xpkUnpack(XpkProgress *pProgress);
 
+	// get unpacked result to user-buffer as-is
 	CReadBuffer *getResult()
 	{
 		return m_Output.GetBuffer();
