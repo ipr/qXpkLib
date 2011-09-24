@@ -113,7 +113,6 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 	XpkChunk *pCurrent = m_pFirst;
 	while (Buffer.IsEnd() == false)
 	{
-		//XpkChunkHeader *pHdr = (XpkChunkHeader*)Buffer.GetAtCurrent();
 		size_t nChunkHdrSize = 0;
 		size_t nChunkCompSize = 0; // compressed data size of chunk
 		
@@ -121,21 +120,27 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 		{
 			XpkChunkHdrLong *pHdr = (XpkChunkHdrLong*)Buffer.GetAtCurrent();
 			
-			// .. need byteswap..
-			// temp
+			pCurrent->m_chunkHeader.m_Type = pHdr->xchl_Type;
+			pCurrent->m_chunkHeader.m_HChk = pHdr->xchl_HChk;
+			pCurrent->m_chunkHeader.m_CChk = GetUWord(&(pHdr->xchl_CChk));
+			pCurrent->m_chunkHeader.m_CLen = GetULong(&(pHdr->xchl_CLen));
+			pCurrent->m_chunkHeader.m_ULen = GetULong(&(pHdr->xchl_ULen));
+			
 			nChunkHdrSize = sizeof(XpkChunkHdrLong);
 			nChunkCompSize = pHdr->xchl_CLen;
-			::memcpy(&(pCurrent->m_chunkHeader.xch_Long), pHdr, nChunkHdrSize);
 		}
 		else
 		{
 			XpkChunkHdrWord *pHdr = (XpkChunkHdrWord*)Buffer.GetAtCurrent();
 			
-			// .. need byteswap..
-			// temp
+			pCurrent->m_chunkHeader.m_Type = pHdr->xchw_Type;
+			pCurrent->m_chunkHeader.m_HChk = pHdr->xchw_HChk;
+			pCurrent->m_chunkHeader.m_CChk = GetUWord(&(pHdr->xchw_CChk));
+			pCurrent->m_chunkHeader.m_CLen = GetUWord(&(pHdr->xchw_CLen));
+			pCurrent->m_chunkHeader.m_ULen = GetUWord(&(pHdr->xchw_ULen));
+
 			nChunkHdrSize = sizeof(XpkChunkHdrWord);
 			nChunkCompSize = pHdr->xchw_CLen;
-			::memcpy(&(pCurrent->m_chunkHeader.xch_Word), pHdr, nChunkHdrSize);
 		}
 		
 		// .. process chunk

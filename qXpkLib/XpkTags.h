@@ -159,11 +159,31 @@ typedef union
 {
   struct XpkChunkHdrLong xch_Long;
   struct XpkChunkHdrWord xch_Word;
-} XpkChunkHeader;
+} XpkChunkHeaderU;
 
 
 #pragma pack(pop)
 
+// process in this type,
+// doesn't align with that in file
+// but simpler in memory..
+struct XpkChunkHeader 
+{
+  size_t m_Type;
+  size_t m_HChk;
+  size_t m_CChk; // chunk checksum (16-bit CRC?)
+  size_t m_CLen; // chunk length
+  size_t m_ULen; // uncompressed length of chunk?
+  
+  XpkChunkHeader()
+  {
+	m_Type = 0;
+	m_HChk = 0;
+	m_CChk = 0;
+	m_CLen = 0;
+	m_ULen = 0;
+  }
+};
 
 
 
