@@ -241,6 +241,21 @@ public:
 		m_nCurrentPos += nSize;
 		return true;
 	}
+	
+	// helpers for read/write single character:
+	// use instead of direct-IO
+	unsigned char GetNextByte()
+	{
+		unsigned char *pBuf = GetAt(m_nCurrentPos);
+		m_nCurrentPos++;
+		return (*pBuf);
+	}
+	void SetNextByte(const unsigned char ucValue)
+	{
+		unsigned char *pBuf = GetAt(m_nCurrentPos);
+		(*pBuf) = ucValue;
+		m_nCurrentPos++;
+	}
 };
 
 

@@ -7,20 +7,6 @@
 // for buffer-handler..
 #include "AnsiFile.h"
 
-/*
-#ifndef UBYTE
-typedef uint8_t UBYTE;
-#endif
-
-#ifndef UWORD
-typedef uint16_t UWORD;
-#endif
-
-#ifndef ULONG
-//typedef uint32_t ULONG; <- better but windef.h has with different type..
-typedef unsigned long ULONG;
-#endif
-*/
 
 /* constants for Tag.ti_Tag, control tag values */
 /* terminates array of TagItems. ti_Data unused */
@@ -125,28 +111,50 @@ public:
 #define XPK_OutHook	  XTAG(0x14)
 
 
-
+/* some bitmasks in flags-field of file header */
+#define XPKSTREAMF_LONGHEADERS  0x01	/* Use XpkLongLocHeaders	*/
+#define XPKSTREAMF_PASSWORD     0x02	/* This file encoded		*/
+#define XPKSTREAMF_EXTHEADER    0x04	/* Extended globhdr		*/
 
 #pragma pack(push, 1)
+
+/* These structures define the file format for compressed streams */
+struct XpkStreamHeader 
+{
+  uint32_t xsh_Pack;
+  uint32_t xsh_CLen;
+  uint32_t xsh_Type;
+  uint32_t xsh_ULen;
+  
+  // initial 16-bytes of original file?
+  uint8_t xsh_Initial[16];
+  
+  // if flags & XPKSTREAMF_LONGHEADERS -> use "long" chunk header, otherwise use "word" length header
+  uint8_t xsh_Flags; 
+  uint8_t xsh_HChk;
+  uint8_t xsh_SubVrs;
+  uint8_t xsh_MasVrs;
+};
 
 struct XpkChunkHdrWord 
 {
   uint8_t  xchw_Type;
   uint8_t  xchw_HChk;
-  uint16_t xchw_CChk;
-  uint16_t xchw_CLen;
-  uint16_t xchw_ULen;
+  uint16_t xchw_CChk; // chunk checksum (16-bit CRC?)
+  uint16_t xchw_CLen; // chunk length
+  uint16_t xchw_ULen; // uncompressed length of chunk?
 };
 
 struct XpkChunkHdrLong 
 {
   uint8_t  xchl_Type;
   uint8_t  xchl_HChk;
-  uint16_t xchl_CChk;
-  uint32_t xchl_CLen;
-  uint32_t xchl_ULen;
+  uint16_t xchl_CChk; // chunk checksum (16-bit CRC?)
+  uint32_t xchl_CLen; // chunk length
+  uint32_t xchl_ULen; // uncompressed length of chunk?
 };
 
+// hopefully we don't need this..
 typedef union 
 {
   struct XpkChunkHdrLong xch_Long;
@@ -165,6 +173,7 @@ typedef union
 //
 // note: don't cast directly from buffer, might not align
 //
+/*
 struct XpkFileInfo
 {
 	// first 16 bytes similar to common IFF-style
@@ -179,18 +188,19 @@ struct XpkFileInfo
 	//int32_t m_CompressionRatio;
 	//uint32_t m_Reserved[8];
 };
+*/
 
 class XpkChunk;
 class XpkChunk
 {
 public:
-	XpkChunk()
+	XpkChunk(XpkChunk *pPrev = nullptr)
 	    : m_ChunkID(0)
 	    , m_ChunkLen(0)
 	    , m_pTag(nullptr)
-	    , m_pChunkHeader(nullptr)
+	    , m_chunkHeader()
 	    , m_pNext(nullptr)
-	    , m_pPrevious(nullptr)
+	    , m_pPrevious(pPrev)
 	    , m_nDataOffset(0)
 	{}
 	~XpkChunk()
@@ -202,7 +212,7 @@ public:
 	XpkTag *m_pTag;
 	
 	// temp, debug
-	XpkChunkHeader *m_pChunkHeader;
+	XpkChunkHeader m_chunkHeader;
 	
 	XpkChunk *m_pNext;
 	XpkChunk *m_pPrevious;
@@ -216,7 +226,9 @@ class XpkTags
 private:
 	size_t m_nTotalSize;
 	
-	XpkFileInfo m_FileHeader;
+	XpkStreamHeader m_streamHeader;
+	//XpkFileInfo m_FileHeader;
+	
 	XpkChunk *m_pFirst;
 
 	// linked list of tags in XPK-file
@@ -284,6 +296,7 @@ protected:
 	
 public:
     XpkTags();
+    ~XpkTags();
 	
 	// verify that file is XPK:
 	// expect certain structure

@@ -107,17 +107,52 @@ void XpkTags::ParseTags(CReadBuffer &Buffer)
 
 void XpkTags::ReadChunks(CReadBuffer &Buffer)
 {
-	XpkTag *pCurrent = m_pFirst;
-	Buffer.SetCurrentPos(m_pFirst->m_nDataOffset);
+	m_pFirst = new XpkChunk();
+	m_pFirst->m_nDataOffset = Buffer.GetCurrentPos();
+
+	XpkChunk *pCurrent = m_pFirst;
 	while (Buffer.IsEnd() == false)
 	{
-		XpkChunkHeader *pHdr = (XpkChunkHeader*)Buffer.GetAtCurrent();
-	
-	
-	
+		//XpkChunkHeader *pHdr = (XpkChunkHeader*)Buffer.GetAtCurrent();
+		size_t nChunkHdrSize = 0;
+		size_t nChunkCompSize = 0; // compressed data size of chunk
+		
+		if (m_streamHeader.xsh_Flags & XPKSTREAMF_LONGHEADERS)
+		{
+			XpkChunkHdrLong *pHdr = (XpkChunkHdrLong*)Buffer.GetAtCurrent();
+			
+			// .. need byteswap..
+			// temp
+			nChunkHdrSize = sizeof(XpkChunkHdrLong);
+			nChunkCompSize = pHdr->xchl_CLen;
+			::memcpy(&(pCurrent->m_chunkHeader.xch_Long), pHdr, nChunkHdrSize);
+		}
+		else
+		{
+			XpkChunkHdrWord *pHdr = (XpkChunkHdrWord*)Buffer.GetAtCurrent();
+			
+			// .. need byteswap..
+			// temp
+			nChunkHdrSize = sizeof(XpkChunkHdrWord);
+			nChunkCompSize = pHdr->xchw_CLen;
+			::memcpy(&(pCurrent->m_chunkHeader.xch_Word), pHdr, nChunkHdrSize);
+		}
+		
+		// .. process chunk
+
+		pCurrent->m_nDataOffset += nChunkHdrSize;
+		Buffer.SetCurrentPos(nNextChunkOffset);
+		
+
+		
+		// offset to start of next chunk..?
+		size_t nNextChunkOffset = pCurrent->m_nDataOffset + nChunkCompSize;
+		Buffer.SetCurrentPos(nNextChunkOffset);
+		
+		pCurrent->m_pNext = new XpkChunk(pCurrent);
+		pCurrent->m_pNext->m_nDataOffset = nNextChunkOffset;
+		pCurrent = pCurrent->m_pNext;
 	}
-
-
 }
 
 
@@ -134,6 +169,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 // - 4-byte sub-type (cruncher-ID) e.g. 'SQSH'
 // - 4-byte int for chunk-size (actually: unpacked length?)
 // - first 16-bytes of original file?
+// -> not exactly this but close.. 
 //
 // First chunk:
 // - 
@@ -142,33 +178,50 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 
 void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 {
-	m_FileHeader.m_ID = GetULong(Buffer.GetNext(4));
-	m_FileHeader.m_FileLen = GetULong(Buffer.GetNext(4));
-	m_FileHeader.m_ChunkID = GetULong(Buffer.GetNext(4));
+	Buffer.SetCurrentPos(0);
 	
-	// note: unpacked-length of original instead of normal length of chunk?
-	m_FileHeader.m_ChunkLen = GetULong(Buffer.GetNext(4));
+	// "XPKF"
+	m_streamHeader.xsh_Pack = GetULong(Buffer.GetNext(4));
+	// compressed length?
+	m_streamHeader.xsh_CLen = GetULong(Buffer.GetNext(4));
+	// packer type, e.g. "SQSH", "NUKE", "RLEN"..
+	m_streamHeader.xsh_Type = GetULong(Buffer.GetNext(4));
+	// uncompressed length?
+	m_streamHeader.xsh_ULen = GetULong(Buffer.GetNext(4));
 
 	// first 16 bytes of original file
-	::memcpy(m_FileHeader.m_Orig_Head, Buffer.GetNext(16), 16);
+	::memcpy(m_streamHeader.xsh_Initial, Buffer.GetNext(16), 16);
 	
-	// TODO: is there more here before first chunk?
-	// offsets seems wrong somehow..
-
-	m_pFirst = new XpkChunk();
-	m_pFirst->m_nDataOffset = 16; // include first 16 of original or not?
-	m_pFirst->m_ChunkID = m_FileHeader.m_ChunkID;
+	// flags
+	m_streamHeader.xsh_Flags = Buffer.GetNextByte();
 	
-	// note: above might give unpacked length of original
-	// instead of common chunk-length..
-	m_pFirst->m_ChunkLen = m_FileHeader.m_ChunkLen;
+	// ..no idea..
+	m_streamHeader.xsh_HChk = Buffer.GetNextByte();
+	
+	// minor&major version of XPK master/cruncher?
+	m_streamHeader.xsh_SubVrs = Buffer.GetNextByte();
+	m_streamHeader.xsh_MasVrs = Buffer.GetNextByte();
+	
 }
 
 //////////// public methods
 
 XpkTags::XpkTags()
     : m_nTotalSize(0)
+    , m_streamHeader()
+    , m_pFirst(nullptr)
 {
+}
+
+XpkTags::~XpkTags()
+{
+	XpkChunk *pCurrent = m_pFirst;
+	while (pCurrent != nullptr)
+	{
+		XpkChunk *pNext = pCurrent->m_pNext;
+		delete pCurrent;
+		pCurrent = pNext;
+	}
 }
 
 void XpkTags::ParseToNodeList(CReadBuffer &Buffer)
