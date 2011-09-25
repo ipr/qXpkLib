@@ -1,6 +1,18 @@
 ///////////////////////////////////
 //
-// Library entry-point/interface.
+// QXpkLib:
+// just the library entry-point/interface 
+// as Qt-object for loading into an application.
+//
+// Original idea was just a thin wrapper for original code
+// but most of everything seems to become entirely 
+// redesigned and rewritten from scratch now.
+// So only "common" thing with old XPK-library
+// is the ability to read same files..
+//
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
 //
 
 #ifndef QXPKLIB_H
@@ -13,8 +25,6 @@
 
 
 //// fwd. decl.
-
-
 class CXpkMaster;
 //class CxpkProgress; // TODO: see about what to do..
 struct XpkProgress;

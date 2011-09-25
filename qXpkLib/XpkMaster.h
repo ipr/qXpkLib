@@ -4,6 +4,12 @@
 // can load additional decoders as necessary,
 // see xpkLibraryBase
 //
+// CXpkMaster : main decrunch handler
+// CXpkLibrarian : sub-library loader&handler
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
 
 #ifndef XPKMASTER_H
 #define XPKMASTER_H

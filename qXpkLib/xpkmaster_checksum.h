@@ -15,7 +15,9 @@
  1.2   31.01.97 : removed new option
  1.3   09.01.98 : added XPK_ALLINONE
  
- 1.4   25.09.11 : C++ support (header added), standard types..
+ 1.4   25.09.11 : Made to header for calling from C++ code, 
+                  dropped some platform-header includes,
+                  changed to ISO-standard type definitions instead of STRPTR/UBYTE..
 */
 
 #include <stdint.h>

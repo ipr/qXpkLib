@@ -1,3 +1,13 @@
+///////////////////////////////////
+//
+// QXpkLib:
+// just the library entry-point/interface 
+// as Qt-object for loading into an application.
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
+
 #include "qxpklib.h"
 
 #include "AnsiFile.h"

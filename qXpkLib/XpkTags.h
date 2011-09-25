@@ -1,3 +1,14 @@
+///////////////////////////////////
+//
+// XpkTags:
+// fileformat handling, chunk handler,
+// should call given library to decrunch each chunk.
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
+
+
 #ifndef XPKTAGS_H
 #define XPKTAGS_H
 
@@ -156,7 +167,7 @@ protected:
 	}
 	
 	
-	XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
+	//XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
 	//bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
 	//void ParseTags(CReadBuffer &Buffer);
 

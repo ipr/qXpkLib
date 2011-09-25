@@ -1,8 +1,13 @@
+///////////////////////////////////
+//
+// This XpkProgress is mostly directly from XPKMaster sources
+// that existed already, this will be dropped in the future..
+//
+
 #ifndef XPKPROGRESS_H
 #define XPKPROGRESS_H
 
 // rewrite these later..
-
 
 
 enum Xpk_Progress_Status

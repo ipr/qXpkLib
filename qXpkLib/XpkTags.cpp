@@ -1,8 +1,17 @@
+///////////////////////////////////
+//
+// XpkTags:
+// fileformat handling, chunk handler,
+// should call given library to decrunch each chunk.
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
+
 #include "XpkTags.h"
 
 // checksum functions
 #include "xpkmaster_checksum.h"
-
 
 
 /////////////
@@ -125,9 +134,6 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 	XpkChunk *pCurrent = m_pFirst;
 	while (Buffer.IsEnd() == false)
 	{
-		size_t nChunkHdrSize = 0;
-		size_t nChunkCompSize = 0; // compressed data size of chunk
-		
 		if (m_streamHeader.xsh_Flags & XPKSTREAMF_LONGHEADERS)
 		{
 			XpkChunkHdrLong *pHdr = (XpkChunkHdrLong*)Buffer.GetAtCurrent();
@@ -138,8 +144,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_ChunkLength = Swap4(pHdr->xchl_CLen);
 			pCurrent->m_ULen = Swap4(pHdr->xchl_ULen);
 			
-			nChunkHdrSize = sizeof(XpkChunkHdrLong);
-			nChunkCompSize = pCurrent->m_ChunkLength;
+			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrLong);
 		}
 		else
 		{
@@ -151,19 +156,24 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_ChunkLength = Swap2(pHdr->xchw_CLen);
 			pCurrent->m_ULen = Swap2(pHdr->xchw_ULen);
 
-			nChunkHdrSize = sizeof(XpkChunkHdrWord);
-			nChunkCompSize = pCurrent->m_ChunkLength;
+			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrWord);
 		}
 		
-		// .. process chunk
-
-		pCurrent->m_nDataOffset += nChunkHdrSize;
+		// move to actual data of chunk (according to chunk header size)
 		Buffer.SetCurrentPos(pCurrent->m_nDataOffset);
-		
 
+		// "end-of-file" chunk? (empty)
+		if (pCurrent->m_Type == XPKCHUNK_END)
+		{
+			return;
+		}
 		
-		// offset to start of next chunk..?
-		size_t nNextChunkOffset = pCurrent->m_nDataOffset + nChunkCompSize;
+		// TODO:
+		// .. process chunk
+		
+		// offset to start of next chunk:
+		// start of data in current + size of data in current
+		size_t nNextChunkOffset = pCurrent->m_nDataOffset + pCurrent->m_ChunkLength;
 		Buffer.SetCurrentPos(nNextChunkOffset);
 		
 		pCurrent->m_pNext = new XpkChunk(pCurrent);
@@ -268,6 +278,9 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 		// no read, just skip it??
         if(!hookread(xbuf, XIO_READ, NULL, exthlen))
 			goto Abort; -> exception
+			
+		// later it is read anyway, why not just directly when detected?
+			
 		*/
 		
 		// increment by length-field size anyway..
@@ -312,13 +325,11 @@ void XpkTags::ParseToNodeList(CReadBuffer &Buffer)
 	m_nTotalSize = Buffer.GetCurrentPos();
 	Buffer.SetCurrentPos(0); // start at beginning..
 
-	// debugging of file format..
+	// read&parse file header as "streamheader"
 	ReadFileInfo(Buffer);
-	
-	ReadChunks(Buffer);
-	
-	//ParseTags(Buffer);
 
+	// read chunks from file
+	ReadChunks(Buffer);
 
 	// set original position
 	Buffer.SetCurrentPos(m_nTotalSize);

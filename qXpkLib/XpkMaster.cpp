@@ -1,3 +1,16 @@
+///////////////////////////////////
+//
+// Actual decoder handling:
+// can load additional decoders as necessary,
+// see xpkLibraryBase
+//
+// CXpkMaster : main decrunch handler
+// CXpkLibrarian : sub-library loader&handler
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
+
 #include "XpkMaster.h"
 
 #include <exception>
@@ -256,6 +269,7 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	// throws exception on failure
 	PrepareUnpacker(getCruncherType(&m_InputBuffer));
 
+	// TODO: if XFD-cruncher is needed, switch handling to suitable class..
 	
 	// setup info for decrunch
 	pProgress->pInputBuffer = &m_InputBuffer;
