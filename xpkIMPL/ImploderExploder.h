@@ -11,6 +11,8 @@
 #ifndef IMPLODEREXPLODER_H
 #define IMPLODEREXPLODER_H
 
+#include <stdint.h>
+
 #include <string>
 #include <exception>
 
@@ -112,7 +114,7 @@ protected:
 	// actual decompressing
 	void DeplodeImploder();
 	
-	void LoadBuffer(const uchar *pData, const ulong nSize);
+	void LoadBuffer(const uint8_t *pData, const uint32_t nSize);
 
 	void Clean()
 	{
@@ -140,7 +142,7 @@ public:
 	}
 	
 	// allow unpacking already read file from a buffer
-	bool UnpackBuffer(const uchar *pData, const ulong nSize)
+	bool UnpackBuffer(const uint8_t *pData, const uint32_t nSize)
 	{
 		LoadBuffer(pData, nSize);
 		DeplodeImploder();

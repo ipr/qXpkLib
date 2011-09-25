@@ -26,23 +26,27 @@ private:
 	// can remain null if not used by inherited
 	// (if XPK type file-format).
 	//
-	XpkTags *m_pTagList;
+	//XpkTags *m_pTagList;
 	
 protected:
 	// only inherited can be made instance of
 	xpkLibraryBase(void) 
-	    : m_pTagList(nullptr)
+	    //: m_pTagList(nullptr)
 	{}
 	virtual ~xpkLibraryBase(void)
 	{
+		/*
 		if (m_pTagList != nullptr)
 		{
 			delete m_pTagList;
 		}
+		*/
 	}
 	
+	// done in XpkTags in master, decide what to do..
 	void ParseToNodeList(CReadBuffer &Buffer)
 	{
+		/*
 		if (m_pTagList != nullptr)
 		{
 			if (m_pTagList->IsXpkFile(Buffer) == false)
@@ -51,6 +55,7 @@ protected:
 			}
 			m_pTagList->ParseToNodeList(Buffer);
 		}
+		*/
 	}
 	
 	

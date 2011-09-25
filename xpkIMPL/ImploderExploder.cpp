@@ -10,6 +10,8 @@
 
 #include "ImploderExploder.h"
 
+#include <stdint.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -389,9 +391,9 @@ void CImploderExploder::DeplodeImploder()
 	}
 }
  
-void CImploderExploder::LoadBuffer(const uchar *pData, const ulong nSize)
+void CImploderExploder::LoadBuffer(const uint8_t *pData, const uint32_t nSize)
 {
-	m_in_list.size = InputFile.GetSize();
+	m_in_list.size = nSize;
 	if (m_in_list.size < 0x30) 
 	{
 		throw ImplException("too short to be a FImp file");

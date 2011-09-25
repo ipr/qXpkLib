@@ -7,7 +7,7 @@
 #include "XpkProgress.h"
 
 // use helper for actual decrunching
-#include "PowerPacker.h"
+#include "ImploderExploder.h"
 
 //TODO: when ready, we can add tracking of created instances
 // (when library needs members per-user..)
@@ -46,8 +46,8 @@ bool xpkIMPL::Decrunch(XpkProgress *pProgress)
 	if (pProgress->IsXpkFile() == true)
 	{
 		// use chunk-nodes (code from master-library actually..)
-		m_pTagList = new XpkTags();
-		m_pTagList->ParseToNodeList(*pProgress->pInputBuffer);
+		//m_pTagList = new XpkTags();
+		//m_pTagList->ParseToNodeList(*pProgress->pInputBuffer);
 		
 		// TODO: process by chunks (without the chunk-info..)
 	}
