@@ -27,6 +27,10 @@ HEADERS += qxpklib.h\
     XpkProgress.h \
     XpkTags.h \
     IoContext.h \
-    FileType.h
+    FileType.h \
+    xpkmaster_checksum.h
+
+
+
 
 

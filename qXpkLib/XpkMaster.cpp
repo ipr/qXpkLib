@@ -138,18 +138,18 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 
 void CXpkMaster::PrepareUnpacker(std::string &subType)
 {
-	if (subType.length < 4)
+	if (subType.length() < 4)
 	{
 		// should throw exception, for testing just skip
 		return;
 	}
 	
 	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(szSubType, m_SubLib);
+	m_pSubLibrary = CXpkLibrarian::getDecruncher(subType, m_SubLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it
-		throw ArcException("Unsupported cruncher type", szSubType);
+		throw ArcException("Unsupported cruncher type", subType);
 	}
 }
 
@@ -258,12 +258,13 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 
 	// fuck it.. read it all at once to stop headaches..
 	// other problems to solve anyway
-	m_InputBuffer.PrepareBuffer(m_nInputFileSize, false);
-	if (InFile.Read(m_InputBuffer.GetBegin(), m_nInputFileSize) == false)
+	m_nInputFileSize = InFile.GetSize();
+	m_InputBuffer.PrepareBuffer(InFile.GetSize(), false);
+	if (InFile.Read(m_InputBuffer.GetBegin(), InFile.GetSize()) == false)
 	{
 		throw IOException("Failed reading file data");
 	}
-	m_InputBuffer.SetCurrentPos(m_nInputFileSize); // info to decruncher
+	m_InputBuffer.SetCurrentPos(InFile.GetSize()); // info to decruncher
 	InFile.Close(); // not needed any more
 	
 	// determine file type from header, try to load decruncher for it:

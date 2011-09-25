@@ -11,21 +11,9 @@
 // get rid of them entirely instead of hacking something together
 // and replace with something more easily portable.
 //
+/*
 XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
 {
-	// first tag
-	/*
-	if (pCurrent == nullptr)
-	{
-		pCurrent = new TagItem();
-	}
-	else if (pCurrent != nullptr)
-	{
-		pCurrent->next = new TagItem();
-		pCurrent = pCurrent->next;
-	}
-	*/
-	
 	if (pPrevious != nullptr)
 	{
 		// amount to change offset:
@@ -74,7 +62,9 @@ XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
 	
 	return pCurrent;
 }
+*/
 
+/*
 bool XpkTags::ReadTagData(CReadBuffer &Buffer, XpkTag *pTag)
 {
 	// temp!
@@ -82,7 +72,9 @@ bool XpkTags::ReadTagData(CReadBuffer &Buffer, XpkTag *pTag)
 	
 	return false;
 }
+*/
 
+/*
 void XpkTags::ParseTags(CReadBuffer &Buffer)
 {
 	XpkTag *pCurrent = nullptr;
@@ -101,10 +93,28 @@ void XpkTags::ParseTags(CReadBuffer &Buffer)
 		}
 		pCurrent = pNext;
 	}
-	
 }
+*/
 
-
+//////////////////
+//
+// XPK fileformat:
+// chunk-based, crunched data in chunks
+//
+// Chunk format:
+// * chunk header
+// - 1 byte for chunk type
+// - 1 byte for chunk header checksum ?
+// - 2 bytes for chunk checksum
+// - 2/4 bytes for chunk (compressed) length
+// - 2/4 bytes for uncompressed length?
+// * chunk data
+// - amount of packed data given in chunk header..
+//
+// Note: chunk header may have different size in different file
+// according to flags (if "long" sizes are used for chunks).
+//
+//
 void XpkTags::ReadChunks(CReadBuffer &Buffer)
 {
 	m_pFirst = new XpkChunk();
@@ -120,33 +130,33 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 		{
 			XpkChunkHdrLong *pHdr = (XpkChunkHdrLong*)Buffer.GetAtCurrent();
 			
-			pCurrent->m_chunkHeader.m_Type = pHdr->xchl_Type;
-			pCurrent->m_chunkHeader.m_HChk = pHdr->xchl_HChk;
-			pCurrent->m_chunkHeader.m_CChk = GetUWord(&(pHdr->xchl_CChk));
-			pCurrent->m_chunkHeader.m_CLen = GetULong(&(pHdr->xchl_CLen));
-			pCurrent->m_chunkHeader.m_ULen = GetULong(&(pHdr->xchl_ULen));
+			pCurrent->m_Type = pHdr->xchl_Type;
+			pCurrent->m_HChecksum = pHdr->xchl_HChk;
+			pCurrent->m_ChunkChecksum = Swap2(pHdr->xchl_CChk);
+			pCurrent->m_ChunkLength = Swap4(pHdr->xchl_CLen);
+			pCurrent->m_ULen = Swap4(pHdr->xchl_ULen);
 			
 			nChunkHdrSize = sizeof(XpkChunkHdrLong);
-			nChunkCompSize = pHdr->xchl_CLen;
+			nChunkCompSize = pCurrent->m_ChunkLength;
 		}
 		else
 		{
 			XpkChunkHdrWord *pHdr = (XpkChunkHdrWord*)Buffer.GetAtCurrent();
 			
-			pCurrent->m_chunkHeader.m_Type = pHdr->xchw_Type;
-			pCurrent->m_chunkHeader.m_HChk = pHdr->xchw_HChk;
-			pCurrent->m_chunkHeader.m_CChk = GetUWord(&(pHdr->xchw_CChk));
-			pCurrent->m_chunkHeader.m_CLen = GetUWord(&(pHdr->xchw_CLen));
-			pCurrent->m_chunkHeader.m_ULen = GetUWord(&(pHdr->xchw_ULen));
+			pCurrent->m_Type = pHdr->xchw_Type;
+			pCurrent->m_HChecksum = pHdr->xchw_HChk;
+			pCurrent->m_ChunkChecksum = Swap2(pHdr->xchw_CChk);
+			pCurrent->m_ChunkLength = Swap2(pHdr->xchw_CLen);
+			pCurrent->m_ULen = Swap2(pHdr->xchw_ULen);
 
 			nChunkHdrSize = sizeof(XpkChunkHdrWord);
-			nChunkCompSize = pHdr->xchw_CLen;
+			nChunkCompSize = pCurrent->m_ChunkLength;
 		}
 		
 		// .. process chunk
 
 		pCurrent->m_nDataOffset += nChunkHdrSize;
-		Buffer.SetCurrentPos(nNextChunkOffset);
+		Buffer.SetCurrentPos(pCurrent->m_nDataOffset);
 		
 
 		
@@ -165,30 +175,28 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 //
 // XPK fileformat:
 // chunk-based, crunched data in chunks
-// (more details??)
 // 
 // File header:
 // starts as common IFF-style header:
 // - 4-byte ID, 'XPKF'
 // - 4-byte int for filesize minus header (8)
 // - 4-byte sub-type (cruncher-ID) e.g. 'SQSH'
-// - 4-byte int for chunk-size (actually: unpacked length?)
-// - first 16-bytes of original file?
-// -> not exactly this but close.. 
+// - 4-byte int for total uncompressed length ?
+// - first 16-bytes of original file
+// - 1 byte for flags
+// - 1 byte for header checksum ?
+// - 1 byte for minor version of cruncher/library ?
+// - 1 byte for major version of cruncher/library ?
 //
-// First chunk:
-// - 
-// (TODO)
-//
-
 void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 {
 	Buffer.SetCurrentPos(0);
 	
 	// "XPKF"
 	m_streamHeader.xsh_Pack = GetULong(Buffer.GetNext(4));
-	// compressed length?
+	// file length without IFF header (type+length = 8) ?
 	m_streamHeader.xsh_CLen = GetULong(Buffer.GetNext(4));
+	
 	// packer type, e.g. "SQSH", "NUKE", "RLEN"..
 	m_streamHeader.xsh_Type = GetULong(Buffer.GetNext(4));
 	// uncompressed length?
@@ -200,13 +208,18 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	// flags
 	m_streamHeader.xsh_Flags = Buffer.GetNextByte();
 	
-	// ..no idea..
+	// ..no idea.. header checksum?
 	m_streamHeader.xsh_HChk = Buffer.GetNextByte();
 	
 	// minor&major version of XPK master/cruncher?
 	m_streamHeader.xsh_SubVrs = Buffer.GetNextByte();
 	m_streamHeader.xsh_MasVrs = Buffer.GetNextByte();
 	
+	// TODO: remove later, debug-test..
+	if (Buffer.GetCurrentPos() != sizeof(XpkStreamHeader))
+	{
+		throw IOException("Read size does not match stream-header size");
+	}
 }
 
 //////////// public methods

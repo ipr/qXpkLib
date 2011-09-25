@@ -116,6 +116,17 @@ public:
 #define XPKSTREAMF_PASSWORD     0x02	/* This file encoded		*/
 #define XPKSTREAMF_EXTHEADER    0x04	/* Extended globhdr		*/
 
+/* chunk-header type values */
+enum XpkChunkHeaderType
+{
+	XPKCHUNK_RAW	= 0x00,	// raw copy of source 
+	XPKCHUNK_PACKED	= 0x01, // packed data 
+	XPKCHUNK_END	= 0x0F // empty end Chunk 
+};
+//#define XPKCHUNK_RAW		0x00 /* raw copy of source */
+//#define XPKCHUNK_PACKED		0x01 /* packed data */
+//#define XPKCHUNK_END		0x0F /* empty end Chunk */
+
 #pragma pack(push, 1)
 
 /* These structures define the file format for compressed streams */
@@ -139,7 +150,7 @@ struct XpkStreamHeader
 struct XpkChunkHdrWord 
 {
   uint8_t  xchw_Type;
-  uint8_t  xchw_HChk;
+  uint8_t  xchw_HChk; // header checksum?
   uint16_t xchw_CChk; // chunk checksum (16-bit CRC?)
   uint16_t xchw_CLen; // chunk length
   uint16_t xchw_ULen; // uncompressed length of chunk?
@@ -148,42 +159,13 @@ struct XpkChunkHdrWord
 struct XpkChunkHdrLong 
 {
   uint8_t  xchl_Type;
-  uint8_t  xchl_HChk;
+  uint8_t  xchl_HChk; // header checksum?
   uint16_t xchl_CChk; // chunk checksum (16-bit CRC?)
   uint32_t xchl_CLen; // chunk length
   uint32_t xchl_ULen; // uncompressed length of chunk?
 };
 
-// hopefully we don't need this..
-typedef union 
-{
-  struct XpkChunkHdrLong xch_Long;
-  struct XpkChunkHdrWord xch_Word;
-} XpkChunkHeaderU;
-
-
 #pragma pack(pop)
-
-// process in this type,
-// doesn't align with that in file
-// but simpler in memory..
-struct XpkChunkHeader 
-{
-  size_t m_Type;
-  size_t m_HChk;
-  size_t m_CChk; // chunk checksum (16-bit CRC?)
-  size_t m_CLen; // chunk length
-  size_t m_ULen; // uncompressed length of chunk?
-  
-  XpkChunkHeader()
-  {
-	m_Type = 0;
-	m_HChk = 0;
-	m_CChk = 0;
-	m_CLen = 0;
-	m_ULen = 0;
-  }
-};
 
 
 
@@ -215,29 +197,33 @@ class XpkChunk
 {
 public:
 	XpkChunk(XpkChunk *pPrev = nullptr)
-	    : m_ChunkID(0)
-	    , m_ChunkLen(0)
-	    , m_pTag(nullptr)
-	    , m_chunkHeader()
-	    , m_pNext(nullptr)
+	    : m_nDataOffset(0)
 	    , m_pPrevious(pPrev)
-	    , m_nDataOffset(0)
+	    , m_pNext(nullptr)
+	    , m_Type(0)
+	    , m_HChecksum(0)
+	    , m_ChunkChecksum(0)
+	    , m_ChunkLength(0)
+	    , m_ULen(0)
 	{}
 	~XpkChunk()
 	{}
 	
-	uint32_t m_ChunkID; // IFF-style chunk-ID tag
-	uint32_t m_ChunkLen; // chunk length 
-	
-	XpkTag *m_pTag;
-	
-	// temp, debug
-	XpkChunkHeader m_chunkHeader;
-	
-	XpkChunk *m_pNext;
-	XpkChunk *m_pPrevious;
-	
 	size_t m_nDataOffset; // offset to data (after chunk header)
+	XpkChunk *m_pPrevious; // preceding chunk
+	XpkChunk *m_pNext; // next chunk
+	
+	//uint32_t m_ChunkID; // IFF-style chunk-ID tag
+	//uint32_t m_ChunkLen; // chunk length 
+	//XpkTag *m_pTag;
+
+	// chunk header fields
+	size_t m_Type; // see XpkChunkHeaderType
+	size_t m_HChecksum; // header checksum?
+	size_t m_ChunkChecksum; // chunk checksum (16-bit CRC?)
+	size_t m_ChunkLength; // chunk length
+	size_t m_ULen; // uncompressed length of chunk?
+	
 };
 
 
@@ -275,6 +261,10 @@ protected:
 		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
 
+	uint16_t Swap2(const uint16_t val) const
+    {
+        return (((val >> 8)) | (val << 8));
+    }
 	uint32_t Swap4(const uint32_t val) const
 	{
 		return (
@@ -284,6 +274,7 @@ protected:
 	}
 	
 	/* Get ID number from string */
+	/*
 	static char xpkupper(char c)
 	{
 	  if(c>='a' && c<='z')
@@ -291,7 +282,9 @@ protected:
 	
 	  return c;
 	}
-	
+	*/
+
+	/*	
 	unsigned int idfromname(char *name)
 	{
 	  unsigned int i, j=0;
@@ -303,12 +296,13 @@ protected:
 	
 	  return Swap4(j);
 	}
+	*/
 	
 
 	
 	XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
-	bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
-	void ParseTags(CReadBuffer &Buffer);
+	//bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
+	//void ParseTags(CReadBuffer &Buffer);
 
 	void ReadChunks(CReadBuffer &Buffer);
 
