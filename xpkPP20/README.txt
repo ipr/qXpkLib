@@ -20,3 +20,7 @@ but that isn't yet supported in this.. (Need sample to check.)
 
 Uses code from my previous conversion, see: https://github.com/ipr/PowerPacker-decrunch
 
+Currently library gives access to one global instance of decruncher, which creates
+helper-object on-stack: no need to synchronize/reset members in library
+but it also expects whole file to be decrunched in one call.
+

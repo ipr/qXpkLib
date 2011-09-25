@@ -25,10 +25,18 @@ public:
 
 };
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // need this for caller to locate instance dynamically,
 // library needs to have one global instance of the cruncher (has no members anyway..)
 //
 XPKGZIPSHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // XPKGZIP_H

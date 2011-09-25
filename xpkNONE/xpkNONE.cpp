@@ -23,6 +23,11 @@ xpkNONE::~xpkNONE()
 {
 }
 
+bool xpkNONE::Crunch(XpkProgress *pProgress)
+{
+	return false;
+}
+
 // this is dummy: output is same as input
 bool xpkNONE::Decrunch(XpkProgress *pProgress)
 {

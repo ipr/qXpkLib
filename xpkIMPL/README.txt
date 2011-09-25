@@ -18,3 +18,7 @@ but should be possible anyway..
 Note that there are multiple variations of the format with different identifiers in file,
 caller should detect those and load this library: supported variations detected in library also.
 
+Currently library gives access to one global instance of decruncher, which creates
+helper-object on-stack: no need to synchronize/reset members in library
+but it also expects whole file to be decrunched in one call.
+

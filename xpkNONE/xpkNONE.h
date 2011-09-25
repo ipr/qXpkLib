@@ -14,33 +14,23 @@ class XPKNONESHARED_EXPORT xpkNONE : public xpkLibraryBase
 public:
 	xpkNONE();
 	virtual ~xpkNONE();
-	
-	// temp
-	/*
-	typedef struct XpkMode
-	{} XpkMode;
-	virtual XpkMode *GetModes()
-	{
-		return XpkMode;
-	}
-	
-	typedef struct XpkInfo
-	{} XpkInfo;
-	virtual XpkInfo *GetInfo()
-	{
-		return XpkInfo;
-	}
-	*/
-	
-	//virtual QString GetPackerName()=0;
-	//virtual QString GetPackerLongName()=0;
 
+	virtual bool Crunch(XpkProgress *pProgress);
 	virtual bool Decrunch(XpkProgress *pProgress);
 };
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 // need this for caller to locate instance dynamically,
 // library needs to have one global instance of the cruncher (has no members anyway..)
 //
 XPKNONESHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // XPKNONE_H
