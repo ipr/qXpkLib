@@ -115,6 +115,16 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 		// but can use same unpacking..
 		szSubType = "IMPL";
 	}
+	else if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
+	{
+		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
+		//
+		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
+	}
+	else if (type.m_enFileType == HEADERTYPE_XFD_GENERIC)
+	{
+		// XFD-packed
+	}
 	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH
 			 || type.m_enFileType == HEADERTYPE_XPK_NUKE
 			 || type.m_enFileType == HEADERTYPE_XPK_RLEN)
@@ -152,13 +162,6 @@ void CXpkMaster::PrepareUnpacker(std::string &subType)
 		throw ArcException("Unsupported cruncher type", subType);
 	}
 }
-
-/*
-void CXpkMaster::PreparePacker()
-{
-	// user-given packer-type needed?
-}
-*/
 
 bool CXpkMaster::ForeignDecrunch(XpkProgress *pProgress)
 {
@@ -229,24 +232,6 @@ bool CXpkMaster::xpkInfo(QXpkLib::CXpkFileInfo &info)
 
 	return false;
 }
-
-/*
-bool CXpkMaster::xpkPack(XpkProgress *pProgress)
-{
-	PreparePacker();
-	  
-	CAnsiFile InFile;
-	if (InFile.Open(m_InputName.toStdString()) == false)
-	{
-		throw ArcException("Failed to open", m_InputName.toStdString());
-	}
-	m_nInputFileSize = InFile.GetSize();
-	
-	//m_pSubLibrary->crunch(m_InputBuffer.GetBegin());
-	
-	return false;
-}
- */
 
 bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 {

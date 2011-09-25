@@ -74,7 +74,6 @@ private:
 protected:
 	std::string getCruncherType(CReadBuffer *pInputBuffer) const;
 	void PrepareUnpacker(std::string &subType);
-	//void PreparePacker();
 
 	bool ForeignDecrunch(XpkProgress *pProgress);
 	bool OwnDecrunch(XpkProgress *pProgress);
@@ -85,7 +84,6 @@ public:
 	
 	bool xpkInfo(QXpkLib::CXpkFileInfo &info);
 	
-	//bool xpkPack(XpkProgress *pProgress);
 	bool xpkUnpack(XpkProgress *pProgress);
 
 	// get unpacked result to user-buffer as-is
@@ -104,14 +102,12 @@ public slots:
 	void setOutputFile(QString &szFile) 
 	{
 		m_Output.setName(szFile);
-		//m_OutputName = szFile;
 	}
 	
 signals:
 	// errors with exceptions, other with messages
 	void message(QString);
 	void warning(QString);
-	//void error(QString);
 	
 };
 
