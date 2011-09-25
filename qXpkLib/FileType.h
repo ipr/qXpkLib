@@ -42,6 +42,7 @@ typedef enum tHeaderType
 	HEADERTYPE_XPK_SQSH, // XPK SQSH
 	HEADERTYPE_XPK_NUKE, // XPK NUKE
 	HEADERTYPE_XPK_RLEN, // XPK RLEN
+	HEADERTYPE_XFD_GENERIC, // XFD, multi-algorithm (SQSH etc.), Amiga
 	HEADERTYPE_GZIP, // GNU-zip packer (gz)
 	HEADERTYPE_BZIP2, // BZIP2 packer (bz2)
 	HEADERTYPE_Z, // Un*X compress (Z)

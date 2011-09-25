@@ -1,5 +1,7 @@
 #include "XpkTags.h"
 
+// checksum functions
+#include "xpkmaster_checksum.h"
 
 
 
@@ -186,14 +188,20 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 // - 1 byte for flags
 // - 1 byte for header checksum ?
 // - 1 byte for minor version of cruncher/library ?
+//  - actually version required of sub-library..
 // - 1 byte for major version of cruncher/library ?
 //
 void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 {
 	Buffer.SetCurrentPos(0);
 	
-	// "XPKF"
+	// default
+	m_formatType = XPKMODE_UPSTD;
+	
+	// "XPKF", 0x58504b46 (XPK_COOKIE, magic number)
+	// note: support also XFD-packed files? ("XFDD")
 	m_streamHeader.xsh_Pack = GetULong(Buffer.GetNext(4));
+	
 	// file length without IFF header (type+length = 8) ?
 	m_streamHeader.xsh_CLen = GetULong(Buffer.GetNext(4));
 	
@@ -208,11 +216,30 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	// flags
 	m_streamHeader.xsh_Flags = Buffer.GetNextByte();
 	
+	/*
+	// also check "XFDD", 0x58464444 in file ID?
+	if (m_streamHeader.xsh_Flags & XMF_XFD && m_streamHeader.xsh_Pack == "XFDD")
+	{
+		m_formatType = XPKMODE_UPXFD;
+	}
+	
+	if (m_streamHeader.xsh_Flags & XMF_PASSTHRU)
+	{
+		// unpacked?
+		m_formatType = XPKMODE_UPUP;
+	}
+	
+	if (m_streamHeader.xsh_Flags & XPKSTREAMF_PASSWORD)
+	{
+		// password-protected file?
+	}
+	*/
+	
 	// ..no idea.. header checksum?
 	m_streamHeader.xsh_HChk = Buffer.GetNextByte();
 	
 	// minor&major version of XPK master/cruncher?
-	m_streamHeader.xsh_SubVrs = Buffer.GetNextByte();
+	m_streamHeader.xsh_SubVrs = Buffer.GetNextByte(); // sub-library version required?
 	m_streamHeader.xsh_MasVrs = Buffer.GetNextByte();
 	
 	// TODO: remove later, debug-test..
@@ -220,6 +247,36 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	{
 		throw IOException("Read size does not match stream-header size");
 	}
+	
+	// non-zero header checksum? (note where doing checksumming..)
+    if (hchecksum(Buffer.GetBegin(), sizeof(XpkStreamHeader)) != 0)
+    {
+		throw ArcException("Header checksum error", m_streamHeader.xsh_HChk);
+    }
+    
+    // has extended header?
+    if (m_streamHeader.xsh_Flags & XPKSTREAMF_EXTHEADER)
+    {
+		// size of extended header if present?
+		uint16_t extheaderLen = GetUWord(Buffer.GetNext(2));
+		
+		/*
+		// this done above..		
+	    if(!hookread(xbuf, XIO_READ, &exthlen, sizeof(UWORD)))
+			goto Abort; -> exception
+			
+		// no read, just skip it??
+        if(!hookread(xbuf, XIO_READ, NULL, exthlen))
+			goto Abort; -> exception
+		*/
+		
+		// increment by length-field size anyway..
+        extheaderLen += sizeof(uint16_t);	/* for unwinding while XpkExamine */
+        
+        // note: increase buffer position by size of extended header?
+	}
+	
+	// -> continue with chunks..
 }
 
 //////////// public methods

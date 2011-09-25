@@ -245,6 +245,12 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		}
 		return enFileType;
 	}
+	else if (::memcmp(pBuffer, "XFDD", 4) == 0)
+	{
+		// XFD-library packed,
+		// also multi-algorithm packing..
+		return HEADERTYPE_XFD_GENERIC;
+	}
 	else if (::memcmp(pBuffer, "PP20", 4) == 0)
 	{
 		// powerpacker
@@ -508,6 +514,7 @@ tHeaderCategory CFileType::FileCategoryByType(const tHeaderType enType) const
 	case HEADERTYPE_XPK_SQSH:
 	case HEADERTYPE_XPK_NUKE:
 	case HEADERTYPE_XPK_RLEN:
+	//case HEADERTYPE_XFD_GENERIC:
 	case HEADERTYPE_GZIP:
 	case HEADERTYPE_BZIP2:
 	case HEADERTYPE_Z:

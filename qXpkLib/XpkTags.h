@@ -132,18 +132,24 @@ enum XpkChunkHeaderType
 /* These structures define the file format for compressed streams */
 struct XpkStreamHeader 
 {
-  uint32_t xsh_Pack;
-  uint32_t xsh_CLen;
-  uint32_t xsh_Type;
-  uint32_t xsh_ULen;
+  uint32_t xsh_Pack; // common 4-byte IFF-style ID (magic number)
+  uint32_t xsh_CLen; // size of file minus two first fields
+  uint32_t xsh_Type; // type of sub-library (4-byte IFF-style ID)
+  uint32_t xsh_ULen; // uncompressed length of all data in file?
   
   // initial 16-bytes of original file?
   uint8_t xsh_Initial[16];
   
   // if flags & XPKSTREAMF_LONGHEADERS -> use "long" chunk header, otherwise use "word" length header
   uint8_t xsh_Flags; 
+  
+  // this header checksum?
   uint8_t xsh_HChk;
+  
+  // required version of sub-library?
   uint8_t xsh_SubVrs;
+
+  // master-library version?  
   uint8_t xsh_MasVrs;
 };
 
@@ -226,6 +232,16 @@ public:
 	
 };
 
+// fileformat types
+enum XpkFormat
+{
+	XPKMODE_UPUP = 1,
+	XPKMODE_UPSTD = 2,
+	XPKMODE_UPPP = 3,
+	XPKMODE_UPXFD = 4,
+	XPKMODE_PKSTD = 20
+};
+
 
 class XpkTags
 {
@@ -234,6 +250,7 @@ private:
 	
 	XpkStreamHeader m_streamHeader;
 	//XpkFileInfo m_FileHeader;
+	XpkFormat m_formatType;
 	
 	XpkChunk *m_pFirst;
 
@@ -273,32 +290,6 @@ protected:
 				);
 	}
 	
-	/* Get ID number from string */
-	/*
-	static char xpkupper(char c)
-	{
-	  if(c>='a' && c<='z')
-	    c-='a'-'A';
-	
-	  return c;
-	}
-	*/
-
-	/*	
-	unsigned int idfromname(char *name)
-	{
-	  unsigned int i, j=0;
-	
-	  for(i=4; i; i--) {
-	    j<<=8;
-	    j+=xpkupper(*(name++));
-	  }
-	
-	  return Swap4(j);
-	}
-	*/
-	
-
 	
 	XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
 	//bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
