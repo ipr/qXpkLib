@@ -132,6 +132,13 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
         // Amiga Oktalyzer tracker module
         return HEADERTYPE_OKTALYZER;
     }
+    /*
+    else if (::memcmp(pBuffer, "ziRCONia", 8) == 0)
+    {
+		// MMCMP format packed file?
+		// (compressed audio-module apparently..)
+    }
+    */
 	else if (::memcmp(pBuffer, "MAESTRO", 7) == 0)
 	{
 		// Maestro (Samplitude?) sampleformat
@@ -309,6 +316,16 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		return HEADERTYPE_IT;
 	}
     */
+	else if (::memcmp(pBuffer, "LPAK", 4) == 0)
+	{
+		// stand-alone compression format
+		return HEADERTYPE_LPAK;
+	}
+	else if (::memcmp(pBuffer, "SZDD", 4) == 0)
+	{
+		// stand-alone compression format (Microsoft compress)
+		return HEADERTYPE_SZDD;
+	}
 	else if (::memcmp(pBuffer, "LZX", 3) == 0)
 	{
 		// LZX archive
@@ -382,6 +399,16 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		&& pBuffer[1] == 0x9D)
 	{
 		// Unix-compress (really old..)
+		/*
+		if (pBuffer[2] & 0x60)
+		{
+			// unknown format (unsupported variation?)
+		}
+		else if ((pBuffer[2] & 0x1f) > 16)
+		{
+			// too many bits -> unsupported
+		}
+		*/
 		return HEADERTYPE_Z;
 	}
 	/*

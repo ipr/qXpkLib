@@ -48,6 +48,8 @@ typedef enum tHeaderType
 	HEADERTYPE_Z, // Un*X compress (Z)
 	HEADERTYPE_7Z, // 7Z packer (7zip)
 	HEADERTYPE_XZ, // XZ Utils packer (xz)
+	HEADERTYPE_LPAK, // 'LPAK' (similar to 'SZDD')
+	HEADERTYPE_SZDD, // 'SZDD' (Microsoft compress)
 
 	// audio types, modules ("trackers")
     //HEADERTYPE_MOD_SOUNDTRACKER, // original SoundTracker format?

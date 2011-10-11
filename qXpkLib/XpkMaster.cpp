@@ -136,7 +136,7 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 	}
 	else if (type.m_enFileType == HEADERTYPE_XFD_GENERIC)
 	{
-		// XFD-packed
+		// XFD-packed file ("XFDD" or "XFDF")
 	}
 	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH
 			 || type.m_enFileType == HEADERTYPE_XPK_NUKE
@@ -151,11 +151,38 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 		// load sub-library for handling GZIP
 		szSubType = "GZIP";
 	}
+	else if (type.m_enFileType == HEADERTYPE_AMIGAOS)
+	{
+		// AmigaOS executable (M68k),
+		// may be self-extracting application..
+		// -> needs more extensive checking
+		// if there is "decrunchable" data after loader
+		// or if it needs to be run in emulator or natively..
+	}
+	else if (type.m_enFileType == HEADERTYPE_UNIXELF)
+	{
+		// Unix-style ELF-binary,
+		// PPC Amiga or any Unix-variant or Linux?
+		// may be self-extracting application
+		// -> needs more extensive checking
+		// if there is "decrunchable" data after loader
+		// or if it needs to be run in emulator or natively..
+	}
 	else
 	{
 		// others?
 		// -> should be as sub-libraries..
+		
+		// detect some more types: files which XFD supports
+		// but have "alien" fileformat..
+		if (m_pXfdMaster->isXfdSupported(pInputBuffer) == true)
+		{
+			// handle as "XFD-GENERIC" type..
+		}
+		
 	}
+	
+	
 	return szSubType;
 }
 
@@ -224,16 +251,24 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 CXpkMaster::CXpkMaster(QObject *parent)
 	: QObject(parent)
     , m_SubLib(parent)
+    , m_pXfdMaster(nullptr)
     , m_InputName()
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
     , m_Output()
     , m_pSubLibrary(nullptr)
 {
+	// temp, check handling later..
+	m_pXfdMaster = new CXfdMaster();
 }
 
 CXpkMaster::~CXpkMaster(void)
 {
+	if (m_pXfdMaster != nullptr)
+	{
+		delete m_pXfdMaster;
+		m_pXfdMaster = nullptr;
+	}
 }
 
 bool CXpkMaster::xpkInfo(QXpkLib::CXpkFileInfo &info)

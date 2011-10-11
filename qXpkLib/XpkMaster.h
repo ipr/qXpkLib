@@ -26,6 +26,9 @@
 #include "AnsiFile.h"
 #include "IoContext.h"
 
+// XFD-support
+#include "XfdMaster.h"
+
 // pure virtual interface
 // for lower-level library (level 0)
 //
@@ -65,6 +68,9 @@ private:
 	
 	// wrapper for loading/unloading
 	QLibrary m_SubLib;
+
+	// temp, determine later if suitable way..
+	CXfdMaster *m_pXfdMaster;
 	
 	// base-pointer (virtual) 
 	// -> load proper by file/packer type
