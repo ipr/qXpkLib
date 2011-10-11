@@ -221,6 +221,19 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	
 	m_Tags.ParseToNodeList(m_InputBuffer);
 	
+	XpkChunk *pChunk = m_Tags.getFirst();
+	while (pChunk != nullptr)
+	{
+		// locate data of chunk
+		m_InputBuffer.SetCurrentPos(pChunk->m_nDataOffset);
+		
+		// decrunch chunk into output buffer
+		//m_pSubLibrary->Decrunch();
+
+		// next chunk to process..	
+		pChunk = pChunk->m_pNext;
+	}
+	
 	/* not this far yet..
 	bool bRet = true;
 	while (pProgress->xp_PackedProcessed < m_nInputFileSize

@@ -17,25 +17,14 @@
 
 #include "AnsiFile.h"
 
-
-// pure virtual interface for slave-implementations
-class CXfdSlave
-{
-protected:
-	CReadBuffer *m_pIn;
-
-public:
-    CXfdSlave(CReadBuffer *pIn)
-		: m_pIn(pIn)
-    {}
-    
-    bool decrunch(CReadBuffer *pOut) = 0;
-};
+#include "XfdSlave.h"
 
 
 class CXfdMaster
 {
 protected:
+
+	// need better way of sharing code..
 	uint32_t MakeTag(const unsigned char *buf) const
     {
         uint32_t tmp = 0;
@@ -47,14 +36,13 @@ protected:
     }
 
     // TODO:
-    //CXfdSlave *getXfdSlave( /*type or buffer*/ ) const;
-    //CXfdSlave *m_pXfdSlave;
+    //XfdSlave *getXfdSlave( /*type or buffer*/ ) const;
+    //XfdSlave *m_pXfdSlave;
 
 public:
     CXfdMaster();
     
     bool isXfdSupported(CReadBuffer *pInputBuffer) const;
-    
     
 };
 

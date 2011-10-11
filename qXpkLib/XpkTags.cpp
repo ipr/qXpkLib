@@ -170,6 +170,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 		
 		// TODO:
 		// .. process chunk
+		// -> walkthrough in XPK-master now..
 		
 		// offset to start of next chunk:
 		// start of data in current + size of data in current

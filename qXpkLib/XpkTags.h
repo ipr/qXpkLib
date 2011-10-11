@@ -194,6 +194,21 @@ public:
 	
 	void ParseToNodeList(CReadBuffer &Buffer);
 	
+	XpkFormat getFormat()
+	{
+		return m_formatType;
+	}
+	
+	XpkStreamHeader *getHeader()
+	{
+		return &m_streamHeader;
+	}
+	
+	XpkChunk *getFirst()
+	{
+		return m_pFirst;
+	}
+	
 };
 
 #endif // XPKTAGS_H
