@@ -224,6 +224,11 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	XpkChunk *pChunk = m_Tags.getFirst();
 	while (pChunk != nullptr)
 	{
+		if (pChunk->m_Type == XPKCHUNK_END)
+		{
+			break;
+		}
+	
 		// locate data of chunk
 		m_InputBuffer.SetCurrentPos(pChunk->m_nDataOffset);
 		
@@ -255,7 +260,7 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	return bRet;
 	*/
 	
-	return false;
+	return true;
 }
 
 
