@@ -225,6 +225,20 @@ public:
 		m_nCurrentPos = nCurrentPos;
 	}
 	
+	// reserve additional space
+	bool Reserve(const size_t nSize)
+	{
+		if (nSize <= (m_nReadBufferSize - m_nCurrentPos))
+		{
+			// already enough unused space
+			return true;
+		}
+		
+		// allocate more, keep existing
+		GrowBuffer(m_nReadBufferSize + nSize, true);
+		return true;
+	}
+	
 	// copy given, start at current
 	bool Append(const unsigned char *pData, const size_t nSize)
 	{

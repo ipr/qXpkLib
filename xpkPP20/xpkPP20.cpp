@@ -54,6 +54,12 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 	}
 	*/
 	
+	// only whole file decompression for now..
+	if (pProgress->xp_chunkIn < pProgress->xp_WholePackedFileSize)
+	{
+		return false;
+	}
+	
 	// just use the stand-alone unpacker
 	// when not used as sub-type of XPK..
 	//
@@ -65,13 +71,18 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 		// (TODO: use directly input-buffer instead of copy..
 		// also give output for direct use..)
 		//
-		PP.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
+		PP.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->xp_WholePackedFileSize);
 		
 		// no exception -> keep unpacked data
 		//
-		// (TODO: get directly to output-buffer..)
+		// (TODO: decrunch directly to output-buffer..)
 		//
 		pProgress->pOutputBuffer->Append(PP.GetUnpackedData(), PP.GetUnpackedSize());
+		
+		pProgress->xp_UnpackedSize = PP.GetUnpackedSize(); // size of whole file as unpacked
+		pProgress->xp_chunkOut = PP.GetUnpackedSize(); // whole file as single chunk
+		pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
+		pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		
 		// no exception -> success
 		return true;

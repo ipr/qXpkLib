@@ -5,7 +5,6 @@
 // see xpkLibraryBase
 //
 // CXpkMaster : main decrunch handler
-// CXpkLibrarian : sub-library loader&handler
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
@@ -21,89 +20,7 @@
 //
 #include "FileType.h"
 
-
-//#include <QDir>
-
-// fix missing definition
-#ifdef UNICODE
-#ifndef _UNICODE
-#define _UNICODE
-#endif
-#endif
-
-#include <tchar.h>
-#include <Windows.h>
-
-
-QList<QString> CXpkLibrarian::availableLibraries()
-{
-	QList<QString> lstTypes;
-	
-	// enumerate existing decruncher-libraries on disk,
-	// add to list each supported file/algorithm type supported
-	
-	return lstTypes;
-}
-
-xpkLibraryBase *CXpkLibrarian::getDecruncher(std::string &szType, QLibrary &lib)
-{
-	// we want module-path (where loaded) and not working directory!
-	// is there any way to get it on different platforms
-	// or must we assume sub-libraries will be in some global path always??
-	
-	TCHAR szModulePath[_MAX_PATH + 1];
-	DWORD dwRes = ::GetModuleFileName(NULL, // TODO: get handle to this lib somewhere..
-	                    (LPTSTR)&szModulePath,
-	                    _MAX_PATH + 1);
-	szModulePath[dwRes] = 0x000; // 
-	
-	QString szFileName;
-#ifdef _UNICODE
-	szFileName = QString::fromWCharArray(szModulePath, dwRes);
-#else
-	szFileName = QString::fromLocal8Bit(szModulePath, dwRes);
-#endif
-
-	// NOT THIS: we want dll path not working path
-	//
-	// load library of given type
-	//QString szFileName = QDir::currentPath();
-	szFileName.replace('\\', "/"); // fix MSDOS pathnames if any
-	
-	int iIndex = szFileName.lastIndexOf('/');
-	szFileName = szFileName.left(iIndex); // remove module name
-	if (szFileName.at(szFileName.length() -1) != '/')
-	{
-		szFileName += "/";
-	}
-	
-	// TODO: use plugins-path?
-	
-	szFileName.append("xpk");
-	szFileName.append(QString::fromStdString(szType));
-	// temp, use dummy for testing
-	//szFileName.append("Dummy");
-	szFileName.append(".dll");
-
-	lib.setFileName(szFileName);
-	if (lib.load() == false)
-	{
-		throw ArcException("Failed locating library", szFileName.toStdString());
-	}
-	
-	GetXpkInstance *pGetInstance = (GetXpkInstance*)lib.resolve("GetXpkInstance");
-	if (pGetInstance == nullptr)
-	{
-		QString szError = lib.errorString();
-		throw ArcException("Failed locating symbol", szError.toStdString());
-	}
-	return (xpkLibraryBase*)(*pGetInstance)();
-
-	// temp: use dummy
-	//return new XpkDummy();
-	
-}
-
+#include "XpkLibrarian.h"
 
 
 ///////// protected methods
@@ -119,14 +36,14 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 	{
 		// Amiga PowerPacker:
 		// not XPK-file but we may have support for it..
-		szSubType = "PP20";
+		szSubType = "xpkPP20";
 	}
 	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
 	{
 		// Amiga Imploder:
 		// multiple identifiers (clones, variations)
 		// but can use same unpacking..
-		szSubType = "IMPL";
+		szSubType = "xpkIMPL";
 	}
 	else if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
 	{
@@ -138,8 +55,11 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 	{
 		// XFD-packed file ("XFDD" or "XFDF")
 	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH
-			 || type.m_enFileType == HEADERTYPE_XPK_NUKE
+	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
+	{
+		szSubType = "xpkSQSH";
+	}
+	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE
 			 || type.m_enFileType == HEADERTYPE_XPK_RLEN)
 	{
 		// already detected as XPK
@@ -149,7 +69,7 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 	else if (type.m_enFileType == HEADERTYPE_GZIP)
 	{
 		// load sub-library for handling GZIP
-		szSubType = "GZIP";
+		szSubType = "xpkGZIP";
 	}
 	else if (type.m_enFileType == HEADERTYPE_AMIGAOS)
 	{
@@ -168,6 +88,16 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 		// if there is "decrunchable" data after loader
 		// or if it needs to be run in emulator or natively..
 	}
+	else if (type.m_enFileType == HEADERTYPE_ZCOMPRESS)
+	{
+		// standalone sub-library available now..
+		szSubType = "xfdZCompress";
+	}
+	else if (type.m_enFileType == HEADERTYPE_SZDD)
+	{
+		// standalone sub-library available now..
+		szSubType = "xfdSZDD";
+	}
 	else
 	{
 		// others?
@@ -179,9 +109,7 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
 		{
 			// handle as "XFD-GENERIC" type..
 		}
-		
 	}
-	
 	
 	return szSubType;
 }
@@ -203,14 +131,6 @@ void CXpkMaster::PrepareUnpacker(std::string &subType)
 	}
 }
 
-bool CXpkMaster::ForeignDecrunch(XpkProgress *pProgress)
-{
-	// we depend entirely on sub-library to do decrunching
-	// -> pass entire file to sub-library
-	
-	return m_pSubLibrary->Decrunch(pProgress);
-}
-
 bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 {
 	// XPK-container format in file:
@@ -219,46 +139,51 @@ bool CXpkMaster::OwnDecrunch(XpkProgress *pProgress)
 	// -> not done yet..
 	// temp, testing
 	
-	m_Tags.ParseToNodeList(m_InputBuffer);
-	
 	XpkChunk *pChunk = m_Tags.getFirst();
 	while (pChunk != nullptr)
 	{
-		if (pChunk->m_Type == XPKCHUNK_END)
+		if (pChunk->m_Type == XPKCHUNK_END) // end of file
 		{
 			break;
 		}
-	
-		// locate data of chunk
-		m_InputBuffer.SetCurrentPos(pChunk->m_nDataOffset);
+		else if (pChunk->m_Type == XPKCHUNK_RAW) // unpacked raw data
+		{
+			// unpacked raw data:
+			// direct copy to output
+			pProgress->pOutputBuffer->Append(
+						pProgress->pInputBuffer->GetAt(pChunk->m_nDataOffset), 
+						pChunk->m_ChunkLength);
+		}
+		else if (pChunk->m_Type == XPKCHUNK_PACKED) // packed
+		{
+			pProgress->xp_chunkIn = pChunk->m_ChunkLength;
+			pProgress->xp_chunkOut = pChunk->m_UnLen;
 		
-		// decrunch chunk into output buffer
-		//m_pSubLibrary->Decrunch();
+			// locate data of chunk
+			pProgress->pInputBuffer->SetCurrentPos(pChunk->m_nDataOffset);
+			
+			// prepare space for uncompressed data
+			if (pChunk->m_UnLen > 0)
+			{
+				pProgress->pOutputBuffer->Reserve(pChunk->m_UnLen);
+			}
+			
+			// decrunch chunk into output buffer
+			if (m_pSubLibrary->Decrunch(pProgress) == false)
+			{
+				// .. or throw exception now
+				return false;
+			}
+		}
+		else
+		{
+			// unknown type, error or skip it?
+			throw ArcException("Unknown chunk type", pChunk->m_Type);
+		}
 
 		// next chunk to process..	
 		pChunk = pChunk->m_pNext;
 	}
-	
-	/* not this far yet..
-	bool bRet = true;
-	while (pProgress->xp_PackedProcessed < m_nInputFileSize
-	       && bRet == true)
-	{
-		
-		// temp, testing
-		pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetBegin(), pProgress->pInputBuffer->GetCurrentPos());
-		pProgress->xp_PackedProcessed = m_nInputFileSize;
-		
-		// since we have all in buffer already, just update position if necessary
-		size_t nPos = pProgress->pInputBuffer->GetCurrentPos();
-		if (nPos < m_nInputFileSize)
-		{
-			pProgress->pInputBuffer->SetCurrentPos(pProgress->xp_PackedProcessed);
-		}
-		
-	}
-	return bRet;
-	*/
 	
 	return true;
 }
@@ -307,15 +232,15 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 		throw ArcException("Failed to open input", m_InputName.toStdString());
 	}
 
-	// fuck it.. read it all at once to stop headaches..
-	// other problems to solve anyway
+	// just read it all to buffer, change later if wanted..
 	m_nInputFileSize = InFile.GetSize();
 	m_InputBuffer.PrepareBuffer(InFile.GetSize(), false);
 	if (InFile.Read(m_InputBuffer.GetBegin(), InFile.GetSize()) == false)
 	{
 		throw IOException("Failed reading file data");
 	}
-	m_InputBuffer.SetCurrentPos(InFile.GetSize()); // info to decruncher
+	
+	pProgress->xp_WholePackedFileSize = InFile.GetSize(); // info to decruncher
 	InFile.Close(); // not needed any more
 	
 	// determine file type from header, try to load decruncher for it:
@@ -334,13 +259,25 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	{
 		// XPK-container, process into tags
 		// and chunk-nodes
+		m_Tags.ParseChunks(m_InputBuffer);
+		
+		// result unpacked size
+		pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_ULen;
+		
 		bRet = OwnDecrunch(pProgress);
 	}
 	else
 	{
 		// something else, 
 		// sub-library should know what do with it..
-		bRet = ForeignDecrunch(pProgress);
+		// we depend entirely on sub-library to do decrunching
+		// -> pass entire file to sub-library
+		//
+		// whole file decompression only in this case
+		pProgress->xp_chunkIn = pProgress->xp_WholePackedFileSize;
+		pProgress->xp_chunkOut = 0; // we don't know this until library detects this..
+		pProgress->pInputBuffer->SetCurrentPos(0);
+		bRet = m_pSubLibrary->Decrunch(pProgress);
 	}
 	
 	if (bRet == false)

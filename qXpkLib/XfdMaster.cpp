@@ -11,6 +11,19 @@
 
 #include "XfdMaster.h"
 
+// reuse librarian for loading decrunchers
+#include "XpkLibrarian.h"
+
+
+//////// protecte methods
+
+void CXfdMaster::loadDecruncher(/*type*/)
+{
+}
+
+
+//////// public methods
+
 CXfdMaster::CXfdMaster()
 {
 }

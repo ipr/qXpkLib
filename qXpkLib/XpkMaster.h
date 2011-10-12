@@ -5,7 +5,6 @@
 // see xpkLibraryBase
 //
 // CXpkMaster : main decrunch handler
-// CXpkLibrarian : sub-library loader&handler
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
@@ -38,20 +37,6 @@
 // temp..
 #include "XpkTags.h"
 
-
-// container/loader of derunching libraries?
-//
-class CXpkLibrarian : public QObject
-{
-protected:
-	typedef xpkLibraryBase *GetXpkInstance();
-	
-public:
-	static QList<QString> availableLibraries();
-	
-	//static xpkLibraryBase *getDecruncher(QString szType, QLibrary &lib);
-	static xpkLibraryBase *getDecruncher(std::string &szType, QLibrary &lib);
-};
 
 
 class CXpkMaster : public QObject
@@ -87,7 +72,7 @@ protected:
 	std::string getCruncherType(CReadBuffer *pInputBuffer) const;
 	void PrepareUnpacker(std::string &subType);
 
-	bool ForeignDecrunch(XpkProgress *pProgress);
+	//bool ForeignDecrunch(XpkProgress *pProgress);
 	bool OwnDecrunch(XpkProgress *pProgress);
 	
 public:

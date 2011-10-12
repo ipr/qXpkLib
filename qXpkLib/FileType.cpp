@@ -409,7 +409,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 			// too many bits -> unsupported
 		}
 		*/
-		return HEADERTYPE_Z;
+		return HEADERTYPE_ZCOMPRESS;
 	}
 	/*
 	else if (pBuffer[0] == 0x1F
@@ -552,9 +552,11 @@ tHeaderCategory CFileType::FileCategoryByType(const tHeaderType enType) const
 	case HEADERTYPE_XFD_GENERIC:
 	case HEADERTYPE_GZIP:
 	case HEADERTYPE_BZIP2:
-	case HEADERTYPE_Z:
+	case HEADERTYPE_ZCOMPRESS:
 	case HEADERTYPE_7Z:
 	case HEADERTYPE_XZ:
+	case HEADERTYPE_LPAK:
+	case HEADERTYPE_SZDD:
 		return HEADERCAT_PACKER;
 		
     //case HEADERTYPE_MOD_SOUNDTRACKER:
@@ -677,7 +679,7 @@ wstring CFileType::GetNameOfType()
 		return _T("7-Zip");
 	case HEADERTYPE_XZ:
 		return _T("XZ");
-	case HEADERTYPE_Z:
+	case HEADERTYPE_ZCOMPRESS:
 		return _T("Z-compress");
 		
 		

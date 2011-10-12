@@ -44,7 +44,7 @@ enum XpkChunkHeaderType
 struct XpkStreamHeader 
 {
   uint32_t xsh_Pack; // common 4-byte IFF-style ID (magic number)
-  uint32_t xsh_CLen; // size of file minus two first fields
+  uint32_t xsh_CLen; // size of file minus two first fields (8 bytes)
   uint32_t xsh_Type; // type of sub-library (4-byte IFF-style ID)
   uint32_t xsh_ULen; // uncompressed length of all data in file?
   
@@ -76,8 +76,8 @@ struct XpkChunkHdrWord
   uint8_t  xchw_Type;
   uint8_t  xchw_HChk; // header checksum?
   uint16_t xchw_CChk; // chunk checksum (16-bit CRC?)
-  uint16_t xchw_CLen; // chunk length
-  uint16_t xchw_ULen; // uncompressed length of chunk?
+  uint16_t xchw_CLen; // chunk compressed length
+  uint16_t xchw_ULen; // uncompressed length of chunk data
 };
 
 struct XpkChunkHdrLong 
@@ -85,8 +85,8 @@ struct XpkChunkHdrLong
   uint8_t  xchl_Type;
   uint8_t  xchl_HChk; // header checksum?
   uint16_t xchl_CChk; // chunk checksum (16-bit CRC?)
-  uint32_t xchl_CLen; // chunk length
-  uint32_t xchl_ULen; // uncompressed length of chunk?
+  uint32_t xchl_CLen; // chunk compressed length
+  uint32_t xchl_ULen; // uncompressed length of chunk data
 };
 
 #pragma pack(pop)
@@ -104,7 +104,7 @@ public:
 	    , m_HChecksum(0)
 	    , m_ChunkChecksum(0)
 	    , m_ChunkLength(0)
-	    , m_ULen(0)
+	    , m_UnLen(0)
 	{}
 	~XpkChunk()
 	{}
@@ -117,8 +117,8 @@ public:
 	size_t m_Type; // see XpkChunkHeaderType
 	size_t m_HChecksum; // header checksum?
 	size_t m_ChunkChecksum; // chunk checksum (16-bit CRC?)
-	size_t m_ChunkLength; // chunk length
-	size_t m_ULen; // uncompressed length of chunk?
+	size_t m_ChunkLength; // chunk compressed length
+	size_t m_UnLen; // uncompressed length of chunk data
 	
 };
 
@@ -192,7 +192,12 @@ public:
 		return false;
 	}
 	
-	void ParseToNodeList(CReadBuffer &Buffer);
+	// TODO: this should be: ParseHeader()
+	void ParseChunks(CReadBuffer &Buffer);
+
+	// TODO: add this so single-pass
+	// can be done without loading entire file to memory
+	//XpkChunk *nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent = nullptr);
 	
 	XpkFormat getFormat()
 	{

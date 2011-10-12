@@ -40,8 +40,8 @@ bool xpkRLEN::Decrunch(XpkProgress *pProgress)
 	//unsigned char *pOut = pProgress->pOutputBuffer->GetBegin();
 	
 	// keep input size and set to start
-	const size_t nInputSize = pProgress->pInputBuffer->GetSize();
-	pProgress->pInputBuffer->SetCurrentPos(0); // 
+	const size_t nInputSize = pProgress->xp_chunkIn;
+	//pProgress->pInputBuffer->SetCurrentPos(0); // should be set by master-library..
 	
 	while (pProgress->pInputBuffer->IsEnd() == false)
 	{
@@ -59,6 +59,7 @@ bool xpkRLEN::Decrunch(XpkProgress *pProgress)
 		}
 		else
 		{
+			// repeat to output
 			int iCpy = *(pProgress->pInputBuffer->GetAtCurrent());
 			for (iVal = -iVal; iVal > 0; iVal--)
 			{

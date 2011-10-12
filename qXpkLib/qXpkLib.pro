@@ -19,7 +19,8 @@ SOURCES += qxpklib.cpp \
     IoContext.cpp \
     FileType.cpp \
     XfdMaster.cpp \
-    XfdSlave.cpp
+    XfdSlave.cpp \
+    XpkLibrarian.cpp
 
 HEADERS += qxpklib.h\
         qXpkLib_global.h \
@@ -32,7 +33,10 @@ HEADERS += qxpklib.h\
     FileType.h \
     xpkmaster_checksum.h \
     XfdMaster.h \
-    XfdSlave.h
+    XfdSlave.h \
+    XpkLibrarian.h
+
+
 
 
 

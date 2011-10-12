@@ -38,6 +38,8 @@ protected:
     // TODO:
     //XfdSlave *getXfdSlave( /*type or buffer*/ ) const;
     //XfdSlave *m_pXfdSlave;
+    
+    void loadDecruncher(/*type*/);
 
 public:
     CXfdMaster();

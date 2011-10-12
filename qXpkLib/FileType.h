@@ -45,7 +45,7 @@ typedef enum tHeaderType
 	HEADERTYPE_XFD_GENERIC, // XFD, multi-algorithm (SQSH etc.), Amiga
 	HEADERTYPE_GZIP, // GNU-zip packer (gz)
 	HEADERTYPE_BZIP2, // BZIP2 packer (bz2)
-	HEADERTYPE_Z, // Un*X compress (Z)
+	HEADERTYPE_ZCOMPRESS, // Un*X compress (Z)
 	HEADERTYPE_7Z, // 7Z packer (7zip)
 	HEADERTYPE_XZ, // XZ Utils packer (xz)
 	HEADERTYPE_LPAK, // 'LPAK' (similar to 'SZDD')

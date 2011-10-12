@@ -142,7 +142,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_HChecksum = pHdr->xchl_HChk;
 			pCurrent->m_ChunkChecksum = Swap2(pHdr->xchl_CChk);
 			pCurrent->m_ChunkLength = Swap4(pHdr->xchl_CLen);
-			pCurrent->m_ULen = Swap4(pHdr->xchl_ULen);
+			pCurrent->m_UnLen = Swap4(pHdr->xchl_ULen);
 			
 			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrLong);
 		}
@@ -154,7 +154,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_HChecksum = pHdr->xchw_HChk;
 			pCurrent->m_ChunkChecksum = Swap2(pHdr->xchw_CChk);
 			pCurrent->m_ChunkLength = Swap2(pHdr->xchw_CLen);
-			pCurrent->m_ULen = Swap2(pHdr->xchw_ULen);
+			pCurrent->m_UnLen = Swap2(pHdr->xchw_ULen);
 
 			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrWord);
 		}
@@ -313,7 +313,7 @@ XpkTags::~XpkTags()
 	}
 }
 
-void XpkTags::ParseToNodeList(CReadBuffer &Buffer)
+void XpkTags::ParseChunks(CReadBuffer &Buffer)
 {
 	if (IsXpkFile(Buffer) == false)
 	{
@@ -336,3 +336,18 @@ void XpkTags::ParseToNodeList(CReadBuffer &Buffer)
 	Buffer.SetCurrentPos(m_nTotalSize);
 }
 
+// TODO: add this so single-pass
+// can be done without loading entire file to memory
+/*
+XpkChunk *XpkTags::nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent)
+{
+	if (pCurrent == nullptr)
+	{
+		// find first chunk
+	}
+	else
+	{
+		// find next chunk
+	}
+}
+*/
