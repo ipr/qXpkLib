@@ -81,6 +81,11 @@ protected:
         tmp |= ((uint32_t)(buf[0]));
         return tmp;
     }
+
+	// TODO: keep regs as member?
+	// will it be simpler like this?
+	//datareg D[8];
+	//addrreg A[8];
 	
 public:
     XfdSlave(CReadBuffer *pIn)
@@ -97,6 +102,7 @@ protected:
 	bool crun(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
 	bool crnd(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
 	bool marc(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
+	
 public:
     bool decrunch(CReadBuffer *pOut);
 };

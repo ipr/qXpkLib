@@ -17,20 +17,7 @@
 
 //////// protecte methods
 
-void CXfdMaster::loadDecruncher(/*type*/)
-{
-}
-
-
-//////// public methods
-
-CXfdMaster::CXfdMaster()
-{
-}
-
-// detect XFD-supported decrunching from buffer..
-//
-bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
+XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer) const
 {
 	// TODO: implement..
 	// some stuff which may be added (libraries? just classes?)
@@ -64,10 +51,12 @@ bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
 	else if (::memcmp(pInputBuffer->GetBegin(), "CRUN", 4) == 0)
 	{
 		// ByteKiller clones
+		return new XfdByteKiller(pInputBuffer);
 	}
 	else if (::memcmp(pInputBuffer->GetBegin(), "CRND", 4) == 0)
 	{
 		// ByteKiller clones
+		return new XfdByteKiller(pInputBuffer);
 	}
 	/* // more ByteKiller clones..
 		cmp.l	#'MARC',(A0)
@@ -89,6 +78,7 @@ bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
 	else if (::memcmp(pInputBuffer->GetBegin(), "Vice", 4) == 0)
 	{
 		// Vice cruncher
+		return new XfdVice(pInputBuffer);
 	}
 	else if (::memcmp(pInputBuffer->GetBegin(), "ZbL!", 4) == 0)
 	{
@@ -101,5 +91,55 @@ bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
 	*/
 	// .. and so on ..
 	
+	return nullptr;
+}
+
+// destroy decruncher when necessary
+void CXfdMaster::release()
+{
+	if (m_pXfdSlave != nullptr)
+	{
+		delete m_pXfdSlave;
+		m_pXfdSlave = nullptr;
+	}
+}
+
+//////// public methods
+
+CXfdMaster::CXfdMaster()
+	: m_pXfdSlave(nullptr)
+{
+}
+
+CXfdMaster::~CXfdMaster()
+{
+	release();
+}
+
+// detect XFD-supported decrunching from buffer..
+//
+bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
+{
+	release(); // release existing if necessary
+	m_pXfdSlave = loadDecruncher(pInputBuffer);
+	if (m_pXfdSlave != nullptr)
+	{
+		// decruncher located -> supported
+		return true;
+	}
 	return false;
 }
+
+bool CXfdMaster::decrunch(XpkProgress *pProgress)
+{
+	release(); // release existing if necessary
+	
+	m_pXfdSlave = loadDecruncher(pProgress->pInputBuffer);
+	if (m_pXfdSlave != nullptr)
+	{
+		// decruncher located -> supported
+		return m_pXfdSlave->decrunch(pProgress->pOutputBuffer);
+	}
+	return false;
+}
+

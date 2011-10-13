@@ -19,6 +19,9 @@
 
 #include "XfdSlave.h"
 
+// status information (caller and decruncher)
+#include "XpkProgress.h"
+
 
 class CXfdMaster
 {
@@ -37,15 +40,19 @@ protected:
 
     // TODO:
     //XfdSlave *getXfdSlave( /*type or buffer*/ ) const;
-    //XfdSlave *m_pXfdSlave;
+    XfdSlave *m_pXfdSlave;
     
-    void loadDecruncher(/*type*/);
+    XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer) const;
 
+	void release();
+	
 public:
     CXfdMaster();
+    ~CXfdMaster();
     
     bool isXfdSupported(CReadBuffer *pInputBuffer) const;
     
+	bool decrunch(XpkProgress *pProgress);
 };
 
 #endif // XFDMASTER_H

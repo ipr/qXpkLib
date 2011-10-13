@@ -126,20 +126,27 @@ bool XfdByteKiller::decrunch(CReadBuffer *pOut)
 	
 		return crun(pOut, pA0+4, D0);
 	}
+	
 	if (tag == MakeTag("CRND"))
 	{
 		return crnd(pOut, pA0+4, D0);
 	}
+	
 	if (tag == MakeTag("MARC")
 		|| tag == MakeTag("TMB!")
 		|| tag == MakeTag("TXIC")
-		|| tag == MakeTag("SCC!")
-		|| tag == MakeTag("ons ")
-		|| tag == MakeTag(" Sym")
-		|| tag == MakeTag("Gary"))
+		|| tag == MakeTag("SCC!"))
 	{
 		return marc(pOut, pA0+4, D0);
 	}
+	
+	if (tag == MakeTag("ons ")
+		|| tag == MakeTag(" Sym")
+		|| tag == MakeTag("Gary"))
+	{
+		return false;
+	}
+
 	// .. and others..
 
 	return false;
