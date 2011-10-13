@@ -107,7 +107,7 @@ protected:
 	}
 
 	// need better way of sharing code..
-	uint32_t MakeTag(const uint8_t *buf) const
+	uint32_t MakeTag(const char *buf) const
     {
         uint32_t tmp = 0;
         tmp |= (((uint32_t)(buf[3])) << 24);
@@ -125,11 +125,11 @@ protected:
 	datareg D0,D1,D2,D3,D4,D5,D6,D7;
 	addrreg A0,A1,A2,A3,A4,A5,A6,A7; // SP == A7
 	
-public:
     XfdSlave(CReadBuffer *pIn)
 		: m_pIn(pIn)
     {}
-    bool decrunch(CReadBuffer *pOut) = 0;
+public:
+    virtual bool decrunch(CReadBuffer *pOut) = 0;
 };
 
 ////////// ByteKiller
@@ -150,7 +150,10 @@ protected:
 	bool pack(CReadBuffer *pOut, uint8_t *src, uint32_t size);
 	
 public:
-    bool decrunch(CReadBuffer *pOut);
+	XfdByteKiller(CReadBuffer *pIn)
+		: XfdSlave(pIn)
+	{}
+    virtual bool decrunch(CReadBuffer *pOut);
 };
 
 ////////// Vice
@@ -158,7 +161,10 @@ public:
 class XfdVice : public XfdSlave
 {
 public:
-    bool decrunch(CReadBuffer *pOut);
+	XfdVice(CReadBuffer *pIn)
+		: XfdSlave(pIn)
+	{}
+    virtual bool decrunch(CReadBuffer *pOut);
 };
 
 ////////// VDCO (Virtual Dreams)
@@ -166,7 +172,10 @@ public:
 class XfdVDCO : public XfdSlave
 {
 public:
-    bool decrunch(CReadBuffer *pOut);
+	XfdVDCO(CReadBuffer *pIn)
+		: XfdSlave(pIn)
+	{}
+    virtual bool decrunch(CReadBuffer *pOut);
 };
 
 

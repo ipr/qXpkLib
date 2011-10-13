@@ -17,7 +17,7 @@
 
 //////// protecte methods
 
-XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer) const
+XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer)
 {
 	// TODO: implement..
 	// some stuff which may be added (libraries? just classes?)
@@ -123,7 +123,7 @@ CXfdMaster::~CXfdMaster()
 
 // detect XFD-supported decrunching from buffer..
 //
-bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer) const
+bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer)
 {
 	release(); // release existing if necessary
 	m_pXfdSlave = loadDecruncher(pInputBuffer);

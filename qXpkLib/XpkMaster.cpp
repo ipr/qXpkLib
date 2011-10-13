@@ -25,7 +25,7 @@
 
 ///////// protected methods
 
-std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer) const
+std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 {
 	// simplify, use std::string and get it done
 	std::string szSubType;
@@ -123,7 +123,7 @@ void CXpkMaster::PrepareUnpacker(std::string &subType)
 	}
 	
 	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(subType, m_SubLib);
+	m_pSubLibrary = CXpkLibrarian::getDecruncher(QString::fromStdString(subType), m_SubLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it

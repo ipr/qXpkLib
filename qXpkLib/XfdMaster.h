@@ -28,6 +28,7 @@ class CXfdMaster
 protected:
 
 	// need better way of sharing code..
+	/*
 	uint32_t MakeTag(const unsigned char *buf) const
     {
         uint32_t tmp = 0;
@@ -37,12 +38,11 @@ protected:
         tmp |= ((uint32_t)(buf[0]));
         return tmp;
     }
+    */
 
-    // TODO:
-    //XfdSlave *getXfdSlave( /*type or buffer*/ ) const;
     XfdSlave *m_pXfdSlave;
     
-    XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer) const;
+    XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer);
 
 	void release();
 	
@@ -50,7 +50,7 @@ public:
     CXfdMaster();
     ~CXfdMaster();
     
-    bool isXfdSupported(CReadBuffer *pInputBuffer) const;
+    bool isXfdSupported(CReadBuffer *pInputBuffer);
     
 	bool decrunch(XpkProgress *pProgress);
 };

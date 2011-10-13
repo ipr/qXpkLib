@@ -39,6 +39,7 @@ QString CXpkLibrarian::libNameFromType(tHeaderType enType)
 	switch (enType)
 	{
 	}
+	return "";
 }
 
 xpkLibraryBase *CXpkLibrarian::getDecruncher(QString &szLib, QLibrary &lib)

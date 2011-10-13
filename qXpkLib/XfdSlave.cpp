@@ -170,8 +170,7 @@ bool XfdByteKiller::decrunch(CReadBuffer *pOut)
 	uint32_t size = m_pIn->GetSize(); // <- buffer length
 
 	D0.l = size;
-	//A0.src = src;
-
+	A0.src = pA0;
 
 	uint32_t tag = GetULong(pA0);
 	if (tag == MakeTag("CRUN"))
@@ -308,10 +307,12 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 	//ADD.L		xfdbi_UserTargetBufLen(A2),A1	; dest end
 	A1.src += pOut->GetSize();
 
+	// keep address? -> needs update..
 	//MOVE.L	A3,D2
-	//D2.l = (int32_t)A3;
+	//D2.l = (int32_t)(A3.src);
 	
 	//BSR.B	D_Vice
+	//goto D_Vice;
 	//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A2)
 
 	//SUBA.L	D2,A3

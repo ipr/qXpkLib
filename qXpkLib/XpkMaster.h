@@ -69,7 +69,7 @@ private:
 	XpkTags m_Tags;
 	
 protected:
-	std::string getCruncherType(CReadBuffer *pInputBuffer) const;
+	std::string getCruncherType(CReadBuffer *pInputBuffer);
 	void PrepareUnpacker(std::string &subType);
 
 	//bool ForeignDecrunch(XpkProgress *pProgress);
