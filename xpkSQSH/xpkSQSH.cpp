@@ -44,20 +44,21 @@ xpkLibraryBase *GetXpkInstance(void)
 }
 
 
-int bfextu(unsigned char *p,int bo,int bc) {
-  int r;
-
-  p += bo / 8;
-  r = *(p++);
-  r <<= 8;
-  r |= *(p++);
-  r <<= 8;
-  r |= *p;
-  r <<= bo % 8;
-  r &= 0xffffff;
-  r >>= 24 - bc;
-
-  return r;
+int bfextu(unsigned char *p,int bo,int bc) 
+{
+	int r;
+	
+	p += bo / 8;
+	r = *(p++);
+	r <<= 8;
+	r |= *(p++);
+	r <<= 8;
+	r |= *p;
+	r <<= bo % 8;
+	r &= 0xffffff;
+	r >>= 24 - bc;
+	
+	return r;
 }
 
 //#define bfextu1 ((*(src + d0 / 8) >> (7 - (d0 % 8))) & 1)
@@ -67,39 +68,44 @@ inline int bfextu1(unsigned char *src, int d0)
 	return ((*(src + d0 / 8) >> (7 - (d0 % 8))) & 1);
 }
 
-int bfextu3(unsigned char *p,int bo) {
-  int r;
-
-  p += bo / 8;
-  r = *(p++);
-  r <<= 8;
-  r |= *p;
-  r >>= 13 - (bo % 8);
-  r &= 7;
-
-  return r;
+int bfextu3(unsigned char *p,int bo) 
+{
+	int r;
+	
+	p += bo / 8;
+	r = *(p++);
+	r <<= 8;
+	r |= *p;
+	r >>= 13 - (bo % 8);
+	r &= 7;
+	
+	return r;
 }
 
-int bfexts(unsigned char *p,int bo,int bc) {
-  int r;
-
-  p += bo / 8;
-  r = *(p++);
-  r <<= 8;
-  r |= *(p++);
-  r <<= 8;
-  r |= *p;
-  r <<= (bo % 8) + 8;
-  r >>= 32 - bc;
-
-  return r;
+int bfexts(unsigned char *p,int bo,int bc) 
+{
+	int r;
+	
+	p += bo / 8;
+	r = *(p++);
+	r <<= 8;
+	r |= *(p++);
+	r <<= 8;
+	r |= *p;
+	r <<= (bo % 8) + 8;
+	r >>= 32 - bc;
+	
+	return r;
 }
 
+// this should get size of chunk somehow,
+// or is it expecting marker-byte somewhere?
 void unsqsh(unsigned char *src, unsigned char *dst) 
 {
-  int d0,d1,d2,d3,d4,d5,d6,a2,a5;
-  unsigned char *a4,*a6;
-  unsigned char a3[] = { 2,3,4,5,6,7,8,0,3,2,4,5,6,7,8,0,4,3,5,2,6,7,8,0,5,4,
+	// registers
+	int d0,d1,d2,d3,d4,d5,d6,a2,a5;
+	unsigned char *a4,*a6;
+	unsigned char a3[] = { 2,3,4,5,6,7,8,0,3,2,4,5,6,7,8,0,4,3,5,2,6,7,8,0,5,4,
 	6,2,3,7,8,0,6,5,7,2,3,4,8,0,7,6,8,2,3,4,5,0,8,7,6,2,3,4,5,0 };
 
 
@@ -161,8 +167,11 @@ l74a:	a2 = d6;
 l74c:	d6 = d2;
 	d6 >>= 3;
 	d2 -= d6;
-	if (dst < a6) goto l6c6;
-
+	if (dst < a6) 
+	{
+		goto l6c6;
+	}
+	// this is end of chunk?
 	return;
 
 l75a:	d0++;
@@ -248,7 +257,13 @@ bool xpkSQSH::Crunch(XpkProgress *pProgress)
 
 bool xpkSQSH::Decrunch(XpkProgress *pProgress)
 {
+	// TODO: we should pass size of chunk to unpacking,
+	// then update amount of data actually processed..
+	
+	size_t nOut = pProgress->pOutputBuffer->GetCurrentPos();
+
 	unsqsh(pProgress->pInputBuffer->GetAtCurrent(), pProgress->pOutputBuffer->GetAtCurrent());
-	return false;
+	
+	return true;
 }
 

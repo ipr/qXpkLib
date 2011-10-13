@@ -52,10 +52,10 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 {
 	// TODO: replace direct pointers by buffer-wrapper
 	// -> we can grow when needed
-	
-	int8_t *inbuf = m_pInput->GetBegin();
+	//
+	int8_t *inbuf = (int8_t*)m_pInput->GetBegin();
 	uint32_t insize = m_pInput->GetSize();
-	int8_t *outbuf = m_pOutput->GetBegin();
+	int8_t *outbuf = (int8_t*)m_pOutput->GetBegin();
 	uint32_t outsize = m_pOutput->GetSize();
 	
 	int8_t *outptr = outbuf;

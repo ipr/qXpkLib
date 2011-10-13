@@ -93,8 +93,8 @@ public:
 		/* Initialize the first 256 entries in the table. */
 		for(int32_t code = 255; code >= 0; code--)
 		{
-			cd->tab_prefixof[code] = 0;
-			cd->tab_suffixof[code] = (uint8_t)code;
+			tab_prefixof[code] = 0;
+			tab_suffixof[code] = (uint8_t)code;
 		}
 	}
 	
