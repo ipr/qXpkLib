@@ -33,6 +33,27 @@ struct addrreg
 {
 	uint8_t *src;
 
+	/* 
+	will it be more trouble to use operators..? 
+	(implicit use by mistake..)
+	*/
+	operator int8_t() const
+	{
+		int8_t *p = (int8_t*)src;
+		return *p;
+	}
+	operator int16_t() const
+	{
+		int16_t *p = (int16_t*)src;
+		return *p;
+	}
+	operator int32_t() const
+	{
+		int32_t *p = (int32_t*)src;
+		return *p;
+	}
+	/**/
+	
 	// off = address relative offset
 	
 	int8_t b(size_t off = 0)

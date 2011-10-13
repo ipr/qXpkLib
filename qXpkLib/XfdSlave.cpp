@@ -65,7 +65,7 @@ bool XfdByteKiller::crun(CReadBuffer *pOut, uint8_t *src, uint32_t size)
 	}
 		
 	//move.l	(A0),D1
-	D1.l = A0.l();
+	D1.l = A0; // "auto" lvalue -> operator? 
 	
 	//beq.b	.Exit
 	//bmi.b	.Exit
@@ -169,7 +169,7 @@ bool XfdByteKiller::decrunch(CReadBuffer *pOut)
 	uint8_t *pA0 = m_pIn->GetBegin(); // <- buffer address
 	uint32_t size = m_pIn->GetSize(); // <- buffer length
 
-	//D0.l = size;
+	D0.l = size;
 	//A0.src = src;
 
 
@@ -242,8 +242,6 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 {
 	m_pIn->SetCurrentPos(0);
 	
-	//datareg D0, D1;
-	//addrreg A0;
 	A0.src = m_pIn->GetBegin(); // <- buffer address
 	D0.l = m_pIn->GetSize(); // <- buffer length
 	
@@ -288,8 +286,9 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 //label DB_Vice:
 	//MOVEM.L	D2-D7/A2-A6,-(SP) // (move listed registers, decrease stack)
 	//MOVEA.L	A0,A2
+	A2.src = A0.src;
 	//MOVE.L	xfdbi_SourceBuffer(A2),A6
-	A6.src = A0.src;
+	A6.src = A0.src; //m_pIn->GetAtCurrent();
 	
 	//MOVE.L	xfdbi_UserTargetBuf(A2),A3	; dest start
 	A3.src = pOut->GetBegin();
@@ -298,11 +297,20 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 	A0.src = A6.src;
 	
 	//ADD.L		xfdbi_SourceBufLen(A2),A0	; source end
+	A0.src += m_pIn->GetSize();
+	
 	//ADDQ.L	#4,A6				; source start
+	A6.src += 4;
+	
 	//MOVE.L	A3,A1
+	A1.src = A3.src;
+	
 	//ADD.L		xfdbi_UserTargetBufLen(A2),A1	; dest end
+	A1.src += pOut->GetSize();
 
 	//MOVE.L	A3,D2
+	//D2.l = (int32_t)A3;
+	
 	//BSR.B	D_Vice
 	//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A2)
 
