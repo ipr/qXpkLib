@@ -17,6 +17,43 @@
 
 #include "AnsiFile.h"
 
+// simplify asm to c conversion,
+// for each register with access methods
+struct datareg
+{
+	union
+	{
+		int8_t b;
+		int16_t w;
+		int32_t l;
+	};
+};
+
+struct addrreg
+{
+	uint8_t *src;
+	
+	int8_t b()
+	{
+		return *src++;
+	}
+	
+	int16_t w()
+	{
+		int16_t *p = (int16_t*)src;
+		src += 2;
+		return *p;
+	}
+	
+	int32_t l()
+	{
+		int32_t *p = (int32_t*)src;
+		src += 4;
+		return *p;
+	}
+};
+
+
 // pure virtual interface 
 // for XFD-slave decruncher implementations
 //
@@ -56,6 +93,10 @@ public:
 
 class XfdByteKiller : public XfdSlave
 {
+protected:
+	bool crun(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
+	bool crnd(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
+	bool marc(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
 public:
     bool decrunch(CReadBuffer *pOut);
 };
