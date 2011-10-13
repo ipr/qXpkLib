@@ -80,6 +80,11 @@ XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer) const
 		// Vice cruncher
 		return new XfdVice(pInputBuffer);
 	}
+	else if (::memcmp(pInputBuffer->GetBegin(), "VDCO", 4) == 0)
+	{
+		// VDCO (Virtual Dreams)
+		return new XfdVDCO(pInputBuffer);
+	}
 	else if (::memcmp(pInputBuffer->GetBegin(), "ZbL!", 4) == 0)
 	{
 		// one of Zeeball's filetypes (many more it seems..)

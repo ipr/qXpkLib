@@ -32,24 +32,38 @@ struct datareg
 struct addrreg
 {
 	uint8_t *src;
+
+	// off = address relative offset
 	
-	int8_t b()
+	int8_t b(size_t off = 0)
 	{
-		return *src++;
+		if (off == 0)
+		{
+			return *src++;
+		}
+		return *(src + off);
+	}
+
+	int16_t w(size_t off = 0)
+	{
+		if (off == 0)
+		{
+			int16_t *p = (int16_t*)src;
+			src += 2;
+			return *p;
+		}
+		return (*((int16_t*)(src + off)));
 	}
 	
-	int16_t w()
+	int32_t l(size_t off = 0)
 	{
-		int16_t *p = (int16_t*)src;
-		src += 2;
-		return *p;
-	}
-	
-	int32_t l()
-	{
-		int32_t *p = (int32_t*)src;
-		src += 4;
-		return *p;
+		if (off == 0)
+		{
+			int32_t *p = (int32_t*)src;
+			src += 4;
+			return *p;
+		}
+		return (*((int32_t*)(src + off)));
 	}
 };
 
@@ -85,7 +99,10 @@ protected:
 	// TODO: keep regs as member?
 	// will it be simpler like this?
 	//datareg D[8];
-	//addrreg A[8];
+	//addrreg A[8]; // SP == A7
+	// less typing this way..
+	datareg D0,D1,D2,D3,D4,D5,D6,D7;
+	addrreg A0,A1,A2,A3,A4,A5,A6,A7; // SP == A7
 	
 public:
     XfdSlave(CReadBuffer *pIn)
@@ -99,18 +116,33 @@ public:
 class XfdByteKiller : public XfdSlave
 {
 protected:
-	bool crun(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
-	bool crnd(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
-	bool marc(CReadBuffer *pOut, uint8_t *src, uint32_t D0);
+	bool crun(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool crnd(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool marc(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool xvdg(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	/*
+	bool amos(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	*/
+	bool arpf(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool arp3(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool ace(CReadBuffer *pOut, uint8_t *src, uint32_t size);
+	bool pack(CReadBuffer *pOut, uint8_t *src, uint32_t size);
 	
 public:
     bool decrunch(CReadBuffer *pOut);
 };
 
-
 ////////// Vice
 
 class XfdVice : public XfdSlave
+{
+public:
+    bool decrunch(CReadBuffer *pOut);
+};
+
+////////// VDCO (Virtual Dreams)
+
+class XfdVDCO : public XfdSlave
 {
 public:
     bool decrunch(CReadBuffer *pOut);
