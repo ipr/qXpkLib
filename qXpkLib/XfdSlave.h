@@ -119,22 +119,37 @@ struct addrreg
 	{
 		if (off == 0)
 		{
-			int16_t *p = (int16_t*)src;
+			//int16_t *p = (int16_t*)src;
+			int8_t *p = src;
 			src += 2;
-			return *p;
+			//return *p;
+			return getW(p);
 		}
-		return (*((int16_t*)(src + off)));
+		//return (*((int16_t*)(src + off)));
+		return getW(src + off);
 	}
 	
 	int32_t l(size_t off = 0)
 	{
 		if (off == 0)
 		{
-			int32_t *p = (int32_t*)src;
+			//int32_t *p = (int32_t*)src;
+			int8_t *p = src;
 			src += 4;
-			return *p;
+			//return *p;
+			return getL(p);
 		}
-		return (*((int32_t*)(src + off)));
+		//return (*((int32_t*)(src + off)));
+		return getL(src + off);
+	}
+	
+	uint16_t getW(const uint8_t *pBuf)
+	{
+		return ((pBuf[0] << 8) + pBuf[1]);
+	}
+	uint32_t getL(const uint8_t *pBuf)
+	{
+		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
 };
 
@@ -144,6 +159,12 @@ struct addrreg
 class Areg
 {
 public:
+	addrreg m;
+	
+	operator -> ()
+	{
+		return datareg(m.l)
+	}
 
 };
 */
@@ -155,15 +176,6 @@ class XfdSlave
 {
 protected:
 	CReadBuffer *m_pIn;
-	
-	uint16_t GetUWord(const uint8_t *pBuf)
-	{
-		return ((pBuf[0] << 8) + pBuf[1]);
-	}
-	uint32_t GetULong(const uint8_t *pBuf)
-	{
-		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
-	}
 
 	// need better way of sharing code..
 	uint32_t MakeTag(const char *buf) const

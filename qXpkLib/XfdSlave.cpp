@@ -172,7 +172,7 @@ bool XfdByteKiller::decrunch(CReadBuffer *pOut)
 	D0.l = size;
 	A0.src = pA0;
 
-	uint32_t tag = GetULong(pA0);
+	uint32_t tag = MakeTag((char*)pA0);
 	if (tag == MakeTag("CRUN"))
 	{
 		//cmp.l	#'CRUN',(A0)+
@@ -244,7 +244,7 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 	A0.src = m_pIn->GetBegin(); // <- buffer address
 	D0.l = m_pIn->GetSize(); // <- buffer length
 	
-	if (GetULong(A0.src) != MakeTag("Vice"))
+	if (MakeTag((char*)A0.src) != MakeTag("Vice"))
 	{
 		return false;
 	}
@@ -316,28 +316,45 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 	//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A2)
 
 	//SUBA.L	D2,A3
+	//A3.src += D2.l;
+	
 	//MOVE.L	A3,xfdbi_TargetBufSaveLen(A2)
 
 	//; D0 already set
-	//MOVEM.L	(SP)+,D2-D7/A2-A6
-	//RTS
+	//MOVEM.L	(SP)+,D2-D7/A2-A6 // restore stack
+	//RTS 
 	
+//; A6 -> Crunched data start, past header (source)
+//; A0 -> Crunched data end (source)
+//; A3 -> Decrunch buffer start (destination)
+//; A1 -> Decrunch buffer end (destination)
+
+//; Uses: A0,A1,A3,A4,A5,A6, D0,D1,D3,D4,D5,D6,D7
+
+D_Vice:
+		//LEA	$200(A6),A5
+		A5.src = A6.src + 0x200;
+		
+		//LEA	$400(A6),A4
+		A4.src = A6.src + 0x400;
+		
+		//MOVEQ	#1,D6
+		D6.l = 1;
+		
+		//MOVE.W	$1FE(A6),D4
+		D4.w = A6.w(0x1FE);
+		
+		//MOVEQ	#$1F,D7
+		D7.l = 0x1F;
+		
+		//MOVEQ	#7,D3
+		D3.l = 7;
+
 /*
-; A6 -> Crunched data start, past header (source)
-; A0 -> Crunched data end (source)
-; A3 -> Decrunch buffer start (destination)
-; A1 -> Decrunch buffer end (destination)
-
-; Uses: A0,A1,A3,A4,A5,A6, D0,D1,D3,D4,D5,D6,D7
-
-D_Vice		LEA	$200(A6),A5
-		LEA	$400(A6),A4
-		MOVEQ	#1,D6
-		MOVE.W	$1FE(A6),D4
-		MOVEQ	#$1F,D7
-		MOVEQ	#7,D3
-
-.Vice01:	MOVEQ	#0,D1
+Vice01:	
+		//MOVEQ	#0,D1
+		D1.l = 0;
+		
 		BSR.S	.ViceSub
 		TST.B	D5
 		BEQ.S	.Error
@@ -346,17 +363,26 @@ D_Vice		LEA	$200(A6),A5
 		BCLR	D3,D1
 		SUBQ.B	#1,D1
 		BSR.S	.ViceSub
-.Vice02:	CMPA.L	A1,A3
+
+Vice02:	
+		CMPA.L	A1,A3
 		BGE.B	.DestEnd
 		MOVE.B	D5,(A3)+
 		DBRA	D1,.Vice02
 		BRA.S	.Vice01
-.Vice03:	SUBQ.B	#1,D1
-.Vice04:	MOVE.W	D4,D5
-.Vice05:	LSR.L	#1,D6
+
+Vice03:	
+		SUBQ.B	#1,D1
+
+Vice04:	
+		MOVE.W	D4,D5
+
+Vice05:	
+		LSR.L	#1,D6
 		BCC.S	.Vice08
 		BEQ.S	.Vice07
-.Vice06:	MOVE.W	(A5,D5.W),D5
+		
+Vice06:	MOVE.W	(A5,D5.W),D5
 		BMI.S	.Vice09
 		LSR.L	#1,D6
 		BCC.S	.Vice08
@@ -368,38 +394,49 @@ D_Vice		LEA	$200(A6),A5
 		MOVE.B	D5,(A3)+
 		DBRA	D1,.Vice04
 		BRA.S	.Vice01
-.Vice07:	MOVE.L	(A4)+,D6
+		
+Vice07:	MOVE.L	(A4)+,D6
 		CMPA.L	A0,A4
 		BGT.B	.SourceEnd
 		LSR.L	#1,D6
 		BSET	D7,D6
 		BCS.S	.Vice06
-.Vice08:	MOVE.W	(A6,D5.W),D5
+		
+Vice08:	MOVE.W	(A6,D5.W),D5
 		BMI.S	.Vice09
 		LSR.L	#1,D6
 		BCC.S	.Vice08
 		BEQ.S	.Vice07
 		MOVE.W	(A5,D5.W),D5
 		BPL.S	.Vice05
-.Vice09:	CMPA.L	A1,A3
+		
+Vice09:	CMPA.L	A1,A3
 		BGE.B	.DestEnd
 		MOVE.B	D5,(A3)+
 		DBRA	D1,.Vice04
 		BRA.S	.Vice01
 
-.DestEnd	MOVEQ	#0,D0
+DestEnd:
+		MOVEQ	#0,D0
 		RTS
 
-.SourceEndSub	ADDQ.L	#4,SP
-.Error
-.SourceEnd	MOVEQ	#1,D0
+SourceEndSub:	
+		ADDQ.L	#4,SP
+Error:
+SourceEnd:	
+		MOVEQ	#1,D0
 		RTS
 
-.ViceSub:	MOVE.W	D4,D5
-.ViceS1:	LSR.L	#1,D6
+ViceSub:	
+		MOVE.W	D4,D5
+
+ViceS1:	
+		LSR.L	#1,D6
 		BCC.S	.ViceS4
 		BEQ.S	.ViceS3
-.ViceS2:	MOVE.W	(A5,D5.W),D5
+
+ViceS2:	
+		MOVE.W	(A5,D5.W),D5
 		BMI.S	.End
 		LSR.L	#1,D6
 		BCC.S	.ViceS4
@@ -407,23 +444,28 @@ D_Vice		LEA	$200(A6),A5
 		MOVE.W	(A5,D5.W),D5
 		BPL.S	.ViceS1
 		RTS
-.ViceS3:	MOVE.L	(A4)+,D6
+
+ViceS3:	
+		MOVE.L	(A4)+,D6
 		CMP.L	A0,A4
 		BGT.B	.SourceEndSub
 		LSR.L	#1,D6
 		BSET	D7,D6
 		BCS.S	.ViceS2
-.ViceS4:	MOVE.W	(A6,D5.W),D5
+
+ViceS4:	
+		MOVE.W	(A6,D5.W),D5
 		BMI.S	.End
 		LSR.L	#1,D6
 		BCC.S	.ViceS4
 		BEQ.S	.ViceS3
 		MOVE.W	(A5,D5.W),D5
 		BPL.S	.ViceS1
-.End:		RTS
+
+End:	
+		RTS
 		END
 */
-
 	// TODO: .. finish implement..
 	return false;
 }
@@ -437,7 +479,7 @@ bool XfdVDCO::decrunch(CReadBuffer *pOut)
 	A0.src = m_pIn->GetBegin(); // <- buffer address
 	D0.l = m_pIn->GetSize(); // <- buffer length
 
-	if (GetULong(A0.src) != MakeTag("VDCO"))
+	if (MakeTag((char*)A0.src) != MakeTag("VDCO"))
 	{
 		return false;
 	}
