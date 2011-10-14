@@ -146,6 +146,11 @@ struct addrreg
 		return getL(src + off);
 	}
 	
+	// byteordering helpers
+	uint8_t getB(const uint8_t *pBuf) const
+	{
+		return (pBuf[0]);
+	}
 	uint16_t getW(const uint8_t *pBuf) const
 	{
 		return ((pBuf[0] << 8) + pBuf[1]);

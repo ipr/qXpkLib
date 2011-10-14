@@ -643,7 +643,7 @@ vdco5:
 	D2.b = A0.b();		//MOVE.B	(A0)+,D2
 	
 	A2.src = A1.src;	//MOVEA.L	A1,A2
-	A2.src = (A2.src - (D2.w));	//SUBA.W	D2,A2
+	A2.src -= D2.w;		//SUBA.W	D2,A2
 
 	D3.w += 1;			//ADDQ.W	#1,D3
 		
