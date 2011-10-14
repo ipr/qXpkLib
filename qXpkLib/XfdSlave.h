@@ -33,6 +33,41 @@ struct addrreg
 {
 	uint8_t *src;
 
+	/*	
+	ptrdiff_t operator -(const addrreg& other) const
+	{
+		return (other.src - src);
+	}
+	*/
+
+	// need operand size here somewhere..
+	// (size of value to copy)
+	/*
+	addrreg& operator += (const addrreg& other)
+	{
+	}
+	*/
+	
+	void setb(const addrreg& other)
+	{
+		int8_t *p = (int8_t*)src;
+		src++;
+		(*p) = other.b();
+	}
+	void setw(const addrreg& other)
+	{
+		int16_t *p = (int16_t*)src;
+		src += 2;
+		(*p) = other.w();
+	}
+	void setl(const addrreg& other)
+	{
+		int32_t *p = (int32_t*)src;
+		src += 4;
+		(*p) = other.l();
+	}
+
+
 	/* 
 	will it be more trouble to use operators..? 
 	(implicit use by mistake..)
@@ -52,6 +87,21 @@ struct addrreg
 		int32_t *p = (int32_t*)src;
 		return *p;
 	}
+
+	// could be made simpler with these.. ?	
+	operator int8_t*() const
+	{
+		return (int8_t*)src;
+	}
+	operator int16_t*() const
+	{
+		return (int16_t*)src;
+	}
+	operator int32_t*() const
+	{
+		return (int32_t*)src;
+	}
+	
 	/**/
 	
 	// off = address relative offset
