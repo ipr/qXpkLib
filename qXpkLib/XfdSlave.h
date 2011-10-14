@@ -67,51 +67,34 @@ struct addrreg
 	}
 	*/
 	
-	// (An)+,(Am)+ syntax (increment both)
+	// (An)+,(Am)+ syntax (increment both),
+	// value should be "as-is" until value is accessed
+	// -> don't swap byteorder unless value is really used also
 	void setb(addrreg& other)
 	{
 		int8_t *p = (int8_t*)src;
-		src++;
-		(*p) = other.b();
+		int8_t *o = (int8_t*)other.src;
+		src++; other.src++;
+		(*p) = (*o);
 	}
 	void setw(addrreg& other)
 	{
 		int16_t *p = (int16_t*)src;
-		src += 2;
-		(*p) = other.w();
+		int16_t *o = (int16_t*)other.src;
+		src += 2; other.src += 2;
+		(*p) = (*o);
 	}
 	void setl(addrreg& other)
 	{
 		int32_t *p = (int32_t*)src;
-		src += 4;
-		(*p) = other.l();
+		int32_t *o = (int32_t*)other.src;
+		src += 4; other.src += 4;
+		(*p) = (*o);
 	}
 
-	/*	
-	addrreg& operator = (const int8_t &b)
-	{
-		int8_t *p = (int8_t*)src;
-		(*p) = b;
-		return *this;
-	}
-	addrreg& operator = (const int16_t &w)
-	{
-		int16_t *p = (int16_t*)src;
-		(*p) = w;
-		return *this;
-	}
-	addrreg& operator = (const int32_t &l)
-	{
-		int32_t *p = (int32_t*)src;
-		(*p) = l;
-		return *this;
-	}
-	*/
-
-	/* 
+	/*
 	will it be more trouble to use operators..? 
 	(implicit use by mistake..)
-	*/
 	operator int8_t() const
 	{
 		//int8_t *p = (int8_t*)src;
@@ -127,8 +110,6 @@ struct addrreg
 		//int32_t *p = (int32_t*)src;
 		return l(0);
 	}
-
-	/*
 	// could be made simpler with these.. ?	
 	operator int8_t*() const
 	{

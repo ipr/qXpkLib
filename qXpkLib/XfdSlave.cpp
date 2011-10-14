@@ -607,7 +607,7 @@ vdco4:
 	}
 	
 	//CMP.L	A3,A1
-	if ((A1 - A3) == 0)
+	if ((A1.src - A3.src) == 0)
 	{
 		//BEQ.B	.err
 		// end before expected?
@@ -650,7 +650,7 @@ vdco5:
 	A4.src = (A1.src + D3.W)+1; //LEA	1(A1,D3.W),A4
 	
 	//CMP.L	A3,A4
-	if ((A4 - A3) > 0)
+	if ((A4.src - A3.src) > 0)
 	{
 		//BHI.B	.err
 		throw IOException("address outside expected");
