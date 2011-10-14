@@ -46,19 +46,20 @@ struct addrreg
 	}
 	*/
 	
-	void setb(const addrreg& other)
+	// (An)+,(Am)+ syntax (increment both)
+	void setb(addrreg& other)
 	{
 		int8_t *p = (int8_t*)src;
 		src++;
 		(*p) = other.b();
 	}
-	void setw(const addrreg& other)
+	void setw(addrreg& other)
 	{
 		int16_t *p = (int16_t*)src;
 		src += 2;
 		(*p) = other.w();
 	}
-	void setl(const addrreg& other)
+	void setl(addrreg& other)
 	{
 		int32_t *p = (int32_t*)src;
 		src += 4;
@@ -72,18 +73,18 @@ struct addrreg
 	*/
 	operator int8_t() const
 	{
-		int8_t *p = (int8_t*)src;
-		return *p;
+		//int8_t *p = (int8_t*)src;
+		return b(0);
 	}
 	operator int16_t() const
 	{
-		int16_t *p = (int16_t*)src;
-		return *p;
+		//int16_t *p = (int16_t*)src;
+		return w(0);
 	}
 	operator int32_t() const
 	{
-		int32_t *p = (int32_t*)src;
-		return *p;
+		//int32_t *p = (int32_t*)src;
+		return l(0);
 	}
 
 	/*
@@ -106,48 +107,50 @@ struct addrreg
 	
 	// off = address relative offset
 	
-	int8_t b(size_t off = 0)
+	int8_t b(void)
 	{
-		if (off == 0)
-		{
-			return *src++;
-		}
+		return *src++;
+	}
+	int8_t b(const size_t off) const
+	{
 		return *(src + off);
 	}
 
-	int16_t w(size_t off = 0)
+	int16_t w(void)
 	{
-		if (off == 0)
-		{
-			//int16_t *p = (int16_t*)src;
-			int8_t *p = src;
-			src += 2;
-			//return *p;
-			return getW(p);
-		}
+		//int16_t *p = (int16_t*)src;
+		//src += 2;
+		//return *p;
+		int8_t *p = src;
+		src += 2;
+		return getW(p);
+	}
+	int16_t w(const size_t off) const
+	{
 		//return (*((int16_t*)(src + off)));
 		return getW(src + off);
 	}
 	
-	int32_t l(size_t off = 0)
+	int32_t l(void)
 	{
-		if (off == 0)
-		{
-			//int32_t *p = (int32_t*)src;
-			int8_t *p = src;
-			src += 4;
-			//return *p;
-			return getL(p);
-		}
+		//int32_t *p = (int32_t*)src;
+		//src += 4;
+		//return *p;
+		int8_t *p = src;
+		src += 4;
+		return getL(p);
+	}
+	int32_t l(const size_t off) const
+	{
 		//return (*((int32_t*)(src + off)));
 		return getL(src + off);
 	}
 	
-	uint16_t getW(const uint8_t *pBuf)
+	uint16_t getW(const uint8_t *pBuf) const
 	{
 		return ((pBuf[0] << 8) + pBuf[1]);
 	}
-	uint32_t getL(const uint8_t *pBuf)
+	uint32_t getL(const uint8_t *pBuf) const
 	{
 		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
