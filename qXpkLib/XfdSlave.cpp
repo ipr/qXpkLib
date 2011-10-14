@@ -250,7 +250,7 @@ bool XfdVice::decrunch(CReadBuffer *pOut)
 	}
 	
 	//CMP.B	#$80,4(A0)
-	if (A0.b(4) != 0x80)
+	if ((A0.b(4) - 0x80) != 0)
 	{
 		//BNE.B	.Exit
 		return false;
@@ -474,155 +474,187 @@ bool XfdVDCO::decrunch(CReadBuffer *pOut)
 	//MOVE.L	D0,xfdrr_FinalTargetLen(A1)
 	pOut->Reserve(D0.l);
 	
-	//MOVEQ	#12,D0
-	D0.l = 12;
+	D0.l = 12;		//MOVEQ	#12,D0
 	
 	//ADD.L	8(A0),D0		* most files are some bytes longer
 	D0.l += A0.l(8);
 	
+	// note: header is 12 bytes?
+	// -> test current pos
+	
 	//MOVE.L	D0,xfdrr_MinSourceLen(A1)
 	//MOVEQ	#1,D0
-	//return true; // checking done (RB_VDCO)
+	//return true; // checking done (goto: RB_VDCO)
 
 	// actual decrunching starts.. (separate method?)
 //DB_VDCO		MOVEM.L	D2-D7/A2-A6,-(A7) // keep registers in stack
 DB_VDCO:
-		//MOVE.L	A0,A5
-		A5.src = A0.src; // given source
-		
-		//MOVE.L	xfdbi_UserTargetBuf(A5),A1
-		//A1.src = A5.src
-		
-		//MOVE.L	A1,A3
-		//A3.src = A1.src;
-		//ADDA.L	xfdbi_TargetBufSaveLen(A5),A3
-		//MOVE.L	xfdbi_SourceBuffer(A5),A0
+	// these we can skip and get pointers directly
+	//MOVE.L	A0,A5
+	//MOVE.L	xfdbi_UserTargetBuf(A5),A1
+	//MOVE.L	A1,A3
+	//ADDA.L	xfdbi_TargetBufSaveLen(A5),A3
+	//MOVE.L	xfdbi_SourceBuffer(A5),A0
 
 //; A0 -> Crunched Data (source)
 //; A1 -> Decrunch buffer (destination)
 //; A3 -> End of decrunch buffer
+	A0.src = m_pIn->GetBegin();
+	A1.src = pOut->GetBegin();
+	A3.src = pOut->GetEnd();
 
-		//LEA	12(A0),A0	; Skip header
-		A0.src = A0.src +12;
-		//MOVEQ	#15,D7
-		D7.l = 15;
-		//MOVEQ	#4,D6
-		D6.l = 4;
-		
-		//TST.B	(A0)+
+	A0.src += 12;	//LEA	12(A0),A0	; Skip header
+	D7.l = 15;		//MOVEQ	#15,D7
+	D6.l = 4;		//MOVEQ	#4,D6
+	
+	//TST.B	(A0)+
+	if (A0.b() == 0)
+	{
 		//BEQ.B	.vdco3
-		if (A0.b() == 0)
-		{
-			goto .vdco3;
-		}
-		//MOVEQ	#$1F,D7
-		D7.l = 0x1F;
-		//MOVEQ	#3,D6
-		D6.l = 3;
-		
-		//BRA.B	.vdco3
-		goto .vdco3;
+		goto vdco3;
+	}
+	
+	D7.l = 0x1F;	//MOVEQ	#$1F,D7
+	D6.l = 3;		//MOVEQ	#3,D6
+	
+	//BRA.B	.vdco3
+	goto vdco3; // unconditional
 
-.vdco2:		
-		//LEA	8(A1),A4
-		A4.src = A1.src + 8;
-		
-		//CMP.L	A3,A4
+vdco2:		
+	A4.src = A1.src + 8;	//LEA	8(A1),A4
+	
+	//CMP.L	A3,A4
+	if ((A4 - A3) > 0)
+	{
 		//BHI.B	.err
-		if ((A4 - A3) > 0)
-		{
-			//goto .err;
-			throw IOException("address outside expected");
-		}
+		// -> no more jumping, just exit and give error
+		throw IOException("address outside expected");
+	}
 		
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		//MOVE.B	(A0)+,(A1)+
-		for (int i = 0; i < 8; i++)
-		{
-			A1.setb(A0);
-		}
-		
-.vdco3:		MOVE.B	(A0)+,D0
-		BEQ.B	.vdco2
-		MOVEQ	#7,D1
-
-.vdco4:	
-		//ADD.B	D0,D0
-		D0.b += D0.b;
-		BCS.B	.vdco5
-		
-		//CMP.L	A3,A1
-		//BEQ.B	.err
-		if ((A1 - A3) == 0)
-		{
-			// end before expected?
-			throw IOException("unexpected equal address");
-		}
-		
-		//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	//MOVE.B	(A0)+,(A1)+
+	for (int i = 0; i < 8; i++)
+	{
 		A1.setb(A0);
+	}
 		
-		DBRA	D1,.vdco4
-		BRA.B	.vdco3
+vdco3:		
+	D0.b = A0.b();	//MOVE.B	(A0)+,D0
+	if (D0.b == 0)
+	{
+		//BEQ.B	.vdco2
+		goto vdco2;
+	}
+	
+	D1.l = 7;		//MOVEQ	#7,D1
 
-.vdco5:		MOVEQ	#0,D2
-		MOVE.B	(A0)+,D2	; Terminator
-		BEQ.B	.end
+vdco4:	
+	D0.b += D0.b;	//ADD.B	D0,D0
+	
+	// if carry set?
+	if (D0.w & (1 << 8))
+	{
+		//BCS.B	.vdco5
+		goto vdco5;
+	}
+	
+	//CMP.L	A3,A1
+	if ((A1 - A3) == 0)
+	{
+		//BEQ.B	.err
+		// end before expected?
+		throw IOException("unexpected equal address");
+	}
 		
+	A1.setb(A0);	//MOVE.B	(A0)+,(A1)+
+	
+	// decrement&branch until -1
+	//DBRA	D1,vdco4
+	while ((D1.l--) > -1)
+	{
+		goto vdco4;
+	}
+
+	//BRA.B	vdco3
+	goto vdco3; // unconditional branch
+
+vdco5:
+	
+	D2.l = 0;			//MOVEQ	#0,D2
+	D2.b = A0.b();		//MOVE.B	(A0)+,D2	; Terminator
+	
+	if (D2.b == 0) // 0 as end-marker byte?
+	{
+		//BEQ.B	.end
+		goto end;
+	}
+	
+	D3.l = D7.l;		//MOVE.L	D7,D3
+	D3.w &= D2.w;		//AND.W	D2,D3
+	D2.w <<= D6.w;		//LSL.W	D6,D2
+	D2.b = A0.b();		//MOVE.B	(A0)+,D2
+	
+	A2.src = A1.src;	//MOVEA.L	A1,A2
+	A2.src = (A2.src - (D2.w));	//SUBA.W	D2,A2
+
+	D3.w += 1;			//ADDQ.W	#1,D3
 		
-		//MOVE.L	D7,D3
-		D3.l = D7.l;
-		
-		AND.W	D2,D3
-		LSL.W	D6,D2
-		MOVE.B	(A0)+,D2
-		MOVEA.L	A1,A2
-		SUBA.W	D2,A2
-		ADDQ.W	#1,D3
-		LEA	1(A1,D3.W),A4
-		
-		//CMP.L	A3,A4
+	A4.src = (A1.src + D3.W)+1; //LEA	1(A1,D3.W),A4
+	
+	//CMP.L	A3,A4
+	if ((A4 - A3) > 0)
+	{
 		//BHI.B	.err
-		if ((A4 - A3) > 0)
-		{
-			//goto .err;
-			throw IOException("address outside expected");
-		}
-		
-		
-.loop:		
-		//MOVE.B	(A2)+,(A1)+
-		A1.setb(A2);
-		DBRA	D3,.loop
-		DBRA	D1,.vdco4
-		BRA.B	.vdco3
+		throw IOException("address outside expected");
+	}
 
-.end:		//MOVEQ	#1,D0
-		//CMP.L	A3,A1
+loop:	
+	A1.setb(A2); //MOVE.B	(A2)+,(A1)+
+	
+	//DBRA	D3,loop
+	while ((D3.l--) > -1)
+	{
+		goto loop;
+	}
+	
+	//DBRA	D1,vdco4
+	while ((D1.l--) > -1)
+	{
+		goto vdco4;
+	}
+	
+	//BRA.B	vdco3
+	goto vdco3; // unconditional branch
+
+end:
+	//MOVEQ	#1,D0
+	// -> just set exit status (true)
+	
+	//CMP.L	A3,A1
+	if (A3.src == A1.src)
+	{
 		//BEQ.B	.ok
-		if (A3.src == A1.src)
-		{
-			return true;
-		}
-		else
-		{
-			//.err:		MOVEQ	#0,D0
-			//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A5)
-			throw IOException("address mismatch");
-		}
+		goto ok;
+	}
+	else
+	{
+		//.err:		MOVEQ	#0,D0
+		// -> just set exit status (false)
 		
-.ok:	//MOVEM.L	(A7)+,D2-D7/A2-A6 // return stack, exit ok
-		//RTS
-		return true;
-
-		//END
-*/
+		//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A5)
+		throw IOException("address mismatch");
+	}
+		
+ok:
+	//MOVEM.L	(A7)+,D2-D7/A2-A6 // return stack, exit ok
+	//RTS
+	return true;
 
 }
 

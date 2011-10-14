@@ -33,12 +33,10 @@ struct addrreg
 {
 	uint8_t *src;
 
-	/*	
 	ptrdiff_t operator -(const addrreg& other) const
 	{
 		return (other.src - src);
 	}
-	*/
 
 	// need operand size here somewhere..
 	// (size of value to copy)
@@ -88,6 +86,7 @@ struct addrreg
 		return *p;
 	}
 
+	/*
 	// could be made simpler with these.. ?	
 	operator int8_t*() const
 	{
@@ -101,6 +100,7 @@ struct addrreg
 	{
 		return (int32_t*)src;
 	}
+	*/
 	
 	/**/
 	
@@ -138,6 +138,15 @@ struct addrreg
 	}
 };
 
+// address register,
+// handle addressing modes and value-modes..
+/*
+class Areg
+{
+public:
+
+};
+*/
 
 // pure virtual interface 
 // for XFD-slave decruncher implementations
