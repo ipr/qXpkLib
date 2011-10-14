@@ -29,14 +29,35 @@ struct datareg
 	};
 };
 
+// address registers generally need two modes in operations:
+// 1) data-operations (value which is pointed to)
+// 2) address-operations (change pointer to next element)
+//
+// for first case, use helper operands.
+// for second case, operate directly on the pointer instead.
+//
 struct addrreg
 {
+	// actual value of register is just pointer to data:
+	// "address-of" storage.
+	// data-operations (e.g. (A0)+ ) affect 
+	// both pointed data and post-increment of the address,
+	// such as: move.l (A0),D0 -> D0.l = A0.l()
+	// and: cmp.l D0,(A0)+ -> if (A0.l() == D0.l)
+	//
+	// address-value operations should use pointer directly from here,
+	// such as: cmp.l A1,A0 -> if (A0.src == A1.src)
+	// and: movea.l A1,A0 -> A0.src = A1.src 
+	//
+	//
 	uint8_t *src;
 
+	/* no need, use src directly when operating on actual address
 	ptrdiff_t operator -(const addrreg& other) const
 	{
 		return (other.src - src);
 	}
+	*/
 
 	// need operand size here somewhere..
 	// (size of value to copy)
@@ -66,6 +87,26 @@ struct addrreg
 		(*p) = other.l();
 	}
 
+	/*	
+	addrreg& operator = (const int8_t &b)
+	{
+		int8_t *p = (int8_t*)src;
+		(*p) = b;
+		return *this;
+	}
+	addrreg& operator = (const int16_t &w)
+	{
+		int16_t *p = (int16_t*)src;
+		(*p) = w;
+		return *this;
+	}
+	addrreg& operator = (const int32_t &l)
+	{
+		int32_t *p = (int32_t*)src;
+		(*p) = l;
+		return *this;
+	}
+	*/
 
 	/* 
 	will it be more trouble to use operators..? 

@@ -566,7 +566,7 @@ vdco2:
 	A4.src = A1.src + 8;	//LEA	8(A1),A4
 	
 	//CMP.L	A3,A4
-	if ((A4 - A3) > 0)
+	if ((A4.src - A3.src) > 0)
 	{
 		//BHI.B	.err
 		// -> no more jumping, just exit and give error
