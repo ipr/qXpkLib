@@ -8,6 +8,8 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+// fwd. decl.
+class CUnLzx;
 
 class XADLZXSHARED_EXPORT xadLZX : public xadLibraryBase
 {
@@ -23,6 +25,9 @@ public:
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
+	
+private:
+	CUnLzx *m_pArchive;
 };
 
 

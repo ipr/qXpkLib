@@ -14,8 +14,26 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadLha.cpp
+SOURCES += xadLha.cpp \
+    AnsiFile.cpp \
+    LhArchive.cpp \
+    crcio.cpp \
+    LhHeader.cpp \
+    LhExtract.cpp \
+    LhDecoder.cpp \
+    Huffman.cpp
 
-HEADERS += xadLha.h\
-        xadLha_global.h
+HEADERS += xadLha.h \
+        xadLha_global.h \
+    AnsiFile.h \
+    LhArchive.h \
+    GenericTime.h \
+    LhaTypeDefs.h \
+    crcio.h \
+    FiletimeHelper.h \
+    LhHeader.h \
+    LhExtract.h \
+    LhDecoder.h \
+    Huffman.h \
+    FilemodeFlags.h
 

@@ -26,6 +26,15 @@ protected:
 	
 public:
 
+	/*
+	// TODO: for listing archive contents
+	class archiveEntry
+	{
+	public:
+		archiveEntry() {};
+	};
+	*/
+
 	// pack/compress
 	//virtual bool Crunch(XpkProgress *pProgress)=0;
 
@@ -33,7 +42,7 @@ public:
 	//virtual size_t fileCount()=0;
 
 	// list files in archive
-	//virtual fileList()=0;
+	//virtual bool fileList(QList<archiveEntry> &entryList)=0;
 	
 	// should be given in progress-object?
 	//void setArchive(QString &szArchive)=0;

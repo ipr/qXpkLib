@@ -8,6 +8,8 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+// fwd. decl.
+class CLhArchive;
 
 class XADLHASHARED_EXPORT xadLha : public xadLibraryBase
 {
@@ -23,6 +25,9 @@ public:
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
+	
+private:
+	CLhArchive *m_pArchive;
 };
 
 

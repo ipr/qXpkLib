@@ -14,8 +14,14 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadLZX.cpp
+SOURCES += xadLZX.cpp \
+    UnLzx.cpp \
+    AnsiFile.cpp \
+    CrcSum.cpp
 
 HEADERS += xadLZX.h\
-        xadLZX_global.h
+        xadLZX_global.h \
+    UnLzx.h \
+    AnsiFile.h \
+    CrcSum.h
 
