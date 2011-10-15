@@ -43,7 +43,8 @@ xpkLibraryBase *GetXpkInstance(void)
 	return &g_Instance;
 }
 
-
+// see other versions below later..
+//
 int32_t bfextu(unsigned char *p, int32_t bo, int32_t bc) 
 {
 	int32_t r;
@@ -62,12 +63,17 @@ int32_t bfextu(unsigned char *p, int32_t bo, int32_t bc)
 }
 
 //#define bfextu1 ((*(src + d0 / 8) >> (7 - (d0 % 8))) & 1)
-
+//
+// should return bool ? (that's how it's used anyway..)
 inline int32_t bfextu1(const unsigned char *src, const int32_t d0)
 {
+	// just test one bit some place in *src..
+	//
 	return ((*(src + d0 / 8) >> (7 - (d0 % 8))) & 1);
 }
 
+// same as bfextu1() but for 3-bit field?
+// see also bfexts()..
 int32_t bfextu3(unsigned char *p, int32_t bo) 
 {
 	int32_t r;
@@ -82,6 +88,9 @@ int32_t bfextu3(unsigned char *p, int32_t bo)
 	return r;
 }
 
+// simulate M68k BFEXTS instruction?
+// must be simpler way.. 
+// just generate bitmask of suitable size and get it done..
 int32_t bfexts(unsigned char *p, int32_t bo, int32_t bc) 
 {
 	int32_t r;
@@ -108,8 +117,7 @@ void unsqsh(unsigned char *src, unsigned char *dst)
 	
 	// 
 	unsigned char a3[] = { 2,3,4,5,6,7,8,0,3,2,4,5,6,7,8,0,4,3,5,2,6,7,8,0,5,4,
-	6,2,3,7,8,0,6,5,7,2,3,4,8,0,7,6,8,2,3,4,5,0,8,7,6,2,3,4,5,0 };
-
+						6,2,3,7,8,0,6,5,7,2,3,4,8,0,7,6,8,2,3,4,5,0,8,7,6,2,3,4,5,0 };
 
 	a6 = dst;
 	a6 += *src++ << 8;
@@ -149,46 +157,45 @@ l6dc:
 		goto l6f6;
 	}
 	d6 = 2;
-	goto l708;
-
-l6f6:	d0 ++;
-	if (! bfextu1(src, d0)) 
-	{
-		goto l706;
-	}
-	d6 = bfextu3(src,d0);
-	d0 += 3;
+	d0 ++;
 	goto l70a;
 
-l706:	d6 = 3;
-l708:	d0 ++;
+l6f6:	
+	d0 ++;
+	if (! bfextu1(src, d0)) 
+	{
+		d6 = 3;
+		d0 ++;
+	}
+	else
+	{
+		d6 = bfextu3(src,d0);
+		d0 += 3;
+	}
+	goto l70a;
 
 l70a:
 	// only place using table in a3 ?
 	d6 = *(a3 + (8*a2) + d6 - 17);
 	if (d6 != 8) 
 	{
-		goto l730;
+		d5 = 4;
+		d2 += 8;
+		goto l734;
 	}
+	//continue: l718
 
 l718:	
 	if (d2 < 20) 
 	{
-		// only place using l722
-		// -> moved here
-		//goto l722;
-		
 		d5 = 0;
-		goto l734;
 	}
-	d5 = 1;
-	goto l732;
-
-/* // only one place jumping here -> moved there
-l722:	
-	d5 = 0;
-	goto l734;
-*/
+	else
+	{
+		d5 = 1;
+		d2 += 8;
+	}
+	goto l734; // this skipped one anyway
 
 l726:	
 	d0 += 1;
@@ -197,10 +204,13 @@ l726:
 	{
 		goto l718;
 	}
-	d6 = a2;
-
-l730:	d5 = 4;
-l732:	d2 += 8;
+	else
+	{
+		d6 = a2;
+		d5 = 4;
+		d2 += 8;
+	}
+	goto l734; // <- below now..
 
 l734:	
 	d4 = bfexts(src,d0,d6);
@@ -208,17 +218,19 @@ l734:
 	d3 -= d4;
 	*dst++ = d3;
 	d5--;
+	
 	if (d5 != -1) 
 	{
+		// loop from start of this..
 		goto l734;
 	}
-	if (d1 == 31) 
+	
+	if (d1 != 31) 
 	{
-		goto l74a;
+		d1 += 1;
 	}
-	d1 += 1;
-
-l74a:	a2 = d6;
+	a2 = d6;
+	goto l74c;
 
 l74c:	
 	d6 = d2;
@@ -231,100 +243,101 @@ l74c:
 	// this is end of chunk?
 	return;
 
-// following three labels essentially same except d4 value
-// and conditional jump-label..
-
 l75a:	
-	d0++;
-	if (bfextu1(src, d0)) 
-	{
-		goto l766;
-	}
-	d4 = 2;
-	goto l79e;
 
-l766:	
-	d0++;
-	if (bfextu1(src, d0)) 
+	// if three following calls all have non-zero result,
+	// -> jump to l77e
+	// otherwise, jump to l79e
+	//
+	// also, d0 and d4 are changed in process..
+	//
+	// TODO: something like this to simplify..
+	//
+	/*
+	if (bfextu1(src, d0+1) && bfextu1(src, d0+2) && bfextu1(src, d0+3))
 	{
-		goto l772;
-	}
-	d4 = 4;
-	goto l79e;
-
-l772:	
-	d0++;
-	if (bfextu1(src, d0)) 
-	{
+		d0 += 3;
 		goto l77e;
+	} 
+	*/
+
+	d0++;
+	if (bfextu1(src, d0)) 
+	{
+		d0++;
+		if (bfextu1(src, d0)) 
+		{
+			d0++;
+			if (bfextu1(src, d0)) 
+			{
+				goto l77e;
+			}
+			else
+			{
+				d4 = 6;
+			}
+		}
+		else
+		{
+			d4 = 4;
+		}
 	}
-	d4 = 6;
+	else
+	{
+		d4 = 2;
+	}
 	goto l79e;
+
 
 l77e:	
 	d0++;
 	if (bfextu1(src, d0)) 
 	{
-		// only this jumping there -> moved here
-		//goto l792;
-		
 		d0++;
+		
 		d6 = bfextu(src,d0,5);
 		d0 += 5;
 		d4 = 16;
-		goto l7a6;
+		d6 += d4; // moved here (only place)
 	}
-	d0++;
-	d6 = bfextu3(src,d0);
-	d0 += 3;
-	d6 += 8;
-	goto l7a8;
-
-/* // only one place jumping here -> moved
-l792:	
-	d0++;
-	d6 = bfextu(src,d0,5);
-	d0 += 5;
-	d4 = 16;
-	goto l7a6;
-*/
+	else
+	{
+		d0++;
+		
+		d6 = bfextu3(src,d0);
+		d0 += 3;
+		d6 += 8;
+	}
+	goto l7a8; // this skips anyway
 
 l79e:	
 	d0++;
 	d6 = bfextu1(src, d0);
 	d0 ++;
-
-l7a6:	d6 += d4;
+	// continue: l7a8
 
 l7a8:	
 	if (bfextu1(src, d0)) 
 	{
-		goto l7c4;
+		d5 = 12;
+		a5 = -0x100;
 	}
-	d0 ++;
-	if (bfextu1(src, d0)) 
+	else
 	{
-		// only this jumping there -> moved here
-		//goto l7bc;
-		
-		d5 = 14;
-		a5 = -0x1100;
-		goto l7ca;
+		d0 ++;
+		if (bfextu1(src, d0)) 
+		{
+			d5 = 14;
+			a5 = -0x1100;
+		}
+		else
+		{
+			d5 = 8;
+			a5 = 0;
+		}
 	}
-	d5 = 8;
-	a5 = 0;
-	goto l7ca;
-
-/* // only one place jumping here -> moved
-l7bc:	
-	d5 = 14;
-	a5 = -0x1100;
-	goto l7ca;
-*/
-
-l7c4:	
-	d5 = 12;
-	a5 = -0x100;
+	// all branches in this end in l7ca with less jumps between..
+	goto l7ca; // skipped one below anyway
 
 l7ca:	
 	d0++;
@@ -333,29 +346,33 @@ l7ca:
 	d6 -= 3;
 	if (d6 < 0) 
 	{
-		goto l7e0;
+		d6 += 2;
+		a4 = -1 + dst + a5 - d4;
+		goto l7ex;
 	}
-	if (d6 == 0) 
+	
+	if (d6 != 0) 
 	{
-		goto l7da;
+		d1 -= 1;
 	}
-	d1 -= 1;
+	
+	// continue: l7da
 
 l7da:	
 	d1 -= 1;
-	if (d1 >= 0) 
+	if (d1 < 0) 
 	{
-		goto l7e0;
+		d1 = 0;
 	}
-	d1 = 0;
-
-l7e0:	
 	d6 += 2;
 	a4 = -1 + dst + a5 - d4;
+	
+	// continue: l7ex
 
 l7ex:	
 	*dst++ = *a4++;
 	d6--;
+	
 	if (d6 != -1) 
 	{
 		goto l7ex;
