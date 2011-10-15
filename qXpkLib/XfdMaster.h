@@ -19,6 +19,9 @@
 
 #include "XfdSlave.h"
 
+// external XFD-decrunching library interface
+#include "xfdLibraryBase.h"
+
 // status information (caller and decruncher)
 #include "XpkProgress.h"
 
@@ -40,7 +43,9 @@ protected:
     }
     */
 
+	// TODO: determine inheritance to use here..
     XfdSlave *m_pXfdSlave;
+    //xfdLibraryBase *m_pSubLibrary;
     
     XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer);
 

@@ -12,14 +12,14 @@
 
 // (see header)
 xfdSZDD g_Instance;
-xpkLibraryBase *GetXpkInstance(void)
+xfdLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
 }
 
 xfdSZDD::xfdSZDD()
-    : xpkLibraryBase()
+    : xfdLibraryBase()
 {
 }
 

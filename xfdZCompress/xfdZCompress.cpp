@@ -12,14 +12,14 @@
 
 // (see header)
 xfdZCompress g_Instance;
-xpkLibraryBase *GetXpkInstance(void)
+xfdLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
 }
 
 xfdZCompress::xfdZCompress()
-    : xpkLibraryBase()
+    : xfdLibraryBase()
 {
 }
 

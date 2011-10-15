@@ -10,27 +10,16 @@ TARGET = xadZOO
 TEMPLATE = lib
 
 DEFINES += XADZOO_LIBRARY
+DEFINES += _CRT_SECURE_NO_WARNINGS
 
-SOURCES += xadZOO.cpp
+INCLUDEPATH += ../qXpkLib
+
+SOURCES += xadZOO.cpp \
+    UnZoo.cpp
 
 HEADERS += xadZOO.h\
-        xadZOO_global.h
+        xadZOO_global.h \
+    UnZoo.h
 
-symbian {
-    MMP_RULES += EXPORTUNFROZEN
-    TARGET.UID3 = 0xE19458D2
-    TARGET.CAPABILITY = 
-    TARGET.EPOCALLOWDLLDATA = 1
-    addFiles.sources = xadZOO.dll
-    addFiles.path = !:/sys/bin
-    DEPLOYMENT += addFiles
-}
 
-unix:!symbian {
-    maemo5 {
-        target.path = /opt/usr/lib
-    } else {
-        target.path = /usr/lib
-    }
-    INSTALLS += target
-}
+

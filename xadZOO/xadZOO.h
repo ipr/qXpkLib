@@ -3,9 +3,43 @@
 
 #include "xadZOO_global.h"
 
-class XADZOOSHARED_EXPORT xadZOO {
+#include <QObject>
+
+// base for library interface
+#include "xadLibraryBase.h"
+
+
+class XADZOOSHARED_EXPORT xadZOO : public xadLibraryBase
+{
 public:
     xadZOO();
+    virtual ~xadZOO();
+
+	// set path to uncompress files to
+	virtual bool setExtractPath(QString &szPath);
+	
+	// test archive integrity
+	virtual bool testArchive();
+	
+	// unpack/decompress
+	virtual bool Decrunch(XpkProgress *pProgress);
 };
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// need this for caller to locate instance dynamically,
+// library needs to have one global instance of the cruncher (has no members anyway..)
+//
+XADZOOSHARED_EXPORT xadLibraryBase *GetXpkInstance(void);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // XADZOO_H

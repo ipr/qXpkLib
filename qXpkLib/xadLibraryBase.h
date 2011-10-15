@@ -39,7 +39,10 @@ public:
 	//void setArchive(QString &szArchive)=0;
 	
 	// set path to uncompress files to
-	virtual bool setExtractPath(QString &szPath)()=0;
+	virtual bool setExtractPath(QString &szPath)=0;
+	
+	// test archive integrity
+	virtual bool testArchive()=0;
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress)=0;

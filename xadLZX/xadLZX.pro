@@ -1,21 +1,21 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2011-10-16T00:24:15
+# Project created by QtCreator 2011-10-16T01:09:34
 #
 #-------------------------------------------------
 
 QT       -= gui
 
-TARGET = xadTar
+TARGET = xadLZX
 TEMPLATE = lib
 
-DEFINES += XADTAR_LIBRARY
+DEFINES += XADLZX_LIBRARY
 DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadTar.cpp
+SOURCES += xadLZX.cpp
 
-HEADERS += xadTar.h\
-        xadTar_global.h
+HEADERS += xadLZX.h\
+        xadLZX_global.h
 

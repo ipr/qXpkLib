@@ -1,7 +1,7 @@
-#ifndef XADBZIP2_H
-#define XADBZIP2_H
+#ifndef XADLZX_H
+#define XADLZX_H
 
-#include "xadBzip2_global.h"
+#include "xadLZX_global.h"
 
 #include <QObject>
 
@@ -9,11 +9,11 @@
 #include "xadLibraryBase.h"
 
 
-class XADBZIP2SHARED_EXPORT xadBzip2 : public xadLibraryBase
+class XADLZXSHARED_EXPORT xadLZX : public xadLibraryBase
 {
 public:
-    xadBzip2();
-    virtual ~xadBzip2();
+    xadLZX();
+    virtual ~xadLZX();
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
@@ -34,11 +34,12 @@ extern "C"
 // need this for caller to locate instance dynamically,
 // library needs to have one global instance of the cruncher (has no members anyway..)
 //
-XADBZIP2SHARED_EXPORT xadLibraryBase *GetXpkInstance(void);
+XADLZXSHARED_EXPORT xadLibraryBase *GetXpkInstance(void);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // XADBZIP2_H
+
+#endif // XADLZX_H

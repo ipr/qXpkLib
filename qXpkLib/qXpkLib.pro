@@ -37,7 +37,9 @@ HEADERS += qxpklib.h\
     XfdSlave.h \
     XpkLibrarian.h \
     XadMaster.h \
-    xadLibraryBase.h
+    xadLibraryBase.h \
+    xfdLibraryBase.h
+
 
 
 

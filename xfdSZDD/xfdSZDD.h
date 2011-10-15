@@ -6,15 +6,13 @@
 #include <QObject>
 
 // base for library interface
-#include "xpkLibraryBase.h"
+#include "xfdLibraryBase.h"
 
-class XFDSZDDSHARED_EXPORT xfdSZDD : public xpkLibraryBase
+class XFDSZDDSHARED_EXPORT xfdSZDD : public xfdLibraryBase
 {
 public:
     xfdSZDD();
     virtual ~xfdSZDD();
-
-	virtual bool Crunch(XpkProgress *pProgress);
 	
 	virtual bool Decrunch(XpkProgress *pProgress);
 
@@ -28,7 +26,7 @@ extern "C"
 // need this for caller to locate instance dynamically,
 // library needs to have one global instance of the cruncher (has no members anyway..)
 //
-XFDSZDDSHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
+XFDSZDDSHARED_EXPORT xfdLibraryBase *GetXpkInstance(void);
 
 #ifdef __cplusplus
 }

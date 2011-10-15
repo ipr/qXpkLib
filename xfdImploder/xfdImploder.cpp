@@ -14,25 +14,19 @@
 
 // (see header)
 xfdImploder g_Instance;
-xpkLibraryBase *GetXpkInstance(void)
+xfdLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
 }
 
 xfdImploder::xfdImploder()
-	: xpkLibraryBase()
+	: xfdLibraryBase()
 {
 }
 
 xfdImploder::~xfdImploder()
 {
-}
-
-// no packing support for this format
-bool xfdImploder::Crunch(XpkProgress *pProgress)
-{
-	return false;
 }
 
 // decrunching (unpacking) only supported for this format

@@ -14,7 +14,7 @@
 
 // (see header)
 xfdPowerPacker g_Instance;
-xpkLibraryBase *GetXpkInstance(void)
+xfdLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
@@ -22,18 +22,12 @@ xpkLibraryBase *GetXpkInstance(void)
 
 
 xfdPowerPacker::xfdPowerPacker()
- : xpkLibraryBase()
+ : xfdLibraryBase()
 {
 }
 
 xfdPowerPacker::~xfdPowerPacker()
 {
-}
-
-// no packing support for this format
-bool xfdPowerPacker::Crunch(XpkProgress *pProgress)
-{
-	return false;
 }
 
 // decrunching (unpacking) only supported for this format
