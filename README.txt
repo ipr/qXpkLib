@@ -40,9 +40,13 @@ Current status:
 * initial support for loading libraries
  - may need to change interface from C++ style to C-style for correct/simpler loading..
  - at least Windows DLLs are a pain to deal with when exporting C++ classes from library
- - problems occur when trying dynamic linking without 
-  knowing the sub-library at build-time of master-library (which is needed for extensibility)
+ - problems occur when trying dynamic linking without knowing the sub-library at build-time of master-library 
+  (which is needed for extensibility)
+ - name decorations/symbol export of C++ code from Windows DLL are the pain:
+  this does not become issue if we can link DLL-stub to master-library instead of loading it entirely dynamically..
 * some "foreign" external decrunchers are prepared (PowerPacker, Imploder), not yet tested with new master-library
 * the "native" XPK crunchers need rewrite to work with new master-library
+* some initial XFD "alien" format decrunching (needs conversions from M68k-asm to C/C++ for portability..)
+* many placeholders to be written for new library handling (much needed changes..)
 * ...
 
