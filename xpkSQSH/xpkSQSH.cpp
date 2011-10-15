@@ -126,25 +126,47 @@ void unsqsh(unsigned char *src, unsigned char *dst)
  
 	d3 = *(src++);
 	*(dst++) = d3;
+	goto l6c6;
 
 l6c6:	
-	if (d1 >= 8) 
+	if (d1 < 8) 
 	{
-		goto l6dc;
+		if (bfextu1(src, d0)) 
+		{
+			goto l75a;
+		}
+		else
+		{
+			d0 ++;
+			d5 = 0;
+			d6 = 8;
+		}
+		goto l734;
 	}
-	if (bfextu1(src, d0)) 
-	{
-		goto l75a;
-	}
-	d0 ++;
-	d5 = 0;
-	d6 = 8;
-	goto l734;
 
-l6dc:	
 	if (bfextu1(src, d0)) 
 	{
-		goto l726;
+		d0 += 1;
+		d6 = 8;
+		if (d6 == a2) 
+		{
+			if (d2 < 20) 
+			{
+				d5 = 0;
+			}
+			else
+			{
+				d5 = 1;
+				d2 += 8;
+			}
+		}
+		else
+		{
+			d6 = a2;
+			d5 = 4;
+			d2 += 8;
+		}
+		goto l734; 
 	}
 	d0 ++;
 	if (! bfextu1(src, d0)) 
@@ -178,49 +200,30 @@ l6dc:
 	{
 		d5 = 4;
 		d2 += 8;
-		goto l734;
-	}
-	goto l718;
-
-l718:	
-	if (d2 < 20) 
-	{
-		d5 = 0;
 	}
 	else
 	{
-		d5 = 1;
-		d2 += 8;
+		if (d2 < 20) 
+		{
+			d5 = 0;
+		}
+		else
+		{
+			d5 = 1;
+			d2 += 8;
+		}
 	}
-	goto l734; // this skipped one anyway
+	goto l734; // <- now below..
 
-l726:	
-	d0 += 1;
-	d6 = 8;
-	if (d6 == a2) 
+l734:
+	do
 	{
-		goto l718;
-	}
-	else
-	{
-		d6 = a2;
-		d5 = 4;
-		d2 += 8;
-	}
-	goto l734; // <- below now..
-
-l734:	
-	d4 = bfexts(src,d0,d6);
-	d0 += d6;
-	d3 -= d4;
-	*dst++ = d3;
-	d5--;
-	
-	if (d5 != -1) 
-	{
-		// loop from start of this..
-		goto l734;
-	}
+		d4 = bfexts(src,d0,d6);
+		d0 += d6;
+		d3 -= d4;
+		*dst++ = d3;
+		d5--;
+	} while (d5 != -1);
 	
 	if (d1 != 31) 
 	{
@@ -233,6 +236,7 @@ l74c:
 	d6 = d2;
 	d6 >>= 3;
 	d2 -= d6;
+	
 	if (dst < a6) 
 	{
 		goto l6c6;
@@ -241,11 +245,6 @@ l74c:
 	return;
 
 l75a:	
-
-	// if three following calls all have non-zero result,
-	// -> jump to l77e
-	// otherwise, jump to l7a8
-	// also, d0 and d4 are changed in process..
 
 	d0++;
 	if (bfextu1(src, d0)) 
@@ -256,7 +255,25 @@ l75a:
 			d0++;
 			if (bfextu1(src, d0)) 
 			{
-				goto l77e;
+				d0++;
+				if (bfextu1(src, d0)) 
+				{
+					d0++;
+					
+					d6 = bfextu(src,d0,5);
+					d0 += 5;
+					d4 = 16;
+					d6 += d4; 
+				}
+				else
+				{
+					d0++;
+					
+					d6 = bfextu3(src,d0);
+					d0 += 3;
+					d6 += 8;
+				}
+				goto l7a8; // this skips anyway
 			}
 			else
 			{
@@ -278,27 +295,6 @@ l75a:
 	d0 ++;
 	
 	goto l7a8; // 
-
-l77e:	
-	d0++;
-	if (bfextu1(src, d0)) 
-	{
-		d0++;
-		
-		d6 = bfextu(src,d0,5);
-		d0 += 5;
-		d4 = 16;
-		d6 += d4; // moved here (only place)
-	}
-	else
-	{
-		d0++;
-		
-		d6 = bfextu3(src,d0);
-		d0 += 3;
-		d6 += 8;
-	}
-	goto l7a8; // this skips anyway
 
 l7a8:	
 	if (bfextu1(src, d0)) 
@@ -325,6 +321,7 @@ l7a8:
 	d4 = bfextu(src,d0,d5);
 	d0 += d5;
 	d6 -= 3;
+	
 	if (d6 < 0) 
 	{
 		d6 += 2;
