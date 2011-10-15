@@ -35,19 +35,20 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	if (type.m_enFileType == HEADERTYPE_PP20)
 	{
 		// Amiga PowerPacker:
-		// not XPK-file but we may have support for it..
-		szSubType = "xpkPP20";
+		// not XPK-file but we support it in standalone-format also.
+		szSubType = "xfdPowerPacker";
 	}
 	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
 	{
 		// Amiga Imploder:
 		// multiple identifiers (clones, variations)
 		// but can use same unpacking..
-		szSubType = "xpkIMPL";
+		szSubType = "xfdImploder";
 	}
 	else if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
 	{
 		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
+		// also others (DUKE, HUFF, FAST)..
 		//
 		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
