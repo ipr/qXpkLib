@@ -20,7 +20,8 @@ SOURCES += qxpklib.cpp \
     FileType.cpp \
     XfdMaster.cpp \
     XfdSlave.cpp \
-    XpkLibrarian.cpp
+    XpkLibrarian.cpp \
+    XadMaster.cpp
 
 HEADERS += qxpklib.h\
         qXpkLib_global.h \
@@ -34,7 +35,12 @@ HEADERS += qxpklib.h\
     xpkmaster_checksum.h \
     XfdMaster.h \
     XfdSlave.h \
-    XpkLibrarian.h
+    XpkLibrarian.h \
+    XadMaster.h \
+    xadLibraryBase.h
+
+
+
 
 
 

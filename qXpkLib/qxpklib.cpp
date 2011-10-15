@@ -66,15 +66,6 @@ bool QXpkLib::xpkInfo(QXpkLib::CXpkFileInfo &info)
 {
 	try
 	{
-		/*
-		// new status-container
-		if (m_pProgress != nullptr)
-		{
-			delete m_pProgress;
-		}
-		m_pProgress = new XpkProgress();
-		*/
-	
 		// get info to caller from master-instance
 		return m_pMaster->xpkInfo(info);
 	}
@@ -91,6 +82,8 @@ bool QXpkLib::xpkPack()
 {
 	try
 	{
+		// no packing (yet)
+		
 		/*
 		// new status-container
 		if (m_pProgress != nullptr)
@@ -156,5 +149,12 @@ void QXpkLib::setOutputFile(QString &szFile)
 {
 	// temp, change to on instance creation
 	m_pMaster->setOutputFile(szFile);
+}
+
+// destination path for multi-file archive extraction
+void QXpkLib::setOutputPath(QString &szPath)
+{
+	// temp, change to on instance creation
+	m_pMaster->setOutputPath(szPath);
 }
 

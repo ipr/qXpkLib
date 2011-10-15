@@ -17,7 +17,7 @@
 class xpkLibraryBase
 {
 protected:
-	// only inherited can be made instance of
+	// only derived can be instantiated
 	xpkLibraryBase(void) 
 	{}
 	virtual ~xpkLibraryBase(void)

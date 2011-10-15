@@ -1,5 +1,5 @@
 
-xfdImploder - Amiga Imploder pack/unpack library
+xfdImploder - Amiga Imploder unpack library
 
 Based on Public Domain code by: Stuart Caie 
 

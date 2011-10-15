@@ -1,5 +1,5 @@
 
-xfdPowerPacker - Amiga PowerPacker pack/unpack library
+xfdPowerPacker - Amiga PowerPacker unpack library
 
 Based on PP-Tools by: David Tritscher, davidtritscher@dodo.com.au
 

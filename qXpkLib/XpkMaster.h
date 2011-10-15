@@ -28,6 +28,9 @@
 // XFD-support
 #include "XfdMaster.h"
 
+// XAD-support
+#include "XadMaster.h"
+
 // pure virtual interface
 // for lower-level library (level 0)
 //
@@ -49,6 +52,10 @@ private:
 	CReadBuffer m_InputBuffer;
 	size_t m_nInputFileSize;
 	
+	// for multi-file extraction
+	QString m_outputPath;
+	
+	// change to use path and determine name automagically?
 	CIoContext m_Output;
 	
 	// wrapper for loading/unloading
@@ -56,6 +63,7 @@ private:
 
 	// temp, determine later if suitable way..
 	CXfdMaster *m_pXfdMaster;
+	CXadMaster *m_pXadMaster;
 	
 	// base-pointer (virtual) 
 	// -> load proper by file/packer type
@@ -99,6 +107,10 @@ public slots:
 	void setOutputFile(QString &szFile) 
 	{
 		m_Output.setName(szFile);
+	}
+	void setOutputPath(QString &szPath) 
+	{
+		m_outputPath = szPath;
 	}
 	
 signals:

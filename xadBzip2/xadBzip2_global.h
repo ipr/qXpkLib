@@ -1,0 +1,12 @@
+#ifndef XADBZIP2_GLOBAL_H
+#define XADBZIP2_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(XADBZIP2_LIBRARY)
+#  define XADBZIP2SHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define XADBZIP2SHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // XADBZIP2_GLOBAL_H

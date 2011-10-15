@@ -14,8 +14,12 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xpkNUKE.cpp
+SOURCES += xpkNUKE.cpp \
+    Nuke.cpp
 
 HEADERS += xpkNUKE.h\
-        xpkNUKE_global.h
+        xpkNUKE_global.h \
+    Nuke.h
+
+
 

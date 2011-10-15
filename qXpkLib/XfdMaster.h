@@ -50,7 +50,7 @@ public:
     CXfdMaster();
     ~CXfdMaster();
     
-    bool isXfdSupported(CReadBuffer *pInputBuffer);
+    bool isSupported(CReadBuffer *pInputBuffer);
     
 	bool decrunch(XpkProgress *pProgress);
 };

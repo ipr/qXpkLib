@@ -242,6 +242,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		{
 			return HEADERTYPE_XPK_SQSH;
 		}
+		/* // test generic detection -> commented out
 		else if (::memcmp(pTmp, "NUKE", 4) == 0)
 		{
 			return HEADERTYPE_XPK_NUKE;
@@ -250,6 +251,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		{
 			return HEADERTYPE_XPK_RLEN;
 		}
+		*/
 		return enFileType;
 	}
 	else if (::memcmp(pBuffer, "XFDD", 4) == 0)
@@ -269,7 +271,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	else if (::memcmp(pBuffer, "PP20", 4) == 0)
 	{
 		// powerpacker
-		return HEADERTYPE_PP20;
+		return HEADERTYPE_POWERPACKER;
 	}
 	else if (::memcmp(pBuffer, "IMP!", 4) == 0)
 	{
@@ -326,6 +328,13 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// stand-alone compression format (Microsoft compress)
 		return HEADERTYPE_SZDD;
 	}
+	/* check
+	else if (::memcmp(pBuffer, "MSCF", 4) == 0)
+	{
+		// Microsoft CAB-file
+		return HEADERTYPE_MSCAB;
+	}
+	*/
 	else if (::memcmp(pBuffer, "LZX", 3) == 0)
 	{
 		// LZX archive
@@ -451,6 +460,13 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	{
 		return HEADERTYPE_XZ;
 	}
+	else if (pBuffer[0] == 'M'
+		 && pBuffer[1] == 'S'
+		 && pBuffer[2] == 'H')
+	{
+		// xMash
+		return HEADERTYPE_XMASH;
+	}
 	
 	// try to determine from first four bytes.. (in case "magic number" as non-ASCII chars)
 	// note: needs byteswap..
@@ -543,7 +559,7 @@ tHeaderCategory CFileType::FileCategoryByType(const tHeaderType enType) const
 	//case HEADERTYPE_ARJ:
 		return HEADERCAT_ARCHIVE;
 		
-	case HEADERTYPE_PP20:
+	case HEADERTYPE_POWERPACKER:
 	case HEADERTYPE_IMPLODER:
 	case HEADERTYPE_XPK_GENERIC:
 	case HEADERTYPE_XPK_SQSH:
@@ -654,7 +670,7 @@ wstring CFileType::GetNameOfType()
 		return _T("LhA");
 	case HEADERTYPE_LZX:
 		return _T("LZX");
-	case HEADERTYPE_PP20:
+	case HEADERTYPE_POWERPACKER:
 		return _T("PowerPacker");
 	case HEADERTYPE_IMPLODER:
 		return _T("Imploder");

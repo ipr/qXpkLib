@@ -11,6 +11,8 @@
 
 #include "XfdMaster.h"
 
+#include "FileType.h"
+
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
@@ -36,7 +38,9 @@ XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer)
 	// - MasterCruncher?
 	// ... etc.
 	// 
-	
+	// TODO: should ask "slave" decruncher directly if supported..
+	// so many variations..
+	//
 	
 	if (::memcmp(pInputBuffer->GetBegin(), "LPAK", 4) == 0)
 	{
@@ -123,7 +127,7 @@ CXfdMaster::~CXfdMaster()
 
 // detect XFD-supported decrunching from buffer..
 //
-bool CXfdMaster::isXfdSupported(CReadBuffer *pInputBuffer)
+bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer)
 {
 	release(); // release existing if necessary
 	m_pXfdSlave = loadDecruncher(pInputBuffer);

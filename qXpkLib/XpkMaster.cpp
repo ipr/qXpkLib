@@ -32,7 +32,7 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	
 	// determine file datatype by header information
 	CFileType type(pInputBuffer->GetBegin(), pInputBuffer->GetSize());
-	if (type.m_enFileType == HEADERTYPE_PP20)
+	if (type.m_enFileType == HEADERTYPE_POWERPACKER)
 	{
 		// Amiga PowerPacker:
 		// not XPK-file but we support it in standalone-format also.
@@ -48,9 +48,15 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	else if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
 	{
 		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
-		// also others (DUKE, HUFF, FAST)..
+		// also others:
+		// in xpk-dev: NUKE, DUKE, RLEN, HUFF, FAST..
+		// others: SMPL, SLZ3, SHRI, PWPK, PPMQ, 
+		// IDEA?, MASH, LHLB, ILZR, FRLE, FBR2, 
+		// DMCB, DLTA, CBR0, BLZW, BLFH..
 		//
 		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
+		szSubType = "xpk";
+		szSubType.append(m_InputBuffer.GetAt(8), 4);
 	}
 	else if (type.m_enFileType == HEADERTYPE_XFD_GENERIC)
 	{
@@ -60,13 +66,17 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	{
 		szSubType = "xpkSQSH";
 	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE
-			 || type.m_enFileType == HEADERTYPE_XPK_RLEN)
+	/* testing generic detection -> commented out
+	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
+	{
+	}
+	else if (type.m_enFileType == HEADERTYPE_XPK_RLEN)
 	{
 		// already detected as XPK
 		// -> load sub-library (get actual type)
 		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
+	*/
 	else if (type.m_enFileType == HEADERTYPE_GZIP)
 	{
 		// load sub-library for handling GZIP
@@ -104,9 +114,13 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 		// others?
 		// -> should be as sub-libraries..
 		
+		if (m_pXadMaster->isSupported(pInputBuffer) == true)
+		{
+		}
+		
 		// detect some more types: files which XFD supports
 		// but have "alien" fileformat..
-		if (m_pXfdMaster->isXfdSupported(pInputBuffer) == true)
+		if (m_pXfdMaster->isSupported(pInputBuffer) == true)
 		{
 			// handle as "XFD-GENERIC" type..
 		}
@@ -117,6 +131,13 @@ std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
 
 void CXpkMaster::PrepareUnpacker(std::string &subType)
 {
+	// don't delete since libraries now give "static" instance,
+	// change later, for now leave "clean" in case of error..
+	if (m_pSubLibrary != nullptr)
+	{
+		m_pSubLibrary = nullptr;
+	}
+
 	if (subType.length() < 4)
 	{
 		// should throw exception, for testing just skip
@@ -196,6 +217,7 @@ CXpkMaster::CXpkMaster(QObject *parent)
 	: QObject(parent)
     , m_SubLib(parent)
     , m_pXfdMaster(nullptr)
+    , m_pXadMaster(nullptr)
     , m_InputName()
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
@@ -204,10 +226,17 @@ CXpkMaster::CXpkMaster(QObject *parent)
 {
 	// temp, check handling later..
 	m_pXfdMaster = new CXfdMaster();
+	m_pXadMaster = new CXadMaster();
 }
 
 CXpkMaster::~CXpkMaster(void)
 {
+	if (m_pXadMaster != nullptr)
+	{
+		delete m_pXadMaster;
+		m_pXadMaster = nullptr;
+	}
+
 	if (m_pXfdMaster != nullptr)
 	{
 		delete m_pXfdMaster;
@@ -246,6 +275,10 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	
 	// determine file type from header, try to load decruncher for it:
 	// throws exception on failure
+	//
+	// TODO: don't read entire file before this,
+	// only after it is known to be supported..
+	//
 	PrepareUnpacker(getCruncherType(&m_InputBuffer));
 
 	// TODO: if XFD-cruncher is needed, switch handling to suitable class..
@@ -256,7 +289,16 @@ bool CXpkMaster::xpkUnpack(XpkProgress *pProgress)
 	
 	// just decrunch all at once, write file when done
 	bool bRet = true;
-	if (m_Tags.IsXpkFile(m_InputBuffer) == true)
+	if (m_pXadMaster->isSupported(&m_InputBuffer) == true)
+	{
+		m_pXadMaster->setExtractPath(m_outputPath);
+		bRet = m_pXadMaster->extractArchive(pProgress);
+	}
+	else if (m_pXfdMaster->isSupported(&m_InputBuffer) == true)
+	{
+		bRet = m_pXfdMaster->decrunch(pProgress);
+	}
+	else if (m_Tags.IsXpkFile(m_InputBuffer) == true)
 	{
 		// XPK-container, process into tags
 		// and chunk-nodes

@@ -6,6 +6,11 @@
 // from master-project (fulfill fwd. decl.)
 #include "XpkProgress.h"
 
+// use shared helper,
+// also DUKE (Delta-NUKE) wants to use same
+//
+#include "Nuke.h"
+
 //TODO: when ready, we can add tracking of created instances
 // (when library needs members per-user..)
 
@@ -29,11 +34,24 @@ xpkNUKE::~xpkNUKE()
 
 bool xpkNUKE::Crunch(XpkProgress *pProgress)
 {
+	//Nuke();
+	
 	return false;
 }
 
 bool xpkNUKE::Decrunch(XpkProgress *pProgress)
 {
+	CNuke nuke;
+	try
+	{
+		//nuke.decrunch();
+		//UnNuke();
+	}
+	catch (std::exception &exp) // catch by base-type
+	{
+		// debug..
+		//std::cerr << "Exception: " << exp.what() << std::end;
+	}
 	return false;
 }
 

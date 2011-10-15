@@ -32,11 +32,17 @@ typedef enum tHeaderType
 	HEADERTYPE_ZIP, // PK-zip and variants, 0x04034B50
 	//HEADERTYPE_TAR, // "tape-archive" (POSIX) (multi-file)
 	//HEADERTYPE_ZOO, // 0xfdc4a7dc ?
+	//HEADERTYPE_CPIO, // Un*x CPIO
+	//HEADERTYPE_SHAR, // Un*x shell-archive..
+	//HEADERTYPE_STUFFIT, // MacOS Stuffit (SIT)
+	//HEADERTYPE_PACKIT, // MacOS Packit (PIT)
+	//HEADERTYPE_ACE, // 
 	//HEADERTYPE_ARC, // 
 	//HEADERTYPE_ARJ, // 
+	//HEADERTYPE_MSCAB, // Microsoft CAB-file
 	
 	// packer types
-	HEADERTYPE_PP20, // Powerpacker, Amiga
+	HEADERTYPE_POWERPACKER, // Powerpacker, Amiga
 	HEADERTYPE_IMPLODER, // Imploder-packed file (multiple ID variations..), Amiga
 	HEADERTYPE_XPK_GENERIC, // XPK, multi-algorithm (SQSH etc.), Amiga
 	HEADERTYPE_XPK_SQSH, // XPK SQSH
@@ -135,16 +141,20 @@ typedef enum tHeaderType
 	// disk images
 	HEADERTYPE_ADFDOS_DISK, // amiga disk file format, TODO: is there header signature or just booblock of disk?
 	HEADERTYPE_DMS_DISK, // Diskmasher compressed disk file, 0x444D5321 == DMS! (big-endian)
+	HEADERTYPE_XMASH, // xMash
 	//HEADERTYPE_XDM_DISK, // xDM compressed disk file
 	//HEADERTYPE_AMIGA_HARDFILE,
 	//HEADERTYPE_ISOCD,
 	//HEADERTYPE_MDF_CDIMAGE, //
+	//HEADERTYPE_MAC_DMG, // MacOS DMG disk image
 	
 	// executables
 	HEADERTYPE_AMIGAOS, // AmigaOS loadseg()ble executable/binary
 	HEADERTYPE_AMIGAOSLIB, // AmigaOS object/library data
 	HEADERTYPE_MSDOSWINDOWS, // MS-DOS,OS/2,Windows
 	HEADERTYPE_UNIXELF, // Un*x ELF
+	
+	//HEADERTYPE_SFX_LHA, // self-extracting (Lha, msdos)
 
 	// for future
 	HEADERTYPE_RESERVED // (reserved for future use)

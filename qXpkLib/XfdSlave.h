@@ -212,17 +212,17 @@ struct addrreg
 		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
 	
-	void setB(const uint8_t *pBuf, const uint8_t val) const
+	void setB(uint8_t *pBuf, const uint8_t val) const
 	{
 		pBuf[0] = val;
 	}
-	void setW(const uint8_t *pBuf, const uint16_t val) const
+	void setW(uint8_t *pBuf, const uint16_t val) const
 	{
 		//pBuf[0] = ((val & (0xFF << 8)) >> 8);
 		pBuf[0] = ((val & 0xFF00) >> 8);
 		pBuf[1] = (val & 0xFF);
 	}
-	void setL(const uint8_t *pBuf, const uint32_t val) const
+	void setL(uint8_t *pBuf, const uint32_t val) const
 	{
 		pBuf[0] = ((val & (0xFF << 24)) >> 24);
 		pBuf[1] = ((val & (0xFF << 16)) >> 16);

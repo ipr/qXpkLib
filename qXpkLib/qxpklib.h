@@ -57,6 +57,10 @@ public:
 	public:
 		CXpkFileInfo() {}
 		
+		// for archive-files, may be larger than 1
+		// for single-file packers, at most 1
+		unsigned long m_ulFileCount; // files in archive
+		
 		unsigned long m_ulFileSize; // actual file size
 		unsigned long m_ulPackedDataSize; // size of compressed data
 		unsigned long m_ulUnpackedSize; // uncompressed size
@@ -88,6 +92,8 @@ public slots:
 	void setInputFile(QString &szFile);
 	void setOutputFile(QString &szFile);
 
+	// for multi-file archive extraction
+	void setOutputPath(QString &szPath);
 };
 
 #endif // QXPKLIB_H
