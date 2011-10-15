@@ -170,6 +170,13 @@ public:
 	// reduce repeated code -> count to given offset from start
 	unsigned char *GetAt(const size_t nOffset)
 	{
+#ifdef _DEBUG
+		// debug-case, access beyond buffer
+		if (m_nReadBufferSize <= nOffset)
+		{
+			return nullptr;
+		}
+#endif	
 		return m_pReadBuffer + nOffset;
 	}
 	
@@ -242,6 +249,14 @@ public:
 	// copy given, start at current
 	bool Append(const unsigned char *pData, const size_t nSize)
 	{
+	/* if explicit reserve is needed..
+#ifdef _DEBUG
+		if ((m_nCurrentPos + nSize) > m_nReadBufferSize)
+		{
+			// exception, access beyond allocated buffer
+		}
+#endif	
+	*/
 		if (nSize > (m_nReadBufferSize - m_nCurrentPos))
 		{
 			// not enough space in buffer
@@ -409,6 +424,13 @@ public:
 		return true;
 	}
 
+	/*
+	bool Read(CReadBuffer &Buffer)
+	{
+		return Read(Buffer.GetBegin(), Buffer.GetSize());
+	}
+	*/
+	
 	bool Tell(long &lPos)
 	{
 		lPos = ftell(m_pFile);

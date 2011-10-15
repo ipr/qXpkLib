@@ -15,7 +15,6 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 INCLUDEPATH += ../qXpkLib
 
 SOURCES += xadLha.cpp \
-    AnsiFile.cpp \
     LhArchive.cpp \
     crcio.cpp \
     LhHeader.cpp \
@@ -25,7 +24,6 @@ SOURCES += xadLha.cpp \
 
 HEADERS += xadLha.h \
         xadLha_global.h \
-    AnsiFile.h \
     LhArchive.h \
     GenericTime.h \
     LhaTypeDefs.h \
@@ -36,4 +34,6 @@ HEADERS += xadLha.h \
     LhDecoder.h \
     Huffman.h \
     FilemodeFlags.h
+
+
 
