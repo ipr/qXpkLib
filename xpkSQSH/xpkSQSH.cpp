@@ -154,27 +154,24 @@ l6dc:
 	d0 ++;
 	if (bfextu1(src, d0)) 
 	{
-		goto l6f6;
-	}
-	d6 = 2;
-	d0 ++;
-	goto l70a;
-
-l6f6:	
-	d0 ++;
-	if (! bfextu1(src, d0)) 
-	{
-		d6 = 3;
 		d0 ++;
+		if (! bfextu1(src, d0)) 
+		{
+			d6 = 3;
+			d0 ++;
+		}
+		else
+		{
+			d6 = bfextu3(src,d0);
+			d0 += 3;
+		}
 	}
 	else
 	{
-		d6 = bfextu3(src,d0);
-		d0 += 3;
+		d6 = 2;
+		d0 ++;
 	}
-	goto l70a;
 
-l70a:
 	// only place using table in a3 ?
 	d6 = *(a3 + (8*a2) + d6 - 17);
 	if (d6 != 8) 
@@ -183,7 +180,7 @@ l70a:
 		d2 += 8;
 		goto l734;
 	}
-	//continue: l718
+	goto l718;
 
 l718:	
 	if (d2 < 20) 
@@ -247,19 +244,8 @@ l75a:
 
 	// if three following calls all have non-zero result,
 	// -> jump to l77e
-	// otherwise, jump to l79e
-	//
+	// otherwise, jump to l7a8
 	// also, d0 and d4 are changed in process..
-	//
-	// TODO: something like this to simplify..
-	//
-	/*
-	if (bfextu1(src, d0+1) && bfextu1(src, d0+2) && bfextu1(src, d0+3))
-	{
-		d0 += 3;
-		goto l77e;
-	} 
-	*/
 
 	d0++;
 	if (bfextu1(src, d0)) 
@@ -286,8 +272,12 @@ l75a:
 	{
 		d4 = 2;
 	}
-	goto l79e;
-
+	
+	d0++;
+	d6 = bfextu1(src, d0);
+	d0 ++;
+	
+	goto l7a8; // 
 
 l77e:	
 	d0++;
@@ -310,12 +300,6 @@ l77e:
 	}
 	goto l7a8; // this skips anyway
 
-l79e:	
-	d0++;
-	d6 = bfextu1(src, d0);
-	d0 ++;
-	// continue: l7a8
-
 l7a8:	
 	if (bfextu1(src, d0)) 
 	{
@@ -336,10 +320,7 @@ l7a8:
 			a5 = 0;
 		}
 	}
-	// all branches in this end in l7ca with less jumps between..
-	goto l7ca; // skipped one below anyway
 
-l7ca:	
 	d0++;
 	d4 = bfextu(src,d0,d5);
 	d0 += d5;
@@ -348,35 +329,29 @@ l7ca:
 	{
 		d6 += 2;
 		a4 = -1 + dst + a5 - d4;
-		goto l7ex;
 	}
-	
-	if (d6 != 0) 
+	else
 	{
+		if (d6 != 0) 
+		{
+			d1 -= 1;
+		}
+		
 		d1 -= 1;
+		if (d1 < 0) 
+		{
+			d1 = 0;
+		}
+		d6 += 2;
+		a4 = -1 + dst + a5 - d4;
 	}
 	
-	// continue: l7da
-
-l7da:	
-	d1 -= 1;
-	if (d1 < 0) 
+	do
 	{
-		d1 = 0;
-	}
-	d6 += 2;
-	a4 = -1 + dst + a5 - d4;
+		*dst++ = *a4++;
+		d6--;
+	} while (d6 != -1);
 	
-	// continue: l7ex
-
-l7ex:	
-	*dst++ = *a4++;
-	d6--;
-	
-	if (d6 != -1) 
-	{
-		goto l7ex;
-	}
 	d3 = *(--a4);
 	goto l74c;
 }
