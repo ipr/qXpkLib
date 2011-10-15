@@ -74,7 +74,7 @@ struct addrreg
 	{
 		int8_t *p = (int8_t*)src;
 		int8_t *o = (int8_t*)other.src;
-		src++; other.src++;
+		src += 1; other.src += 1;
 		(*p) = (*o);
 	}
 	void setw(addrreg& other)
@@ -92,6 +92,29 @@ struct addrreg
 		(*p) = (*o);
 	}
 
+	
+	// Dn,(An)+ syntax, data-value to buffer-position
+	// according to size of value
+	// -> byteswap also, buffer should always have original byteorder
+	void setb(datareg& dreg)
+	{
+		uint8_t *p = src;
+		src += 1; 
+		setB(p, dreg.b);
+	}
+	void setw(datareg& dreg)
+	{
+		uint8_t *p = src;
+		src += 2;
+		setW(p, dreg.w);
+	}
+	void setl(datareg& dreg)
+	{
+		uint8_t *p = src;
+		src += 4; 
+		setL(p, dreg.l);
+	}
+	
 	/*
 	will it be more trouble to use operators..? 
 	(implicit use by mistake..)
@@ -126,12 +149,21 @@ struct addrreg
 	*/
 	
 	/**/
-	
-	// off = address relative offset
-	
+
+	// value access methods:
+	//
+	// no offset = get element of specified size,
+	// increment address also according to size.
+	//
+	// off = address relative offset,
+	// this allows "peeking" by offset
+	// without modifying current address.
+	//
 	int8_t b(void)
 	{
-		return *src++;
+		int8_t *p = src;
+		src += 1;
+		return *p;
 	}
 	int8_t b(const size_t off) const
 	{
@@ -149,7 +181,6 @@ struct addrreg
 	}
 	int16_t w(const size_t off) const
 	{
-		//return (*((int16_t*)(src + off)));
 		return getW(src + off);
 	}
 	
@@ -164,7 +195,6 @@ struct addrreg
 	}
 	int32_t l(const size_t off) const
 	{
-		//return (*((int32_t*)(src + off)));
 		return getL(src + off);
 	}
 	
@@ -181,6 +211,24 @@ struct addrreg
 	{
 		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
+	
+	void setB(const uint8_t *pBuf, const uint8_t val) const
+	{
+		pBuf[0] = val;
+	}
+	void setW(const uint8_t *pBuf, const uint16_t val) const
+	{
+		//pBuf[0] = ((val & (0xFF << 8)) >> 8);
+		pBuf[0] = ((val & 0xFF00) >> 8);
+		pBuf[1] = (val & 0xFF);
+	}
+	void setL(const uint8_t *pBuf, const uint32_t val) const
+	{
+		pBuf[0] = ((val & (0xFF << 24)) >> 24);
+		pBuf[1] = ((val & (0xFF << 16)) >> 16);
+		pBuf[2] = ((val & (0xFF << 8)) >> 8);
+		pBuf[3] = (val & 0xFF);
+	}
 };
 
 // address register,
@@ -191,6 +239,9 @@ class Areg
 public:
 	addrreg m;
 	
+	datareg& value()
+	{
+	}
 	operator -> ()
 	{
 		return datareg(m.l)
@@ -218,11 +269,8 @@ protected:
         return tmp;
     }
 
-	// TODO: keep regs as member?
-	// will it be simpler like this?
-	//datareg D[8];
-	//addrreg A[8]; // SP == A7
-	// less typing this way..
+	// less typing this way (instead of R[n]..)
+	//
 	datareg D0,D1,D2,D3,D4,D5,D6,D7;
 	addrreg A0,A1,A2,A3,A4,A5,A6,A7; // SP == A7
 	

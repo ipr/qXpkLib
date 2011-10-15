@@ -355,114 +355,237 @@ Vice01:
 		//MOVEQ	#0,D1
 		D1.l = 0;
 		
-		BSR.S	.ViceSub
-		TST.B	D5
-		BEQ.S	.Error
-		MOVE.B	D5,D1
+		//BSR.S	.ViceSub
+		goto ViceSub;
+		
+		//TST.B	D5
+		if (D5.b == 0)
+		{
+			//BEQ.S	.Error
+			goto Error;
+		}
+		
+		//MOVE.B	D5,D1
+		D1.b = D5.b;
+		
 		BPL.S	.Vice03
 		BCLR	D3,D1
-		SUBQ.B	#1,D1
+		
+		//SUBQ.B	#1,D1
+		D1.b -= 1;
+		
+		// this should be own method called..
 		BSR.S	.ViceSub
+		
 
 Vice02:	
-		CMPA.L	A1,A3
-		BGE.B	.DestEnd
-		MOVE.B	D5,(A3)+
-		DBRA	D1,.Vice02
-		BRA.S	.Vice01
+		//CMPA.L	A1,A3
+		if ((A3.src - A1.src) > 0)
+		{
+			//BGE.B	.DestEnd
+			goto DestEnd;
+		}
+		
+		//MOVE.B	D5,(A3)+
+		A3.setb(D5);
+		
+		//DBRA	D1,.Vice02
+		while ((D1.l--) > -1)
+		{
+			goto Vice02;
+		}
+		
+		//BRA.S	.Vice01
+		goto Vice01; // unconditional
 
 Vice03:	
-		SUBQ.B	#1,D1
+		//SUBQ.B	#1,D1
+		D1.b -= 1;
 
 Vice04:	
-		MOVE.W	D4,D5
+		//MOVE.W	D4,D5
+		D5.w = D4.w;
 
 Vice05:	
-		LSR.L	#1,D6
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.Vice08
 		BEQ.S	.Vice07
 		
-Vice06:	MOVE.W	(A5,D5.W),D5
+Vice06:	
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
 		BMI.S	.Vice09
-		LSR.L	#1,D6
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.Vice08
 		BEQ.S	.Vice07
-		MOVE.W	(A5,D5.W),D5
-		BPL.S	.Vice05
-		CMPA.L	A1,A3
-		BGE.B	.DestEnd
-		MOVE.B	D5,(A3)+
-		DBRA	D1,.Vice04
-		BRA.S	.Vice01
 		
-Vice07:	MOVE.L	(A4)+,D6
-		CMPA.L	A0,A4
-		BGT.B	.SourceEnd
-		LSR.L	#1,D6
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
+		BPL.S	.Vice05
+		
+		//CMPA.L	A1,A3
+		if ((A3.src - A1.src) > 0)
+		{
+			//BGE.B	.DestEnd
+			goto DestEnd;
+		}
+		
+		//MOVE.B	D5,(A3)+
+		D5.b = A3.b();
+		
+		//DBRA	D1,.Vice04
+		while ((D1.l--) > -1)
+		{
+			goto Vice04;
+		}
+		
+		//BRA.S	.Vice01
+		goto Vice01; // unconditional
+		
+Vice07:	
+		//MOVE.L	(A4)+,D6
+		D6.l = A4.l();
+		
+		//CMPA.L	A0,A4
+		if ((A4.src - A0.src) > 0)
+		{
+			//BGT.B	.SourceEnd
+			goto SourceEnd;
+		}
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BSET	D7,D6
 		BCS.S	.Vice06
 		
-Vice08:	MOVE.W	(A6,D5.W),D5
+Vice08:	
+		//MOVE.W	(A6,D5.W),D5
+		D5.w = A6.w(D5.w);
+		
 		BMI.S	.Vice09
-		LSR.L	#1,D6
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.Vice08
 		BEQ.S	.Vice07
-		MOVE.W	(A5,D5.W),D5
+		
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
 		BPL.S	.Vice05
 		
-Vice09:	CMPA.L	A1,A3
-		BGE.B	.DestEnd
-		MOVE.B	D5,(A3)+
-		DBRA	D1,.Vice04
-		BRA.S	.Vice01
+Vice09:	
+		//CMPA.L	A1,A3
+		if ((A3.src - A1.src) > 0)
+		{
+			//BGE.B	.DestEnd
+			goto DestEnd;
+		}
+		
+		//MOVE.B	D5,(A3)+
+		A3.setb(D5);
+		
+		//DBRA	D1,.Vice04
+		while ((D1.l--) > -1)
+		{
+			goto Vice04;
+		}
+		
+		//BRA.S	.Vice01
+		goto Vice01; // unconditional
 
 DestEnd:
-		MOVEQ	#0,D0
-		RTS
+		//MOVEQ	#0,D0
+		D0.l = 0; // set return value: false
+		//RTS // return from subroutine
+		//return false;
 
-SourceEndSub:	
+SourceEndSub:
+		// increment stack-pointer (A7) by 4..
 		ADDQ.L	#4,SP
+		
 Error:
-SourceEnd:	
-		MOVEQ	#1,D0
-		RTS
+SourceEnd:
+		// set return value to true end exit
+		//MOVEQ	#1,D0
+		D0.l = 1; // set return value: true
+		RTS // return from subroutine
+		//return true;
 
 ViceSub:	
-		MOVE.W	D4,D5
+		//MOVE.W	D4,D5
+		D5.w = D4.w;
 
 ViceS1:	
-		LSR.L	#1,D6
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.ViceS4
 		BEQ.S	.ViceS3
 
 ViceS2:	
-		MOVE.W	(A5,D5.W),D5
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
 		BMI.S	.End
-		LSR.L	#1,D6
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.ViceS4
 		BEQ.S	.ViceS3
-		MOVE.W	(A5,D5.W),D5
+		
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
 		BPL.S	.ViceS1
-		RTS
+		RTS // return to caller..
 
 ViceS3:	
-		MOVE.L	(A4)+,D6
-		CMP.L	A0,A4
-		BGT.B	.SourceEndSub
-		LSR.L	#1,D6
+		//MOVE.L	(A4)+,D6
+		D6.l = A4.l();
+		
+		//CMP.L	A0,A4
+		if ((A4.src - A0.src) > 0)
+		{
+			//BGT.B	.SourceEndSub
+			goto SourceEndSub;
+		}
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BSET	D7,D6
 		BCS.S	.ViceS2
 
 ViceS4:	
-		MOVE.W	(A6,D5.W),D5
+		//MOVE.W	(A6,D5.W),D5
+		D5.w = A6.w(D5.w);
+
 		BMI.S	.End
-		LSR.L	#1,D6
+		
+		//LSR.L	#1,D6
+		D6.l >>= 1;
+		
 		BCC.S	.ViceS4
 		BEQ.S	.ViceS3
-		MOVE.W	(A5,D5.W),D5
+		
+		//MOVE.W	(A5,D5.W),D5
+		D5.w = A5.w(D5.w);
+		
 		BPL.S	.ViceS1
 
 End:	
+		// finally returns from decrunching here?
 		RTS
 		END
 */
@@ -531,7 +654,7 @@ bool XfdVDCO::decrunch(CReadBuffer *pOut)
 	// actual decrunching starts.. (separate method?)
 //DB_VDCO		MOVEM.L	D2-D7/A2-A6,-(A7) // keep registers in stack
 DB_VDCO:
-	// these we can skip and get pointers directly
+	// these we can skip and we can get pointers directly
 	//MOVE.L	A0,A5
 	//MOVE.L	xfdbi_UserTargetBuf(A5),A1
 	//MOVE.L	A1,A3
@@ -556,23 +679,26 @@ DB_VDCO:
 		goto vdco3;
 	}
 	
+	// used in vdco5
 	D7.l = 0x1F;	//MOVEQ	#$1F,D7
 	D6.l = 3;		//MOVEQ	#3,D6
 	
 	//BRA.B	.vdco3
 	goto vdco3; // unconditional
 
-vdco2:		
+vdco2:
+	// load address with offset (skip 8 in dest)
 	A4.src = A1.src + 8;	//LEA	8(A1),A4
 	
-	//CMP.L	A3,A4
+	//CMP.L	A3,A4 // is dest-pos at/over end of buffer?
 	if ((A4.src - A3.src) > 0)
 	{
 		//BHI.B	.err
 		// -> no more jumping, just exit and give error
 		throw IOException("address outside expected");
 	}
-		
+	
+	// copy 8 bytes as-is
 	//MOVE.B	(A0)+,(A1)+
 	//MOVE.B	(A0)+,(A1)+
 	//MOVE.B	(A0)+,(A1)+
@@ -606,7 +732,7 @@ vdco4:
 		goto vdco5;
 	}
 	
-	//CMP.L	A3,A1
+	//CMP.L	A3,A1 // does not modify register values (just status-bits)
 	if ((A1.src - A3.src) == 0)
 	{
 		//BEQ.B	.err
@@ -631,19 +757,28 @@ vdco5:
 	D2.l = 0;			//MOVEQ	#0,D2
 	D2.b = A0.b();		//MOVE.B	(A0)+,D2	; Terminator
 	
-	if (D2.b == 0) // 0 as end-marker byte?
+	if (D2.b == 0) // test for 0 as file-end marker byte?
 	{
 		//BEQ.B	.end
 		goto end;
 	}
 	
+	// here D7 should be constant 0x1F or (dec) 15,
+	// depending of branch to vdco3;
+	// D6 should be constant 3 or 4 (dec)
+	// depending on same branch.. (not changed after start)
+	
 	D3.l = D7.l;		//MOVE.L	D7,D3
 	D3.w &= D2.w;		//AND.W	D2,D3
 	D2.w <<= D6.w;		//LSL.W	D6,D2
 	D2.b = A0.b();		//MOVE.B	(A0)+,D2
+	// !! ^^ should have D2.w |= A0.b() ??
+	// like this:
+	//D2.w |= (A0.b());
 	
-	A2.src = A1.src;	//MOVEA.L	A1,A2
-	A2.src -= D2.w;		//SUBA.W	D2,A2
+	//A2.src = A1.src;	//MOVEA.L	A1,A2
+	//A2.src -= D2.w;		//SUBA.W	D2,A2
+	A2.src = (A1.src - D2.w);
 
 	D3.w += 1;			//ADDQ.W	#1,D3
 		
@@ -659,13 +794,13 @@ vdco5:
 loop:	
 	A1.setb(A2); //MOVE.B	(A2)+,(A1)+
 	
-	//DBRA	D3,loop
+	//DBRA	D3,loop // decrement&branch -> loop
 	while ((D3.l--) > -1)
 	{
 		goto loop;
 	}
 	
-	//DBRA	D1,vdco4
+	//DBRA	D1,vdco4 // decrement&branch -> loop
 	while ((D1.l--) > -1)
 	{
 		goto vdco4;
