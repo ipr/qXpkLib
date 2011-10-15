@@ -6,17 +6,17 @@
 
 QT       -= gui
 
-TARGET = xpkPP20
+TARGET = xfdPowerPacker
 TEMPLATE = lib
 
-DEFINES += XPKPP20_LIBRARY
+DEFINES += XFDPOWERPACKER_LIBRARY
 DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xpkPP20.cpp \
+SOURCES += xfdPowerPacker.cpp \
     PowerPacker.cpp
 
-HEADERS += xpkPP20.h\
-        xpkPP20_global.h \
+HEADERS += xfdPowerPacker.h \
+        xfdPowerPacker_global.h \
     PowerPacker.h

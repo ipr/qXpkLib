@@ -6,18 +6,18 @@
 
 QT       -= gui
 
-TARGET = xpkIMPL
+TARGET = xfdImploder
 TEMPLATE = lib
 
-DEFINES += XPKIMPL_LIBRARY
+DEFINES += XFDIMPLODER_LIBRARY
 DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xpkIMPL.cpp \
+SOURCES += xfdImploder.cpp \
     ImploderExploder.cpp
 
-HEADERS += xpkIMPL.h\
-        xpkIMPL_global.h \
+HEADERS += xfdImploder.h\
+        xfdImploder_global.h \
     ImploderExploder.h
 

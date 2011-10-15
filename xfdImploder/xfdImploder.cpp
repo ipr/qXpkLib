@@ -1,4 +1,4 @@
-#include "xpkPP20.h"
+#include "xfdImploder.h"
 
 // from master-project for buffer-class
 #include "AnsiFile.h"
@@ -7,37 +7,36 @@
 #include "XpkProgress.h"
 
 // use helper for actual decrunching
-#include "PowerPacker.h"
+#include "ImploderExploder.h"
 
 //TODO: when ready, we can add tracking of created instances
 // (when library needs members per-user..)
 
 // (see header)
-xpkPP20 g_Instance;
+xfdImploder g_Instance;
 xpkLibraryBase *GetXpkInstance(void)
 {
   // TODO: switch to: new xpkRLEN() when there are members..
 	return &g_Instance;
 }
 
-
-xpkPP20::xpkPP20()
- : xpkLibraryBase()
+xfdImploder::xfdImploder()
+	: xpkLibraryBase()
 {
 }
 
-xpkPP20::~xpkPP20()
+xfdImploder::~xfdImploder()
 {
 }
 
 // no packing support for this format
-bool xpkPP20::Crunch(XpkProgress *pProgress)
+bool xfdImploder::Crunch(XpkProgress *pProgress)
 {
 	return false;
 }
 
 // decrunching (unpacking) only supported for this format
-bool xpkPP20::Decrunch(XpkProgress *pProgress)
+bool xfdImploder::Decrunch(XpkProgress *pProgress)
 {
 	// TODO: may be possible that this is used as sub-type of XPK
 	// or entirely stand-alone (some sub-type library exists on Amiga?)
@@ -47,8 +46,8 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 	if (pProgress->IsXpkFile() == true)
 	{
 		// use chunk-nodes (code from master-library actually..)
-		m_pTagList = new XpkTags();
-		m_pTagList->ParseToNodeList(*pProgress->pInputBuffer);
+		//m_pTagList = new XpkTags();
+		//m_pTagList->ParseToNodeList(*pProgress->pInputBuffer);
 		
 		// TODO: process by chunks (without the chunk-info..)
 	}
@@ -63,7 +62,7 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 	// just use the stand-alone unpacker
 	// when not used as sub-type of XPK..
 	//
-	CPowerPacker PP;
+	CImploderExploder Impl;
 	try
 	{
 		// load from existing buffer and unpack to temporary..
@@ -71,16 +70,16 @@ bool xpkPP20::Decrunch(XpkProgress *pProgress)
 		// (TODO: use directly input-buffer instead of copy..
 		// also give output for direct use..)
 		//
-		PP.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->xp_WholePackedFileSize);
+		Impl.UnpackBuffer(pProgress->pInputBuffer->GetBegin(), pProgress->xp_WholePackedFileSize);
 		
 		// no exception -> keep unpacked data
 		//
 		// (TODO: decrunch directly to output-buffer..)
 		//
-		pProgress->pOutputBuffer->Append(PP.GetUnpackedData(), PP.GetUnpackedSize());
-		
-		pProgress->xp_UnpackedSize = PP.GetUnpackedSize(); // size of whole file as unpacked
-		pProgress->xp_chunkOut = PP.GetUnpackedSize(); // whole file as single chunk
+		pProgress->pOutputBuffer->Append(Impl.GetUnpackedData(), Impl.GetUnpackedSize());
+
+		pProgress->xp_UnpackedSize = Impl.GetUnpackedSize(); // size of whole file as unpacked
+		pProgress->xp_chunkOut = Impl.GetUnpackedSize(); // whole file as single chunk
 		pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
 		pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		

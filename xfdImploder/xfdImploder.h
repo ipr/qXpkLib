@@ -1,13 +1,13 @@
 //////////////////////////////////
 //
-// xpkPP20 : Amiga PowerPacker supporting library
+// xfdImploder : Amiga Imploder supporting library
 // for qXpkLib
 //
 
-#ifndef XPKPP20_H
-#define XPKPP20_H
+#ifndef XFDIMPLODER_H
+#define XFDIMPLODER_H
 
-#include "xpkPP20_global.h"
+#include "xfdImploder_global.h"
 
 #include <QObject>
 
@@ -15,17 +15,17 @@
 #include "xpkLibraryBase.h"
 
 
-class XPKPP20SHARED_EXPORT xpkPP20 : public xpkLibraryBase
+class XFDIMPLOLDERSHARED_EXPORT xfdImploder : public xpkLibraryBase
 {
 public:
-    xpkPP20();
-    virtual ~xpkPP20();
+    xfdImploder();
+	virtual ~xfdImploder();
 	
 	virtual bool Crunch(XpkProgress *pProgress);
 	
 	virtual bool Decrunch(XpkProgress *pProgress);
+	
 };
-
 
 #ifdef __cplusplus
 extern "C"
@@ -35,12 +35,12 @@ extern "C"
 // need this for caller to locate instance dynamically,
 // library needs to have one global instance of the cruncher (has no members anyway..)
 //
-XPKPP20SHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
+XFDIMPLOLDERSHARED_EXPORT xpkLibraryBase *GetXpkInstance(void);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // XPKPP20_H
 
+#endif // XFDIMPLODER_H
