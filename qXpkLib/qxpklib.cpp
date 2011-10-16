@@ -11,7 +11,7 @@
 #include "qxpklib.h"
 
 #include "AnsiFile.h"
-#include "XpkMaster.h"
+#include "LibMaster.h"
 
 //////////////// protected methods
 
@@ -23,7 +23,7 @@ void QXpkLib::PrepareMaster()
 		delete m_pMaster;
 	}
 	
-	m_pMaster = new CXpkMaster(this);
+	m_pMaster = new CLibMaster(this);
 
 	// connect emitted signals from master-handler
 	// to output from this library
@@ -62,7 +62,7 @@ QXpkLib::~QXpkLib()
 
 // information on selected file
 // (compression, type etc.)
-bool QXpkLib::xpkInfo(QXpkLib::CXpkFileInfo &info)
+bool QXpkLib::xpkInfo(QXpkLib::CEntryInfo &info)
 {
 	try
 	{
@@ -132,7 +132,6 @@ void QXpkLib::getToBuffer(QByteArray &Array)
 	// reserve out-buffer and copy what we have
 	Array.resize(pOut->GetCurrentPos());
 	::memcpy(Array.data(), pOut->GetBegin(), pOut->GetCurrentPos());
-	
 }
 
 //////////////// public slots

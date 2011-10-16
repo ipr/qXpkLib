@@ -25,7 +25,7 @@
 
 
 //// fwd. decl.
-class CXpkMaster;
+class CLibMaster;
 //class CxpkProgress; // TODO: see about what to do..
 struct XpkProgress;
 
@@ -35,7 +35,7 @@ class QXPKLIBSHARED_EXPORT QXpkLib : public QObject
 	Q_OBJECT
 
 private:
-	CXpkMaster *m_pMaster;
+	CLibMaster *m_pMaster;
 	
 	// current pack/unpack related item
 	//TagItem *m_pItem;
@@ -52,10 +52,10 @@ public:
 
 	// info to caller about compressed file
 	// (metadata such as cruncher etc.)
-	class CXpkFileInfo
+	class CEntryInfo
 	{
 	public:
-		CXpkFileInfo() {}
+		CEntryInfo() {}
 		
 		// for archive-files, may be larger than 1
 		// for single-file packers, at most 1
@@ -70,7 +70,7 @@ public:
 	
 	// get information on selected file
 	// (compression, type etc.)
-	bool xpkInfo(QXpkLib::CXpkFileInfo &info);
+	bool xpkInfo(QXpkLib::CEntryInfo &info);
 
 	// pack/unpack to/from given input&output
 	bool xpkPack();

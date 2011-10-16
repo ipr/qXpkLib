@@ -182,9 +182,9 @@ public:
 	// verify that file is XPK:
 	// expect certain structure
 	// regardless of sub-type (packer)
-	bool IsXpkFile(CReadBuffer &Buffer)
+	bool IsXpkFile(CReadBuffer *pBuffer)
 	{
-		unsigned char *pBuf = Buffer.GetBegin();
+		unsigned char *pBuf = pBuffer->GetBegin();
 		if (::memcmp(pBuf, "XPKF", 4) == 0)
 		{
 			return true;

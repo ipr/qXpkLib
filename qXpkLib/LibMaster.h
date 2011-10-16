@@ -1,17 +1,17 @@
 ///////////////////////////////////
 //
-// Actual decoder handling:
-// can load additional decoders as necessary,
-// see xpkLibraryBase
-//
-// CXpkMaster : main decrunch handler
+// CLibMaster : handler of various decrunchers and files,
+// uses XPK/XFD/XAD masters for additional decrunchers as needed.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
 
-#ifndef XPKMASTER_H
-#define XPKMASTER_H
+
+#ifndef LIBMASTER_H
+#define LIBMASTER_H
+
+#include <QObject>
 
 #include <QObject>
 #include <QString>
@@ -25,6 +25,9 @@
 #include "AnsiFile.h"
 #include "IoContext.h"
 
+// XPK-support
+#include "XpkMaster.h"
+
 // XFD-support
 #include "XfdMaster.h"
 
@@ -37,15 +40,11 @@
 #include "xpkLibraryBase.h"
 #include "XpkProgress.h"
 
-// temp..
-#include "XpkTags.h"
 
-
-
-class CXpkMaster : public QObject
+class CLibMaster : public QObject
 {
-	Q_OBJECT
-
+    Q_OBJECT
+    
 private:
 	//CIoContext m_Input;
 	QString m_InputName;
@@ -61,27 +60,33 @@ private:
 	// wrapper for loading/unloading
 	QLibrary m_SubLib;
 
-	// base-pointer (virtual) 
-	// -> load proper by file/packer type
-	xpkLibraryBase *m_pSubLibrary;
-	
-	// temp for testing
-	XpkTags m_Tags;
+	// temp, determine later if suitable way..
+	CXpkMaster *m_pXpkMaster;
+	CXfdMaster *m_pXfdMaster;
+	CXadMaster *m_pXadMaster;
+
 	
 protected:
 	std::string getCruncherType(CReadBuffer *pInputBuffer);
 	void PrepareUnpacker(std::string &subType);
-	
-public:
-    CXpkMaster(QObject *parent = 0);
-	virtual ~CXpkMaster(void);
 
-    bool isSupported(CReadBuffer *pInputBuffer);
-	bool decrunch(XpkProgress *pProgress);
+	//bool ForeignDecrunch(XpkProgress *pProgress);
+	bool OwnDecrunch(XpkProgress *pProgress);
+    
+public:
+    explicit CLibMaster(QObject *parent = 0);
+	virtual ~CLibMaster(void);
+
+	bool xpkInfo(QXpkLib::CEntryInfo &info);
 	
 	bool xpkUnpack(XpkProgress *pProgress);
 
-	
+	// get unpacked result to user-buffer as-is
+	CReadBuffer *getResult()
+	{
+		return m_Output.GetBuffer();
+	}
+
 public slots:
 	// TODO: only on instance-creation?
 	void setInputFile(QString &szFile) 
@@ -102,7 +107,7 @@ signals:
 	// errors with exceptions, other with messages
 	void message(QString);
 	void warning(QString);
-	
+
 };
 
-#endif // XPKMASTER_H
+#endif // LIBMASTER_H
