@@ -15,6 +15,7 @@
 #ifndef XADMASTER_H
 #define XADMASTER_H
 
+#include <QObject>
 #include <QString>
 
 // use ISO-standard typedefs (platform-independency)
@@ -26,8 +27,10 @@
 #include "xadLibraryBase.h"
 
 
-class CXadMaster
+class CXadMaster : public QObject
 {
+	Q_OBJECT
+	
 protected:
 
 	xadLibraryBase *m_pSubLibrary;
@@ -35,14 +38,22 @@ protected:
 	//QString m_archive;
 	
 public:
-    CXadMaster();
-    ~CXadMaster();
-    
-    bool isSupported(CReadBuffer *pInputBuffer);
+    CXadMaster(QObject *parent = 0);
+    virtual ~CXadMaster(void);
+
+	bool isSupported(CReadBuffer *pInputBuffer);
     
 	//void setArchive(QString &szArchive);
 	void setExtractPath(QString &szPath);
 	bool extractArchive(XpkProgress *pProgress);
+	
+public slots:
+	
+signals:
+	// errors with exceptions, other with messages
+	void message(QString);
+	void warning(QString);
+	
 };
 
 #endif // XADMASTER_H

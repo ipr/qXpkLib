@@ -17,7 +17,7 @@
 #include "XpkLibrarian.h"
 
 
-//////// protecte methods
+//////// protected methods
 
 XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer)
 {
@@ -115,12 +115,13 @@ void CXfdMaster::release()
 
 //////// public methods
 
-CXfdMaster::CXfdMaster()
-	: m_pXfdSlave(nullptr)
+CXfdMaster::CXfdMaster(QObject *parent)
+	: QObject(parent)
+	, m_pXfdSlave(nullptr)
 {
 }
 
-CXfdMaster::~CXfdMaster()
+CXfdMaster::~CXfdMaster(void)
 {
 	release();
 }

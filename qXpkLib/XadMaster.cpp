@@ -22,12 +22,13 @@
 
 ////////// public methods
 
-CXadMaster::CXadMaster()
- : m_pSubLibrary(nullptr)
+CXadMaster::CXadMaster(QObject *parent)
+	: QObject(parent)
+	, m_pSubLibrary(nullptr)
 {
 }
 
-CXadMaster::~CXadMaster()
+CXadMaster::~CXadMaster(void)
 {
 	if (m_pSubLibrary != nullptr)
 	{

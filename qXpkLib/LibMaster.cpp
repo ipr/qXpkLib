@@ -220,12 +220,23 @@ CLibMaster::CLibMaster(QObject *parent)
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
     , m_Output()
-    , m_pSubLibrary(nullptr)
 {
 	// temp, check handling later..
+	// create when selected archive changed?
+	//
 	m_pXpkMaster = new CXpkMaster();
 	m_pXfdMaster = new CXfdMaster();
 	m_pXadMaster = new CXadMaster();
+
+	// non-critical information via signals,
+	// critical errors in exceptions (catch in library interface)
+	//	
+	connect(m_pXpkMaster, SIGNAL(message(QString)), this, SIGNAL(message(QString)));
+	connect(m_pXpkMaster, SIGNAL(warning(QString)), this, SIGNAL(warning(QString)));
+	connect(m_pXfdMaster, SIGNAL(message(QString)), this, SIGNAL(message(QString)));
+	connect(m_pXfdMaster, SIGNAL(warning(QString)), this, SIGNAL(warning(QString)));
+	connect(m_pXadMaster, SIGNAL(message(QString)), this, SIGNAL(message(QString)));
+	connect(m_pXadMaster, SIGNAL(warning(QString)), this, SIGNAL(warning(QString)));
 }
 
 CLibMaster::~CLibMaster(void)
@@ -247,7 +258,7 @@ CLibMaster::~CLibMaster(void)
 	}
 }
 
-bool CLibMaster::xpkInfo(QXpkLib::CArchiveInfo &info)
+bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
 	// TODO: get info to caller..
 	// - compressor (SQSH, NUKE... PP20, IMPL..)
@@ -257,7 +268,7 @@ bool CLibMaster::xpkInfo(QXpkLib::CArchiveInfo &info)
 	return false;
 }
 
-bool CLibMaster::xpkUnpack(XpkProgress *pProgress)
+bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 {
 	CAnsiFile InFile;
 	if (InFile.Open(m_InputName.toStdString()) == false)
@@ -343,3 +354,9 @@ bool CLibMaster::xpkUnpack(XpkProgress *pProgress)
 	return true;
 }
 
+// input-file given: check what it is
+// (for information to caller)
+void CLibMaster::setInputFile(QString &szFile)
+{
+	m_InputName = szFile;
+}

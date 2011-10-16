@@ -204,7 +204,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 //
 void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 {
-	Buffer.SetCurrentPos(0);
+	//Buffer.SetCurrentPos(0);
 	
 	// default
 	m_formatType = XPKMODE_UPSTD;
@@ -269,7 +269,7 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
     if (m_streamHeader.xsh_Flags & XPKSTREAMF_EXTHEADER)
     {
 		// size of extended header if present?
-		uint16_t extheaderLen = GetUWord(Buffer.GetNext(2));
+		m_extHeaderLen = GetUWord(Buffer.GetNext(2));
 		
 		/*
 		// this done above..		
@@ -285,7 +285,7 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 		*/
 		
 		// increment by length-field size anyway..
-        extheaderLen += sizeof(uint16_t);	/* for unwinding while XpkExamine */
+        m_extHeaderLen += sizeof(uint16_t);	/* for unwinding while XpkExamine */
         
         // note: increase buffer position by size of extended header?
 	}
@@ -296,8 +296,9 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 //////////// public methods
 
 XpkTags::XpkTags()
-    : m_nTotalSize(0)
-    , m_streamHeader()
+    : m_streamHeader()
+    , m_formatType(XPKMODE_UNKNOWN)
+    , m_extHeaderLen(0)
     , m_pFirst(nullptr)
 {
 }
@@ -313,8 +314,28 @@ XpkTags::~XpkTags()
 	}
 }
 
+// verify that file is XPK:
+// expect certain structure
+// regardless of sub-type (packer)
+bool XpkTags::IsXpkFile(CReadBuffer *pBuffer)
+{
+	unsigned char *pBuf = pBuffer->GetBegin();
+	if (::memcmp(pBuf, "XPKF", 4) == 0)
+	{
+		return true;
+	}
+	return false;
+}
+
 void XpkTags::ParseChunks(CReadBuffer &Buffer)
 {
+	// should have enough data to actually parse file header
+	if (Buffer.GetSize() < sizeof(XpkStreamHeader))
+	{
+		//throw IOException("File too small");
+		return;
+	}
+
 	if (IsXpkFile(Buffer) == false)
 	{
 		// can't do anything about it
@@ -323,7 +344,6 @@ void XpkTags::ParseChunks(CReadBuffer &Buffer)
 	}
 	
 	// keep original size
-	m_nTotalSize = Buffer.GetCurrentPos();
 	Buffer.SetCurrentPos(0); // start at beginning..
 
 	// read&parse file header as "streamheader"
@@ -332,8 +352,6 @@ void XpkTags::ParseChunks(CReadBuffer &Buffer)
 	// read chunks from file
 	ReadChunks(Buffer);
 
-	// set original position
-	Buffer.SetCurrentPos(m_nTotalSize);
 }
 
 // TODO: add this so single-pass

@@ -67,7 +67,7 @@ bool QXpkLib::xpkInfo(QXpkLib::CArchiveInfo &info)
 	try
 	{
 		// get info to caller from master-instance
-		return m_pMaster->xpkInfo(info);
+		return m_pMaster->archiveInfo(info);
 	}
 	catch (std::exception &exp)
 	{
@@ -114,7 +114,7 @@ bool QXpkLib::xpkUnpack()
 		}
 		m_pProgress = new XpkProgress();
 		
-		return m_pMaster->xpkUnpack(m_pProgress);
+		return m_pMaster->archiveUnpack(m_pProgress);
 	}
 	catch (std::exception &exp)
 	{

@@ -52,12 +52,6 @@ private:
 	CReadBuffer m_InputBuffer;
 	size_t m_nInputFileSize;
 	
-	// for multi-file extraction
-	QString m_outputPath;
-	
-	// change to use path and determine name automagically?
-	CIoContext m_Output;
-	
 	// wrapper for loading/unloading
 	QLibrary m_SubLib;
 
@@ -83,20 +77,6 @@ public:
 
 	
 public slots:
-	// TODO: only on instance-creation?
-	void setInputFile(QString &szFile) 
-	{
-		// TODO: read metadata when this is set or later only?
-		m_InputName = szFile;
-	}
-	void setOutputFile(QString &szFile) 
-	{
-		m_Output.setName(szFile);
-	}
-	void setOutputPath(QString &szPath) 
-	{
-		m_outputPath = szPath;
-	}
 	
 signals:
 	// errors with exceptions, other with messages

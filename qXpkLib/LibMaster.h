@@ -77,9 +77,9 @@ public:
     explicit CLibMaster(QObject *parent = 0);
 	virtual ~CLibMaster(void);
 
-	bool xpkInfo(QXpkLib::CArchiveInfo &info);
+	bool archiveInfo(QXpkLib::CArchiveInfo &info);
 	
-	bool xpkUnpack(XpkProgress *pProgress);
+	bool archiveUnpack(XpkProgress *pProgress);
 
 	// get unpacked result to user-buffer as-is
 	CReadBuffer *getResult()
@@ -88,8 +88,7 @@ public:
 	}
 
 public slots:
-	// TODO: only on instance-creation?
-	void setInputFile(QString &szFile) 
+	void setInputFile(QString &szFile);
 	{
 		// TODO: read metadata when this is set or later only?
 		m_InputName = szFile;

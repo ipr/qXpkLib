@@ -12,6 +12,9 @@
 #ifndef XFDMASTER_H
 #define XFDMASTER_H
 
+#include <QObject>
+#include <QString>
+
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
 
@@ -26,8 +29,10 @@
 #include "XpkProgress.h"
 
 
-class CXfdMaster
+class CXfdMaster : public QObject
 {
+	Q_OBJECT
+
 protected:
 
 	// need better way of sharing code..
@@ -52,12 +57,19 @@ protected:
 	void release();
 	
 public:
-    CXfdMaster();
-    ~CXfdMaster();
+    CXfdMaster(QObject *parent = 0);
+    virtual ~CXfdMaster(void);
     
     bool isSupported(CReadBuffer *pInputBuffer);
     
 	bool decrunch(XpkProgress *pProgress);
+
+public slots:
+	
+signals:
+	// errors with exceptions, other with messages
+	void message(QString);
+	void warning(QString);
 };
 
 #endif // XFDMASTER_H

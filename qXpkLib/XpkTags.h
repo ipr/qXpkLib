@@ -125,6 +125,7 @@ public:
 // fileformat types
 enum XpkFormat
 {
+	XPKMODE_UNKNOWN = 0,
 	XPKMODE_UPUP = 1,
 	XPKMODE_UPSTD = 2,
 	XPKMODE_UPPP = 3,
@@ -136,10 +137,11 @@ enum XpkFormat
 class XpkTags
 {
 private:
-	size_t m_nTotalSize;
-	
 	XpkStreamHeader m_streamHeader;
 	XpkFormat m_formatType;
+
+	// size of extended header (if exists in file)	
+	size_t m_extHeaderLen;
 	
 	XpkChunk *m_pFirst;
 
@@ -182,15 +184,7 @@ public:
 	// verify that file is XPK:
 	// expect certain structure
 	// regardless of sub-type (packer)
-	bool IsXpkFile(CReadBuffer *pBuffer)
-	{
-		unsigned char *pBuf = pBuffer->GetBegin();
-		if (::memcmp(pBuf, "XPKF", 4) == 0)
-		{
-			return true;
-		}
-		return false;
-	}
+	bool IsXpkFile(CReadBuffer *pBuffer);
 	
 	// TODO: this should be: ParseHeader()
 	void ParseChunks(CReadBuffer &Buffer);
