@@ -17,7 +17,7 @@
 #include <QTextCodec>
 
 // use typedefs from parent
-#include <qlhalib.h>
+//#include <qlhalib.h>
 
 #include "AnsiFile.h"
 #include "LhaTypeDefs.h"
@@ -30,7 +30,7 @@ class CLhArchive : public QObject
 	Q_OBJECT
 
 public:
-    CLhArchive(QLhALib *pParent, QString &szArchive);
+    CLhArchive(QObject *parent, QString &szArchive);
 	virtual ~CLhArchive(void);
 	
 protected:

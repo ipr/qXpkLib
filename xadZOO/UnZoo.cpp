@@ -12,9 +12,7 @@
 
 #include "UnZoo.h"
 
-CUnZoo::CUnZoo()
-{
-}
+#include "GenericTime.h" // conversion helper
 
 /****************************************************************************
 **
@@ -266,19 +264,9 @@ CUnZoo::CUnZoo()
 
 /****************************************************************************
 **
-*F  OPEN_READ_ARCH(<patl>)  . . . . . . . . . . . open an archive for reading
-*F  CLOS_READ_ARCH()  . . . . . . . . . . . . . . . . . . .  close an archive
 *F  BLCK_READ_ARCH(<blk>,<len>) . . . . . . . .  read a block from an archive
 *F  RWND_READ_ARCH()  . . . . . . . . . . . reset file read position to start 
 *F  SEEK_READ_ARCH(pos) . . . . . . . . . . . . . . move read position to pos
-**
-**  'OPEN_READ_ARCH' returns 1 if the archive file with  the path name <patl>
-**  (as specified   by the user  on the  command line)   could  be opened for
-**  reading and   0  otherwise.  Because   archive  files are   binary files,
-**  'OPEN_READ_ARCH' must open the file in binary mode.
-**
-**  'CLOS_READ_ARCH'  closes   the archive  file  opened  by 'OPEN_READ_ARCH'
-**  again.
 **
 **  'BLCK_READ_ARCH' reads up  to  <len>  characters  from the   archive file
 **  opened with 'OPEN_READ_ARCH'  into  the  blkfer  <blk>, and  returns  the
@@ -290,67 +278,10 @@ CUnZoo::CUnZoo()
 */
 #ifdef  SYS_IS_UNIX
 FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "r" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
 #define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
 #define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
 #define SEEK_READ_ARCH(pos)		(fseek( ReadArch, pos, SEEK_SET) == 0)
 #endif
-#ifdef  SYS_IS_DOS_DJGPP
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "rb" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#endif
-#ifdef  SYS_IS_OS2_EMX
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "rb" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#endif
-#ifdef  SYS_IS_TOS_GCC
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "rb" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#endif
-#ifdef  SYS_IS_VMS
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "r" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#endif
-#ifdef  SYS_IS_MAC_MPW
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "r") ) != 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#endif
-#ifdef  SYS_IS_MAC_THC
-#include <SIOUX.h>
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "rb") ) != 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, SEEK_SET ) == 0)
-#define SEEK_READ_ARCH(pos)		(fseek( ReadArch, pos, SEEK_SET) == 0)
-#define SYS_IS_MAC_MPW          /* BH: use most parts of MPW port */
-#endif
-#ifdef  SYS_IS_GENERIC
-FILE *          ReadArch;
-#define OPEN_READ_ARCH(patl)    ((ReadArch = fopen( (patl), "r" )) != 0)
-#define CLOS_READ_ARCH()        (fclose( ReadArch ) == 0)
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#define SEEK_READ_ARCH(pos)		(fseek( ReadArch, pos, SEEK_SET) == 0)
-#endif
-#ifndef OPEN_READ_ARCH
-#include        "You_must_specify_the_system.h"
 #endif
 
 
@@ -382,7 +313,6 @@ FILE *          ReadArch;
 #ifndef OPEN_READ_TEXT
 FILE *          ReadText;
 #define OPEN_READ_TEXT(patl)    ((ReadText = fopen( (patl), "r" )) != 0)
-#define CLOS_READ_TEXT()        (fclose( ReadText ) == 0)
 #define BLCK_READ_TEXT(blk,len) fread( (blk), 1L, (len), ReadText )
 #endif
 
@@ -458,7 +388,6 @@ FILE *          WritText;
 #ifndef OPEN_READ_BINR
 FILE *          ReadBinr;
 #define OPEN_READ_BINR(patl)    ((ReadBinr = fopen( (patl), "rb" )) != 0)
-#define CLOS_READ_BINR()        (fclose( ReadBinr ) == 0)
 #define BLCK_READ_BINR(blk,len) fread( (blk), 1L, (len), ReadBinr )
 #endif
 
@@ -545,42 +474,6 @@ FILE *          WritBinr;
 #endif
 
 
-/****************************************************************************
-**
-*F  CONV_DIRE(<dirl>,<diru>)  . . . . . . . . . . .  convert a directory name
-**
-**  'CONV_DIRE'  returns  in  <dirl>  the  universal  directory  name  <diru>
-**  converted to the  local format.  <diru> contains an  arbitrary number  of
-**  components separated by  slashes ('/'),  where each component may contain
-**  uppercase,  lowercase,  and all special characters,  and may be up to 255
-**  characters long.
-**
-**  You  must  define this  for a new   port if you  want  'unzoo' to extract
-**  members into subdirectories, instead of  extracting  them to the  current
-**  directory.    You may  want  to   use the  universal conversion  function
-**  'ConvDire'.
-*/
-#ifdef  SYS_IS_UNIX
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"/","/","","/","/")
-#endif
-#ifdef  SYS_IS_DOS_DJGPP
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"\\","\\","","\\","\\")
-#endif
-#ifdef  SYS_IS_OS2_EMX
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"/","/","","/","/")
-#endif
-#ifdef  SYS_IS_TOS_GCC
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"\\","\\","","\\","\\")
-#endif
-#ifdef  SYS_IS_VMS
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"[]","[","[.",".","]")
-#endif
-#ifdef  SYS_IS_MAC_MPW
-#define CONV_DIRE(dirl,diru)    ConvDire((dirl),(diru),"","",":",":",":")
-#endif
-#ifndef CONV_DIRE
-#define CONV_DIRE(dirl,diru)    ((dirl)[0]='\0',1)
-#endif
 
 
 /****************************************************************************
@@ -1273,36 +1166,21 @@ int             MakeDirs ( pre, patu )
 */
 int             IsSpec [256];           /* nonzero for special characters  */
 
-int             IsMatchName ( pat, str )
-    char *              pat;            /* pattern to match against        */
-    char *              str;            /* string  to match                */
+int             IsMatchName (char *pat, char *str )
+                  //pat;            /* pattern to match against        */
+                  //str;            /* string  to match                */
 {
-    char *              pos = 0;        /* pos. after last '*' in pattern  */
-    char *              tmp = 0;        /* corresponding match in string   */
-
-    /* try to match the name part                                          */
-    while ( *pat != '\0' || *str != '\0' ) {
-        if      ( *pat==*str                  ) { pat++;       str++;       }
-        else if ( *pat=='?' && ! IsSpec[*str] ) { pat++;       str++;       }
-        else if ( *pat=='?' && *str != '\0'   ) { pat++;       str++;       }
-        else if ( *pat=='*'                   ) { pos = ++pat; tmp =   str; }
-        else if ( tmp != 0  && ! IsSpec[*tmp] ) { pat =   pos; str = ++tmp; }
-        else                                    break;
-    }
-    return *pat == '\0' && *str == '\0';
+	return true;
 }
 
 
 /****************************************************************************
 **
-*F  OpenReadArch(<patl>)  . . . . . . . . . . . . . . try to open the archive
-*F  ClosReadArch()  . . . . . . . . . . . . . . . . . . . . close the archive
 *F  GotoReadArch(<pos>) . . . . . .  goto an absolute position in the archive
 *F  ByteReadArch()  . . . . . . . . . read a  8 bit unsigned from the archive
 *F  HalfReadArch()  . . . . . . . . . read a 16 bit unsigned from the archive
 *F  TripReadArch()  . . . . . . . . . read a 24 bit unsigned from the archive
 *F  WordReadArch()  . . . . . . . . . read a 32 bit unsigned from the archive
-*F  BlckReadArch(<blk>,<len>) . . . .  read a block of bytes from the archive
 *V  Descript  . . . . . . . . . . . . . . . . . . . . header from the archive
 *F  DescReadArch()  . . . . . . . . . . . .  read the header from the archive
 *V  Entry . . . . . . . . . . . . . . . . header of a member from the archive
@@ -1312,8 +1190,6 @@ int             IsMatchName ( pat, str )
 **  specified by the user on the command  line) for reading  and returns 1 to
 **  indicate success or 0 to indicate that the file cannot be opened.
 **
-**  'ClosReadArch' closes the archive again.
-**
 **  'GotoReadArch'  positions the  archive  at the  position <pos>, i.e., the
 **  next call to 'ByteReadArch' will return the byte at position <pos>.  Note
 **  that 'GotoReadArch' does not use 'fseek', because 'fseek' is unreliable.
@@ -1322,7 +1198,6 @@ int             IsMatchName ( pat, str )
 **  'HalfReadArch' returns the next 2 bytes unsigned 16 bit from the archive.
 **  'TripReadArch' returns the next 3 bytes unsigned 24 bit from the archive.
 **  'WordReadArch' returns the next 4 bytes unsigned 32 bit from the archive.
-**  'BlckReadArch' reads <len> bytes into the buffer <blk>.
 **
 **  'Descript' is the description of the archive.
 **
@@ -1335,48 +1210,54 @@ int             IsMatchName ( pat, str )
 **  'EntrReadArch'  reads the directory entry of  a member that starts at the
 **  current position into the structure 'Entry'.
 */
-unsigned char   BufArch [64+4096];      /* buffer for the archive          */
-
-unsigned char * PtrArch;                /* pointer to the next byte        */
-
-unsigned char * EndArch;                /* pointer to the last byte        */
-
-unsigned long   PosArch;                /* position of 'BufArch[0]'        */
-
-int             OpenReadArch ( patl )
-    char *              patl;
+struct zooArchBuf
 {
-    PtrArch = EndArch = (BufArch+64);
-    PosArch = 0;
-    return OPEN_READ_ARCH( patl );
-}
+	unsigned char   BufArch [64+4096];      /* buffer for the archive          */
+	
+	unsigned char * PtrArch;                /* pointer to the next byte        */
+	
+	unsigned char * EndArch;                /* pointer to the last byte        */
+	
+	unsigned long   PosArch;                /* position of 'BufArch[0]'        */
+	
+	// before opening file
+	void setOnOpen()
+	{
+		PtrArch = EndArch = (BufArch+64);
+		PosArch = 0;
+	}
+};
 
-int     ClosReadArch ()
-{
-    return CLOS_READ_ARCH();
-}
 
-int             FillReadArch ()
+int FillReadArch (zooArchBuf *ArchBuf, CAnsiFile &archive)
 {
     unsigned char *     s;              /* loop variable                   */
     unsigned char *     d;              /* loop variable                   */
 
     /* copy the last characters to the beginning (for short backward seeks)*/
-    d = BufArch;
-    for ( s = EndArch-64; s < EndArch; s++ )
+    //d = ArchBuf->BufArch;
+    ::memcpy(ArchBuf->BufArch, ArchBuf->EndArch - 64, 64);
+    /*
+    for ( s = ArchBuf->EndArch-64; s < ArchBuf->EndArch; s++ )
+    {
         *d++ = *s;
-    PosArch += EndArch - (BufArch+64);
+    }
+    */
+    ArchBuf->PosArch += ArchBuf->EndArch - (ArchBuf->BufArch+64);
 
     /* read a block                                                        */
-    PtrArch = BufArch+64;
-    EndArch = PtrArch + BLCK_READ_ARCH( PtrArch, 4096 );
+    ArchBuf->PtrArch = ArchBuf->BufArch+64;
+    ArchBuf->EndArch = ArchBuf->PtrArch + 4096;
+    if (archive.Read(ArchBuf->PtrArch, 4096) == false)
+    {
+		throw IOException("Failure reading block");
+    }
 
     /* return the first character                                          */
-    return (PtrArch < EndArch ? *PtrArch++ : EOF);
+    return (ArchBuf->PtrArch < ArchBuf->EndArch ? *ArchBuf->PtrArch++ : EOF);
 }
 
-int             GotoReadArch ( pos )
-    unsigned long       pos;
+int GotoReadArch ( unsigned long pos )
 {
     /* for long backward seeks goto the beginning of the file              */
     if ( pos+64 < PosArch ) {
@@ -1443,20 +1324,6 @@ unsigned long   WordReadArch ()
     return result;
 }
 
-unsigned long   BlckReadArch ( blk, len )
-    char *              blk;
-    unsigned long       len;
-{
-    int                 ch;             /* character read                  */
-    unsigned long       i;              /* loop variable                   */
-    for ( i = 0; i < len; i++ ) {
-        if ( (ch = ByteReadArch()) == EOF )
-            return i;
-        else
-            *blk++ = ch;
-    }
-    return len;
-}
 
 struct {
     char                text[20];       /* "ZOO 2.10 Archive.<ctr>Z"       */
@@ -1476,14 +1343,24 @@ struct {
 
 }               Descript;
 
-int             DescReadArch ()
+bool CUnZoo::DescReadArch(CAnsiFile &archive)
 {
     /* read the text at the beginning                                      */
-    BlckReadArch(Descript.text,20L);  Descript.text[20] = '\0';
+    
+    // TODO: read all at once instead..
+    if (archive.Read(m_ReadBuffer.GetBegin(), 20) == false)
+    {
+		return false;
+    }
+    
+    ::memcpy(Descript.text, m_ReadBuffer.GetBegin(), 20);
+    Descript.text[20] = '\0';
 
     /* try to read the magic words                                         */
     if ( (Descript.magic = WordReadArch()) != (unsigned long)0xfdc4a7dcL )
-        return 0;
+    {
+        return false;
+	}
 
     /* read the old part of the description                                */
     Descript.posent = WordReadArch();
@@ -1503,7 +1380,7 @@ int             DescReadArch ()
     Descript.number = 0;
 
     /* indicate success                                                    */
-    return 1;
+    return true;
 }
 
 struct {
@@ -1519,37 +1396,30 @@ struct {
     unsigned long       siznow;         /*   compressed size of member     */
     unsigned char       majver;         /* major version needed to extract */
     unsigned char       minver;         /* minor version needed to extract */
-    unsigned char       delete;         /* 1 if member is deleted, 0 else  */
+    unsigned char       deleted;         /* 1 if member is deleted, 0 else  */
     unsigned char       spared;         /* spare entry to pad entry        */
     unsigned long       poscmt;         /* position of comment, 0 if none  */
     unsigned short      sizcmt;         /* length   of comment, 0 if none  */
-    char                nams [14];      /* short name of member or archive */
+    char                nameshort [14];      /* short name of member or archive */
     unsigned short      lvar;           /* length of variable part         */
     unsigned char       timzon;         /* time zone                       */
     unsigned short      crcent;         /* crc value of entry              */
     unsigned char       lnamu;          /* length of long name             */
     unsigned char       ldiru;          /* length of directory             */
-    char                namu [256];     /* univ. name of member of archive */
-    char                diru [256];     /* univ. name of directory         */
-    unsigned short      system;         /* system identifier               */
+    
+    // TODO: replace with std::string
+    char                fileName [256];     /* namu: univ. name of member of archive */
+    char                dirName [256];     /* diru: univ. name of directory         */
+    
+    unsigned short      systemid;         /* system identifier               */
     unsigned long       permis;         /* file permissions                */
     unsigned char       modgen;         /* gens. on, last gen., gen. limit */
     unsigned short      ver;            /* version number of member        */
-    /* the following are not in the archive file and are computed          */
-    char                naml [256];     /* local name of member of archive */
-    char                dirl [256];     /* local name of directory         */
-    char                patl [512];     /* local path name of member       */
-    char                patv [512];     /* ditto but with version number   */
-    char *              patw;           /* name used by '-l'               */
-    unsigned long       year;           /* years since 1900                */
-    unsigned long       month;          /* month since January             */
-    unsigned long       day;            /* day of month                    */
-    unsigned long       hour;           /* hours since midnight            */
-    unsigned long       min;            /* minutes after the hour          */
-    unsigned long       sec;            /* seconds after the minutes       */
+    
+    time_t            timestamp; /* timestamp in usable form */
 }               Entry;
 
-int             EntrReadArch ()
+int EntrReadArch (CAnsiFile &archive)
 {
     unsigned long       l;              /* 'Entry.lnamu+Entry.ldiru'       */
     char *              p;              /* loop variable                   */
@@ -1570,11 +1440,17 @@ int             EntrReadArch ()
     Entry.siznow = WordReadArch();
     Entry.majver = ByteReadArch();
     Entry.minver = ByteReadArch();
-    Entry.delete = ByteReadArch();
+    Entry.deleted = ByteReadArch();
     Entry.spared = ByteReadArch();
     Entry.poscmt = WordReadArch();
     Entry.sizcmt = HalfReadArch();
-    BlckReadArch(Entry.nams,13L);  Entry.nams[13] = '\0';
+
+	// some short name (fucking msdos..)    
+    if (archive.Read(Entry.nameshort,13L) == false)
+    {
+		throw IOException("failed reading enough");
+    }
+    Entry.nameshort[13] = '\0';
 
     /* handle the long name and the directory in the variable part         */
     Entry.lvar   = (Entry.type == 2  ? HalfReadArch() : 0);
@@ -1582,30 +1458,44 @@ int             EntrReadArch ()
     Entry.crcent = (Entry.type == 2  ? HalfReadArch() : 0);
     Entry.lnamu  = (0 < Entry.lvar   ? ByteReadArch() : 0);
     Entry.ldiru  = (1 < Entry.lvar   ? ByteReadArch() : 0);
-    BlckReadArch(Entry.namu,(unsigned long)Entry.lnamu);
-    Entry.namu[Entry.lnamu] = '\0';
-    BlckReadArch(Entry.diru,(unsigned long)Entry.ldiru);
-    Entry.diru[Entry.ldiru] = '\0';
+    
+    if (archive.Read(Entry.fileName,Entry.lnamu) == false)
+    {
+		throw IOException("failed reading enough");
+    }
+    Entry.fileName[Entry.lnamu] = '\0';
+    
+    if (archive.Read(Entry.dirName,Entry.ldiru) == false)
+    {
+		throw IOException("failed reading enough");
+    }
+    Entry.dirName[Entry.ldiru] = '\0';
+    
     l = Entry.lnamu + Entry.ldiru;
-    Entry.system = (l+2 < Entry.lvar ? HalfReadArch() : 0);
+    Entry.systemid = (l+2 < Entry.lvar ? HalfReadArch() : 0);
     Entry.permis = (l+4 < Entry.lvar ? TripReadArch() : 0);
     Entry.modgen = (l+7 < Entry.lvar ? ByteReadArch() : 0);
     Entry.ver    = (l+7 < Entry.lvar ? HalfReadArch() : 0);
 
     /* convert the names to local format                                   */
-    if ( Entry.system == 0 || Entry.system == 2 ) {
+    /*
+    if ( Entry.systemid == 0 || Entry.systemid == 2 ) 
+    {
         CONV_DIRE( Entry.dirl, Entry.diru );
         CONV_NAME( Entry.naml, (Entry.lnamu ? Entry.namu : Entry.nams) );
     }
-    else {
+    else 
+    {
         strcpy( Entry.dirl, Entry.diru );
         strcpy( Entry.naml, (Entry.lnamu ? Entry.namu : Entry.nams) );
     }
     strcpy( Entry.patl, Entry.dirl );
     strcat( Entry.patl, Entry.naml );
+    */
 
     /* create the name with the version appended                           */
-    strcpy( Entry.patv, Entry.patl );
+    //strcpy( Entry.patv, Entry.patl );
+    /*
     p = Entry.patv;  while ( *p != '\0' )  p++;
     *p++ = ';';
     for ( l = 10000; 0 < l; l /= 10 )
@@ -1613,275 +1503,24 @@ int             EntrReadArch ()
             *p++ = (Entry.ver / l) % 10 + '0';
     *p = '\0';
     Entry.patw = ((Entry.modgen&0xc0)!=0x80 ? Entry.patl : Entry.patv);
+    */
 
-    /* convert the time                                                    */
+    /* convert the time to something usable */
+    Entry.timestamp = (time_t)CGenericTime(Entry.datdos, Entry.timdos);
+
+	/*    
     Entry.year  = ((Entry.datdos >>  9) & 0x7f) + 80;
     Entry.month = ((Entry.datdos >>  5) & 0x0f) - 1;
     Entry.day   = ((Entry.datdos      ) & 0x1f);
     Entry.hour  = ((Entry.timdos >> 11) & 0x1f);
     Entry.min   = ((Entry.timdos >>  5) & 0x3f);
     Entry.sec   = ((Entry.timdos      ) & 0x1f) * 2;
+    */
 
     /* indicate success                                                    */
     return 1;
 }
 
-
-/****************************************************************************
-**
-*F  OpenReadFile(<patl>,<bin>)  . . . . . . . . . . . open a file for reading
-*F  ClosReadFile()  . . . . . . . . . . . . . . . . . . .  close a file again
-*F  BlckReadFile(<blk>,<len>) . . . . . . .  write a block of bytes to a file
-*F  BufFile[] . . . . . . . . . . . . . . . . . . . . . . buffer for the file
-**
-**  'OpenReadFile' tries to open the archive  with local path name <patl> (as
-**  converted by 'CONV_NAME'  and 'CONV_DIRE') for reading  and returns 1  to
-**  indicate success  and 0 to  indicate that the file cannot  be opened.  If
-**  <bin> is  0, the file is opened   as a text file,   otherwise the file is
-**  opened as a binary file.
-**
-**  'ClosReadFile' closes the file again.
-**
-**  'BlckReadFile' reads <len>  bytes from the  file to the buffer  <blk> and
-**  returns the  number    of bytes actually   read.   If  no file    is open
-**  'BlckReadFile' only returns 0.
-**
-**  'BufFile'  is  a buffer for  the  file (which is not   used  by the above
-**  functions).
-*/
-unsigned long   IsOpenReadFile;
-
-int             OpenReadFile ( patl, bin )
-    char *              patl;
-    unsigned long       bin;
-{
-    if      ( bin == 0 && OPEN_READ_TEXT(patl) ) {
-        IsOpenReadFile = 1;
-        return 1;
-    }
-    else if ( bin == 1 && OPEN_READ_BINR(patl) ) {
-        IsOpenReadFile = 2;
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-int             ClosReadFile ()
-{
-    if      ( IsOpenReadFile == 1 ) {
-        IsOpenReadFile = 0;
-        return CLOS_READ_TEXT();
-    }
-    else if ( IsOpenReadFile == 2 ) {
-        IsOpenReadFile = 0;
-        return CLOS_READ_BINR();
-    }
-    else {
-        return 0;
-    }
-}
-
-unsigned long   BlckReadFile ( blk, len )
-    char *              blk;
-    unsigned long       len;
-{
-    if      ( IsOpenReadFile == 1 ) {
-        return BLCK_READ_TEXT( blk, len );
-    }
-    else if ( IsOpenReadFile == 2 ) {
-        return BLCK_READ_BINR( blk, len );
-    }
-    else {
-        return 0;
-    }
-}
-
-char            BufFile [8192];         /* at least MAX_OFF                */
-
-
-/****************************************************************************
-**
-*F  OpenWritFile(<patl>,<bin>)  . . . . . . . . . . . open a file for writing
-*F  ClosWritFile()  . . . . . . . . . . . . . . . . . . .  close a file again
-*F  BlckWritFile(<blk>,<len>) . . . . . . .  write a block of bytes to a file
-**
-**  'OpenWritFile' tries to open the archive  with local path name <patl> (as
-**  converted by 'CONV_NAME'  and 'CONV_DIRE') for writing  and returns  1 to
-**  indicate success  and 0 to indicate  that the file cannot  be opened.  If
-**  <bin> is  0, the file  is opened as a text   file, otherwise the  file is
-**  opened as a binary file.
-**
-**  'ClosWritFile' closes the file again.
-**
-**  'BlckWritFile' writes <len>  bytes from the  buffer <blk> to the file and
-**  returns the number  of bytes actually written,  which is less than  <len>
-**  only when a write error happened.  If no file is open 'BlckWritFile' only
-**  returns <len>.
-*/
-unsigned long   IsOpenWritFile;
-
-int             OpenWritFile ( patl, bin )
-    char *              patl;
-    unsigned long       bin;
-{
-    if ( patl == 0 ) {
-        IsOpenWritFile = 1;
-        return 1;
-    }
-    else if ( bin == 1 && OPEN_WRIT_TEXT(patl) ) {
-        IsOpenWritFile = 2;
-        return 1;
-    }
-    else if ( bin == 2 && OPEN_WRIT_BINR(patl) ) {
-        IsOpenWritFile = 3;
-        return 1;
-    }
-#ifdef  SYS_IS_MAC_MPW
-    else if ( bin == 3 && OPEN_WRIT_MACB(patl) ) {
-        IsOpenWritFile = 4;
-        return 1;
-    }
-#endif
-    else {
-        return 0;
-    }
-}
-
-int             ClosWritFile ()
-{
-    if      ( IsOpenWritFile == 1 ) {
-        return 1;
-    }
-    else if ( IsOpenWritFile == 2 ) {
-        IsOpenWritFile = 0;
-        return CLOS_WRIT_TEXT();
-    }
-    else if ( IsOpenWritFile == 3 ) {
-        IsOpenWritFile = 0;
-        return CLOS_WRIT_BINR();
-    }
-#ifdef  SYS_IS_MAC_MPW
-    else if ( IsOpenWritFile == 4 ) {
-        IsOpenWritFile = 0;
-        return CLOS_WRIT_MACB();
-    }
-#endif
-    else {
-        return 0;
-    }
-}
-
-unsigned long   BlckWritFile ( blk, len )
-    char *              blk;
-    unsigned long       len;
-{
-    unsigned long       i;              /* loop variable                   */
-    if      ( IsOpenWritFile == 1 ) {
-        for ( i = 0; i < len; i++ )
-            putchar( blk[i] );
-        return len;
-    }
-    else if ( IsOpenWritFile == 2 ) {
-        return BLCK_WRIT_TEXT( blk, len );
-    }
-    else if ( IsOpenWritFile == 3 ) {
-        return BLCK_WRIT_BINR( blk, len );
-    }
-#ifdef  SYS_IS_MAC_MPW
-    else if ( IsOpenWritFile == 4 ) {
-#ifdef SYS_IS_MAC_THC
-        return BLCK_WRIT_MACB( (StringPtr)blk, len );
-#else
-        return BLCK_WRIT_MACB( blk, len );
-#endif
-    }
-#endif
-    else {
-        return len;
-    }
-}
-
-
-/****************************************************************************
-**
-*V  Crc . . . . . . . . . . . . . . . . current cyclic redundancy check value
-*F  CRC_BYTE(<crc>,<byte>)  . . . . . cyclic redundancy check value of a byte
-*F  InitCrc() . . . . . . . . . . . . initialize cylic redundancy check table
-**
-**  'Crc'  is used by  the  decoding  functions to  communicate  the computed
-**  CRC-16 value to the calling function.
-**
-**  'CRC_BYTE' returns the new value that one gets by updating the old CRC-16
-**  value <crc> with the additional byte  <byte>.  It is  used to compute the
-**  ANSI CRC-16 value for  each member of the archive.   They idea is that if
-**  not  too many bits  of a member have corrupted,  then  the CRC-16 will be
-**  different, and so the corruption can be detected.
-**
-**  'InitCrc' initialize the table that 'CRC_BYTE' uses.   You must call this
-**  before using 'CRC_BYTE'.
-**
-**  The  ANSI CRC-16  value  for a sequence of    bits of lenght  <length> is
-**  computed by shifting the bits through the following shift register (where
-**  'O' are the latches and '+' denotes logical xor)
-**
-**                  bit          bit            ...  bit   bit   bit   -->-
-**                     <length>     <length>-1          3     2     1     |
-**                                                                        V
-**      -<-------<---------------------------------------------------<----+
-**      |       |                                                   |     ^
-**      V       V                                                   V     |
-**      ->O-->O-+>O-->O-->O-->O-->O-->O-->O-->O-->O-->O-->O-->O-->O-+>O-->-
-**       MSB                                                         LSB
-**
-**  Mathematically we compute in the polynomial ring $GF(2)[x]$ the remainder
-**
-**      $$\sum_{i=1}^{i=length}{bit_i x^{length+16-i}} mod crcpol$$
-**
-**  where  $crcpol = x^{16}  + x^{15}  +  x^2 +  1$.  Then  the  CRC-16 value
-**  consists  of the  coefficients   of  the remainder,  with    the constant
-**  coefficient being  the most significant bit (MSB)  and the coefficient of
-**  $x^{15}$ the least significant bit (LSB).
-**
-**  Changing  a  single bit will  always cause  the  CRC-16  value to change,
-**  because $x^{i} mod crcpol$ is never zero.
-**
-**  Changing two  bits  will cause the CRC-16   value to change,  unless  the
-**  distance between the bits is a multiple  of 32767, which  is the order of
-**  $x$ modulo $crcpol = (x+1)(x^{15} + x + 1)$ ($x^{15}+x+1$ is primitive).
-**
-**  Changing  16 adjacent  bits will always  cause the  CRC value  to change,
-**  because $x^{16}$ and $crcpol$ are relatively prime.
-**
-**  David Schwaderer provided the CRC-16 calculation in PC Tech Journal 4/85.
-*/
-unsigned long   Crc;
-
-unsigned long   CrcTab [256];
-
-#define CRC_BYTE(crc,byte)      (((crc)>>8) ^ CrcTab[ ((crc)^(byte))&0xff ])
-
-int             InitCrc ()
-{
-    unsigned long       i, k;           /* loop variables                  */
-    for ( i = 0; i < 256; i++ ) {
-        CrcTab[i] = i;
-        for ( k = 0; k < 8; k++ )
-            CrcTab[i] = (CrcTab[i]>>1) ^ ((CrcTab[i] & 1) ? 0xa001 : 0);
-    }
-    return 1;
-}
-
-
-/****************************************************************************
-**
-*V  ErrMsg  . . . . . . . . . . . . . . . . . . . . . . . . . . error message
-**
-**  'ErrMsg' is used by the  decode functions to communicate  the cause of an
-**  error to the calling function.
-*/
-char *          ErrMsg;
 
 
 /****************************************************************************
@@ -1891,43 +1530,42 @@ char *          ErrMsg;
 **  'DecodeCopy' simply  copies <size> bytes  from the  archive to the output
 **  file.
 */
-int             DecodeCopy ( size )
-    unsigned long       size;
+bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
 {
-    unsigned long       siz;            /* size of current block           */
-    unsigned long       crc;            /* CRC-16 value                    */
-    unsigned long       i;              /* loop variable                   */
+    //unsigned long  blockSize;            /* size of current block           */
+    //unsigned long       crc;            /* CRC-16 value                    */
+    //unsigned long       i;              /* loop variable                   */
 
     /* initialize the crc value                                            */
-    crc = 0;
+    m_crc.ClearCrc(); // = 0;
+    m_ReadBuffer.PrepareBuffer(8192, false); // clear, allocate if not enough
 
     /* loop until everything has been copied                               */
-    while ( 0 < size ) {
-
+    while ( 0 < size ) 
+    {
         /* read as many bytes as possible in one go                        */
-        siz = (sizeof(BufFile) < size ? sizeof(BufFile) : size);
-        if ( BlckReadArch( BufFile, siz ) != siz ) {
-            ErrMsg = "unexpected <eof> in the archive";
-            return 0;
+        const size_t bufSize = m_ReadBuffer.GetSize();
+        unsigned long blockSize = (bufSize < size ? bufSize : size); // choose largest possible
+        
+	    if (archive.Read(m_ReadBuffer.GetBegin(), blockSize) == false)
+        {
+            throw IOException("unexpected <eof> in the archive");
         }
-
-        /* write them                                                      */
-        if ( BlckWritFile( BufFile, siz ) != siz ) {
-            ErrMsg = "cannot write output file";
-            return 0;
+        if (outFile.Write(m_ReadBuffer.GetBegin(), blockSize) == false)
+        {
+            throw IOException("cannot write output file");
         }
 
         /* compute the crc                                                 */
-        for ( i = 0; i < siz; i++ )
-            crc = CRC_BYTE( crc, BufFile[i] );
+        m_crc.UpdateCrc(BufFile, blockSize);
 
         /* on to the next block                                            */
-        size -= siz;
+        size -= blockSize;
     }
 
     /* store the crc and indicate success                                  */
-    Crc = crc;
-    return 1;
+    //m_crc.m_Crc;
+    return true;
 }
 
 
@@ -1937,12 +1575,14 @@ int             DecodeCopy ( size )
 **
 *N  1993/10/21 martin add LZD.
 */
+/**/
 int             DecodeLzd ()
 {
-    ErrMsg = "LZD not yet implemented";
-    return 0;
+    //ErrMsg = "LZD not yet implemented";
+	throw IOException("LZD not implemented");
+    //return 0;
 }
-
+/**/
 
 /****************************************************************************
 **
@@ -2349,44 +1989,41 @@ unsigned long   BeginMonth [12] = {
    0,    31,   59,   90,  120,  151,  181,  212,  243,  273,  304,  334
 };
 
+/*
 char            NameMonth [12] [4] = {
 "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
 };
+*/
 
-int             ListArch ( ver, arc, filec, files )
-    unsigned long       ver;
-    char *              arc;
-    unsigned long       filec;
-    char *              files [];
+int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
 {
-    char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
+    //char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
     int                 chr;            /* character from comment          */
     unsigned long       i;              /* loop variable                   */
-
+    
     /* try to open the archive under various names                         */
-    strcpy(arczoo,arc);  strcat(arczoo,".zoo");
-    if ( OpenReadArch(arc) ) {
-        if ( ! DescReadArch() ) {
-            ClosReadArch();
-            if ( ! OpenReadArch(arczoo) || ! DescReadArch() ) {
-                printf("unzoo: found bad description in archive '%s'\n",arc);
-                return 0;
-            }
-        }
+    //strcpy(arczoo,arc);  
+    //strcat(arczoo,".zoo");
+
+   std::string filename = arc;
+   
+    // just open it, stop fucking around with names
+    CAnsiFile archive(filename);
+    if (archive.IsOk() == false)
+    {
+        throw ArcException("unzoo: could not open archive", filename);
     }
-    else if ( OpenReadArch(arczoo) ) {
-        if ( ! DescReadArch() ) {
-            printf("unzoo: found bad description in archive '%s'\n",arczoo);
-            return 0;
-        }
-    }
-    else {
-        printf("unzoo: could not open archive '%s'\n",arc);
-        return 0;
-    }
+	if ( DescReadArch(archive) == false) 
+	{
+		//printf("unzoo: found bad description in archive '%s'\n",arczoo);
+		throw ArcException("unzoo: bad description in archive", arczoo);
+		//return 0;
+	}
+    
 
     /* if present, print the archive comment                               */
-    if ( ver && Descript.sizcmt != 0 ) {
+    if ( ver && Descript.sizcmt != 0 ) 
+    {
         if ( ! GotoReadArch( Descript.poscmt ) ) {
             printf("unzoo: cannot find comment in archive '%s'\n",arc);
             return 0;
@@ -2399,13 +2036,10 @@ int             ListArch ( ver, arc, filec, files )
             printf("%c",chr);
         }
         if ( chr != '\n' )  printf("\n");
-        fflush( stdout );
     }
 
     /* print the header                                                    */
-    printf("Length    CF  Size Now  Date      Time    \n");
-    printf("--------  --- --------  --------- --------\n");
-    fflush( stdout );
+    //printf("Length    CF  Size Now  Date      Time    \n");
 
     /* loop over the members of the archive                                */
     Entry.posnxt = Descript.posent;
@@ -2419,7 +2053,7 @@ int             ListArch ( ver, arc, filec, files )
         if ( ! Entry.posnxt )  break;
 
         /* skip members we don't care about                                */
-        if ( Entry.delete == 1 )
+        if ( Entry.deleted == 1 )
             continue;
         if ( filec == 0 && ! IsMatchName( "*", Entry.patw ) )
             continue;
@@ -2431,6 +2065,7 @@ int             ListArch ( ver, arc, filec, files )
             continue;
 
         /* print the information about the member                          */
+        /*
         printf("%8lu %3lu%% %8lu  %2lu %3s %02lu %02lu:%02lu:%02lu   %s\n",
                Entry.sizorg,
                (100*(Entry.sizorg-Entry.siznow)+Entry.sizorg/2)
@@ -2439,7 +2074,7 @@ int             ListArch ( ver, arc, filec, files )
                Entry.day, NameMonth[Entry.month], Entry.year % 100,
                Entry.hour, Entry.min, Entry.sec,
                (ver ? Entry.patv : Entry.patw) );
-        fflush( stdout );
+               */
 
         /* update the counts for the whole archive                         */
         Descript.sizorg += Entry.sizorg;
@@ -2466,20 +2101,15 @@ int             ListArch ( ver, arc, filec, files )
     }
 
     /* print the footer                                                    */
-    printf("--------  --- --------  --------- --------\n");
+    /*
     printf("%8lu %3lu%% %8lu  %4lu files\n",
            Descript.sizorg,
            (100*(Descript.sizorg-Descript.siznow)+Descript.sizorg/2)
            / (Descript.sizorg != 0 ? Descript.sizorg : 1),
            Descript.siznow,
            Descript.number );
-    fflush( stdout );
+           */
 
-    /* close the archive file                                              */
-    if ( ! ClosReadArch() ) {
-        printf("unzoo: could not close archive '%s'\n",arc);
-        return 0;
-    }
 
     /* indicate success                                                    */
     return 1;
@@ -2501,17 +2131,10 @@ int             ListArch ( ver, arc, filec, files )
 **  If <ovr> is 0, members will not overwrite  existing files; otherwise they
 **  will.  <pre> is a prefix that is prepended to all path names.
 */
-int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
-    unsigned long       bim;
-    unsigned long       out;
-    unsigned long       ovr;
-    char *              pre;
-    char *              arc;
-    unsigned long       filec;
-    char *              files [];
+int ExtrArch ( unsigned long bim, unsigned long out, unsigned long ovr, char *pre, char *arc, unsigned long filec, char *files )
 {
-    char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
-    char                ans [256];      /* to read the answer              */
+    //char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
+    //char                ans [256];      /* to read the answer              */
     char                patl [1024];    /* local name with prefix          */
     unsigned long       bin;            /* extraction mode text/binary     */
     unsigned long       res;            /* status of decoding              */
@@ -2519,25 +2142,19 @@ int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
     unsigned long       i;              /* loop variable                   */
 
     /* try to open the archive under various names                         */
-    strcpy(arczoo,arc);  strcat(arczoo,".zoo");
-    if ( OpenReadArch(arc) ) {
-        if ( ! DescReadArch() ) {
-            ClosReadArch();
-            if ( ! OpenReadArch(arczoo) || ! DescReadArch() ) {
-                printf("unzoo: found bad description in archive '%s'\n",arc);
-                return 0;
-            }
-        }
+    //strcpy(arczoo,arc);  
+    //strcat(arczoo,".zoo");
+   std::string filename = arc;
+   
+    // just open it, stop fucking around with names
+    CAnsiFile archive(filename);
+    if (archive.IsOk() == false)
+    {
+        throw ArcException("unzoo: could not open archive", filename);
     }
-    else if ( OpenReadArch(arczoo) ) {
-        if ( ! DescReadArch() ) {
-            printf("unzoo: found bad description in archive '%s'\n",arczoo);
-            return 0;
-        }
-    }
-    else {
-        printf("unzoo: could not open archive '%s'\n",arc);
-        return 0;
+	if ( DescReadArch() == false) 
+	{
+        throw ArcException("unzoo: bad description in archive", filename);
     }
 
     /* test if the archive has a comment starting with '!TEXT!'            */
@@ -2573,7 +2190,7 @@ int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
         if ( ! Entry.posnxt )  break;
 
         /* skip members we don't care about                                */
-        if ( Entry.delete == 1 )
+        if ( Entry.deleted == 1 )
             continue;
         if ( filec == 0 && ! IsMatchName( "*", Entry.patw ) )
             continue;
@@ -2592,32 +2209,9 @@ int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
         }
 
         /* check that such a file does not already exist                   */
-        strcpy( patl, pre );  strcat( patl, Entry.patl );
+        strcpy( patl, pre );  
+        strcat( patl, Entry.patl );
         if ( out == 2 && ovr == 0 && OpenReadFile(patl,0L) ) {
-            ClosReadFile();
-            do {
-                printf("'%s' exists, overwrite it? (Yes/No/All/Ren): ",patl);
-                fflush( stdout );
-                if ( fgets( ans, sizeof(ans), stdin ) == (char*)0 )
-                    return 0;
-            } while ( *ans!='y' && *ans!='n' && *ans!='a' && *ans!='r'
-                   && *ans!='Y' && *ans!='N' && *ans!='A' && *ans!='R' );
-            if      ( *ans == 'n' || *ans == 'N' ) {
-                continue;
-            }
-            else if ( *ans == 'a' || *ans == 'A' ) {
-                ovr = 1;
-            }
-            else if ( *ans == 'r' || *ans == 'R' ) {
-                do {
-                    printf("enter a new local path name: ");
-                    fflush( stdout );
-                    if ( fgets( patl, sizeof(patl), stdin ) == (char*)0 )
-                        return 0;
-                    for ( i = 0; patl[i] != '\0' && patl[i] != '\n'; i++ ) ;
-                    patl[i] = '\0';
-                } while ( OpenReadFile(patl,0L) && ClosReadFile() );
-            }
         }
 
         /* decide whether or not we want to open the file binary           */
@@ -2671,26 +2265,36 @@ int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
             return 0;
         }
         res = 0;
-        ErrMsg = "this should not happen";
+        
         if ( out == 0 || out == 2 )
             printf("%s \t-- ",Entry.patl);
         else
             printf("********\n%s\n********\n",Entry.patl);
         fflush( stdout );
-        if ( Entry.method == 0 )  res = DecodeCopy( Entry.siznow );
-        if ( Entry.method == 1 )  res = DecodeLzd();
-        if ( Entry.method == 2 )  res = DecodeLzh();
+        
+        if ( Entry.method == 0 )  
+			res = DecodeCopy( Entry.siznow );
+        if ( Entry.method == 1 )  
+			res = DecodeLzd();
+        if ( Entry.method == 2 )  
+			res = DecodeLzh();
 
         /* check that everything went ok                                   */
-        if      ( res == 0             )  printf("error, %s\n",ErrMsg);
-        else if ( Crc != Entry.crcdat  )  printf("error, CRC failed\n");
-        else if ( out == 2 && bin == 1 )  printf("extracted as text\n");
-        else if ( out == 2 && bin == 2 )  printf("extracted as binary\n");
+        if      ( res == 0             )  
+			//printf("error, %s\n",ErrMsg);
+	        throw IOException("this should not happen");
+        else if ( Crc != Entry.crcdat  )  
+			printf("error, CRC failed\n");
+        else if ( out == 2 && bin == 1 )  
+			printf("extracted as text\n");
+        else if ( out == 2 && bin == 2 )  
+			printf("extracted as binary\n");
 #ifdef  SYS_IS_MAC_MPW
-        else if ( out == 2 && bin == 3 )  printf("extracted as MacBinary\n");
+        else if ( out == 2 && bin == 3 )  
+			printf("extracted as MacBinary\n");
 #endif
-        else if ( out == 0             )  printf("tested\n");
-        fflush( stdout );
+        else if ( out == 0             )  
+			printf("tested\n");
 
         /* close the file after extraction                                 */
         if ( out == 1 || out == 2 )
@@ -2720,11 +2324,6 @@ int             ExtrArch ( bim, out, ovr, pre, arc, filec, files )
 
     }
 
-    /* close the archive file                                              */
-    if ( ! ClosReadArch() ) {
-        printf("unzoo: could not close the archive '%s'\n",arc);
-        return 0;
-    }
 
     /* indicate success                                                    */
     return 1;
@@ -2744,25 +2343,16 @@ int             HelpArch ()
     printf("  ($Id: unzoo.c,v 4.4 2000/05/29 08:56:57 sal Exp $)\n");
     printf("  based on 'booz' version 2.0 by Rahul Dhesi\n");
     printf("\n");
-    printf("unzoo [-l] [-v] <archive>[.zoo] [<file>..]\n");
-    printf("  list the members of the archive\n");
-    printf("  -v:  list also the generation numbers and the comments\n");
-    printf("  <file>: list only files matching at least one pattern,\n");
-    printf("          '?' matches any char, '*' matches any string.\n");
-    printf("\n");
     printf("unzoo -x [-abnpo] [-j <prefix>] <archive>[.zoo] [<file>..]\n");
     printf("  extract the members of the archive\n");
+    
+    // do we get problems with this?
+    // apparently it does some data conversion instead of raw extract?
+    //
     printf("  -a:  extract all members as text files ");
     printf("(not only those with !TEXT! comments)\n");
     printf("  -b:  extract all members as binary files ");
     printf("(even those with !TEXT! comments)\n");
-    printf("  -n:  extract no members, only test the integrity\n");
-    printf("  -p:  extract to stdout\n");
-    printf("  -o:  extract over existing files\n");
-    printf("  -j:  extract to '<prefix><membername>'\n");
-    printf("  <file>: extract only files matching at least one pattern,\n");
-    printf("          '?' matches any char, '*' matches any string.\n");
-    return 1;
 }
 */
 
@@ -2791,16 +2381,10 @@ int             main ( argc, argv )
     char *              p;              /* loop variable                   */
 
 
-#ifdef SYS_IS_MAC_THC
-    SIOUXSettings.autocloseonquit = 1;
-    SIOUXSettings.asktosaveonclose = 0;
-#endif
-
     /* repeat until the user enters an empty line                          */
     InitCrc();
     IsSpec['\0'] = 1;  IsSpec[';'] = 1;
     argd = 1;
-    do {
 
         /* scan the command line arguments                                 */
         cmd = 1;  ver = 0;  bim = 0;  out = 2;  ovr = 0;
@@ -2834,33 +2418,17 @@ int             main ( argc, argv )
         else
             res = HelpArch();
 
-        /* in interactive mode read another line                           */
-        if ( 1 < argd || argc <= 1 ) {
-
-            /* read a command line                                         */
-            printf("\nEnter a command line or an empty line to quit:\n");
-            fflush( stdout );
-            if ( fgets( argl, sizeof(argl), stdin ) == (char*)0 )  break;
-#ifdef SYS_IdfgdfsgasfgdsgfdS_MAC_THC
-			if ( *argl == '\n' && argl[1]=='\0') break;
-#endif 
-           /* parse the command line into argc                            */
-            argd = 1;
-            p = argl;
-            while ( *p==' ' || *p=='\t' || *p=='\n' )  *p++ = '\0';
-            while ( *p != '\0' ) {
-                argw[argd++] = p;
-                while ( *p!=' ' && *p!='\t' && *p!='\n' && *p!='\0' )  p++;
-                while ( *p==' ' || *p=='\t' || *p=='\n' )  *p++ = '\0';
-            }
-            argc = argd;  argv = argw;
-
-        }
-
-    } while ( 1 < argd );
 
     /* just to please lint                                                 */
     return ! res;
 }
 #endif // 0
+
+bool CUnZoo::TestArchive()
+{
+}
+
+bool CUnZoo::Extract()
+{
+}
 

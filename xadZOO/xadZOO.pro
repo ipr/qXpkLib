@@ -15,11 +15,19 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 INCLUDEPATH += ../qXpkLib
 
 SOURCES += xadZOO.cpp \
-    UnZoo.cpp
+    UnZoo.cpp \
+    crcsum.cpp
 
 HEADERS += xadZOO.h\
         xadZOO_global.h \
-    UnZoo.h
+    UnZoo.h \
+    crcsum.h \
+    GenericTime.h
+
+
+
+
+
 
 
 

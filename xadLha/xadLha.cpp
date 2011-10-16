@@ -16,6 +16,13 @@ xadLha::~xadLha()
 	}
 }
 
+/*
+bool xadLha::fileList(QList<archiveEntry> &entryList)
+{
+	//m_pArchive->getHeaderList();
+}
+*/
+
 // set path to uncompress files to
 bool xadLha::setExtractPath(QString &szPath)
 {

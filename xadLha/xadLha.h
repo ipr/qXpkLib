@@ -17,9 +17,11 @@ public:
     xadLha();
     virtual ~xadLha();
 
+	//virtual bool fileList(QList<archiveEntry> &entryList);
+
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
-	
+
 	// test archive integrity
 	virtual bool testArchive();
 	

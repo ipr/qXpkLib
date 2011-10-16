@@ -10,8 +10,8 @@
 
 #include "LhArchive.h"
 
-CLhArchive::CLhArchive(QLhALib *pParent, QString &szArchive)
-	: QObject(pParent),
+CLhArchive::CLhArchive(QObject *parent, QString &szArchive)
+	: QObject(parent),
 	m_szArchive(szArchive),
 	m_nFileSize(0),
 	m_ulTotalPacked(0),
