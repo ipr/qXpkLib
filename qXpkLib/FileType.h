@@ -32,6 +32,7 @@ typedef enum tHeaderType
 	HEADERTYPE_ZIP, // PK-zip and variants, 0x04034B50
 	//HEADERTYPE_TAR, // "tape-archive" (POSIX) (multi-file)
 	//HEADERTYPE_ZOO, // 0xfdc4a7dc ?
+	//HEADERTYPE_AR, // Un*x AR, LSAR?
 	//HEADERTYPE_CPIO, // Un*x CPIO
 	//HEADERTYPE_SHAR, // Un*x shell-archive..
 	//HEADERTYPE_STUFFIT, // MacOS Stuffit (SIT)
@@ -49,8 +50,9 @@ typedef enum tHeaderType
 	HEADERTYPE_XPK_NUKE, // XPK NUKE
 	HEADERTYPE_XPK_RLEN, // XPK RLEN
 	HEADERTYPE_XFD_GENERIC, // XFD, multi-algorithm (SQSH etc.), Amiga
+	HEADERTYPE_BZIP, // older BZip packer 
+	HEADERTYPE_BZIP2, // BZip2 packer (bz2)
 	HEADERTYPE_GZIP, // GNU-zip packer (gz)
-	HEADERTYPE_BZIP2, // BZIP2 packer (bz2)
 	HEADERTYPE_ZCOMPRESS, // Un*X compress (Z)
 	HEADERTYPE_7Z, // 7Z packer (7zip)
 	HEADERTYPE_XZ, // XZ Utils packer (xz)
@@ -142,6 +144,7 @@ typedef enum tHeaderType
 	HEADERTYPE_ADFDOS_DISK, // amiga disk file format, TODO: is there header signature or just booblock of disk?
 	HEADERTYPE_DMS_DISK, // Diskmasher compressed disk file, 0x444D5321 == DMS! (big-endian)
 	HEADERTYPE_XMASH, // xMash
+	HEADERTYPE_ZOOM_DISK, // Zoom disk archiver image
 	//HEADERTYPE_XDM_DISK, // xDM compressed disk file
 	//HEADERTYPE_AMIGA_HARDFILE,
 	//HEADERTYPE_ISOCD,

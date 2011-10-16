@@ -335,6 +335,11 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		return HEADERTYPE_MSCAB;
 	}
 	*/
+	else if (::memcmp(pBuffer, "ZOM5", 4) == 0)
+	{
+		// Zoom disk archiver
+		return HEADERTYPE_ZOOM_DISK;
+	}
 	else if (::memcmp(pBuffer, "LZX", 3) == 0)
 	{
 		// LZX archive
@@ -386,12 +391,19 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		return enFileType;
 	}
 
-	if (pBuffer[0] == 0x42
-		&& pBuffer[1] == 0x5A)
+	if (pBuffer[0] == 'B'
+		&& pBuffer[1] == 'Z'
+		&& pBuffer[2] == '0')
 	{
-		// "BZ"
-		// variations: "BZ0", "BZh1".."BZh9"
-		// TODO: also bzip "1" ?
+		// "BZ0", older BZip format
+		return HEADERTYPE_BZIP;
+	}
+	else if (pBuffer[0] == 'B'
+		&& pBuffer[1] == 'Z'
+		&& pBuffer[2] == 'h')
+	{
+		// "BZh?", where ? = 0..9
+		// for variations: "BZ0", "BZh1".."BZh9"
 		return HEADERTYPE_BZIP2;
 	}
 	else if (pBuffer[0] == 0x1F

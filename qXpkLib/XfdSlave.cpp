@@ -302,6 +302,7 @@ bool XfdByteKiller::xvdg(CReadBuffer *pOut, uint8_t *src, uint32_t size)
 }
 
 /*
+compiled AMOS-programs, starting with common hunk-header (since executable) ?
 ; Amos Pro CLI
 ; Amos Pro Wb
 ; Amos Wb
@@ -384,8 +385,10 @@ bool XfdByteKiller::decrunch(CReadBuffer *pOut)
 		//bne.s	.Exit
 		return xvdg(pOut, pA0+4, size);
 	}
+	// if (tag == MakeTag("xVgd")) // this also?
 	
-	/* AMOS .. common hunk header (executable) ? */
+	/* compiled AMOS program .. starts with common hunk header (since executable) ? */
+	//return amos(pOut, pA0+4, size);
 
 	if (tag == MakeTag("ARPF"))
 	{
