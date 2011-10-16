@@ -437,740 +437,23 @@ FILE *          WritBinr;
 #endif
 
 
-/****************************************************************************
-**
-*F  CONV_NAME(<naml>,<namu>)  . . . . . . . . . . . . . . convert a file name
-**
-**  'CONV_NAME'  returns in <naml> the  universal file name <namu>  converted
-**  to the local format.  <namu>  may contain  uppercase, lowercase,  and all
-**  special characters, and may be up to 255 characters long.
-**
-**  You must define this for a new port if you want  'unzoo' to keep the long
-**  names instead of using the default local format for the file names, which
-**  contains up to eight lowercase  characters before an optional dot  ('.'),
-**  up to three characters after the dot, and no special characters.  You may
-**  want to use the universal conversion function 'ConvName'.
-*/
-#ifdef  SYS_IS_UNIX
-#define CONV_NAME(naml,namu)    strcpy( (naml), (namu) )
-#endif
-#ifdef  SYS_IS_DOS_DJGPP
-#define CONV_NAME(naml,namu)    ConvName( (naml), (namu), 8L, 3L, '_' )
-#endif
-#ifdef  SYS_IS_OS2_EMX
-#define CONV_NAME(naml,namu)    strcpy( (naml), (namu) )
-#endif
-#ifdef  SYS_IS_TOS_GCC
-#define CONV_NAME(naml,namu)    strcpy( (naml), (namu) )
-#endif
-#ifdef  SYS_IS_VMS
-#define CONV_NAME(naml,namu)    ConvName( (naml), (namu), 39L, 39L, '_' )
-#endif
-#ifdef  SYS_IS_MAC_MPW
-#define CONV_NAME(naml,namu)    strncpy( (naml), (namu), 31 ); naml[32] = '\0'
-#endif
-#ifndef CONV_NAME
-#define CONV_NAME(naml,namu)    ConvName( (naml), (namu), 8L, 3L, 'x' )
-#endif
 
-
-
-
-/****************************************************************************
-**
-*F  MAKE_DIRE(<patl>) . . . . . . . . . . . . . . . . . . .  make a directory
-**
-**  'MAKE_DIRE' makes  the directory  with the local   path name  <patl>  (as
-**  converted by 'CONV_NAME' and 'CONV_DIRE' with the prefix of 'MakeDirs').
-**
-**  You must define this for a new port  if you want 'unzoo' to automatically
-**  create directories instead of requiring the user to create them.
-*/
-#ifdef  SYS_IS_UNIX
-#ifdef  SYS_HAS_MKDIR
-#define MAKE_DIRE(patl)         mkdir( (patl), 0777L )
-#else
-char            Cmd [256];
-#define MAKE_DIRE(patl)    (sprintf(Cmd,"/bin/mkdir %s",(patl)),!system(Cmd))
-#endif
-#endif
-#ifdef  SYS_IS_DOS_DJGPP
-#define MAKE_DIRE(patl)         mkdir( (patl), 0777L )
-#endif
-#ifdef  SYS_IS_OS2_EMX
-#include        <stdlib.h>
-#define MAKE_DIRE(patl)         mkdir( (patl), 0777L )
-#endif
-#ifdef  SYS_IS_TOS_GCC
-#define MAKE_DIRE(patl)         mkdir( (patl), 0777L )
-#endif
-#ifdef  SYS_IS_VMS
-#define MAKE_DIRE(patl)         VmsMakeDire( (patl) )
-#endif
-#ifdef  SYS_IS_MAC_MPW
-#define MAKE_DIRE(patl)         MacMakeDire( (patl) )
-#endif
-
-
-/****************************************************************************
-**
-*F  SETF_TIME(<patl>,<secs>)  . . . . . . . . . . . change the time of a file
-**
-**  'SETF_TIME' changes the time of the file with  the local path name <patl>
-**  (as converted  by 'CONV_NAME' and  'CONV_DIRE')  to <secs>, which  is the
-**  number of seconds since 1970/01/01 00:00:00.
-**
-**  You  must define  this for  a new  port  if you  want 'unzoo'  to extract
-**  members with the correct time as stored in the archive.
-*/
-#ifdef  SYS_IS_UNIX
-unsigned int   Secs [2];
-#define SETF_TIME(patl,secs)    (Secs[0]=Secs[1]=(secs),!utime((patl),Secs))
-#endif
-#ifdef  SYS_IS_DOS_DJGPP
-unsigned long   Secs [2];
-#define SETF_TIME(patl,secs)    (Secs[0]=Secs[1]=(secs),!utime((patl),Secs))
-#endif
-#ifdef  SYS_IS_OS2_EMX
-#include        <sys/utime.h>
-struct  utimbuf Secs;
-#define SETF_TIME(patl,secs)    (Secs.actime=Secs.modtime=(secs),!utime((patl),&Secs))
-#endif
-#ifdef  SYS_IS_TOS_GCC
-unsigned long   Secs [2];
-#define SETF_TIME(patl,secs)    (Secs[0]=Secs[1]=(secs),!utime((patl),Secs))
-#endif
-#ifndef SETF_TIME
-#define SETF_TIME(patl,secs)    (1)
-#endif
-
-
-/****************************************************************************
-**
-*F  SETF_PERM(<patl>,<mode>)  . . . . . . .  change the permissions of a file
-**
-**  'SETF_PERM' changes the permissions of the file with the  local path name
-**  <patl> (as converted by 'CONV_NAME' and 'CONV_DIRE') to <mode>,  which is
-**  a UNIX style mode word.
-**
-**  You  must define this  for a  new  port if  you want  'unzoo'  to extract
-**  members with the permissions stored in the archive.
-*/
-#ifdef  SYS_IS_UNIX
-#define SETF_PERM(patl,mode)    (!chmod((patl),(int)(mode)))
-#endif
-#ifdef  SYS_IS_DOS_DJGPP
-#define SETF_PERM(patl,mode)    (!chmod((patl),(int)(mode)))
-#endif
-#ifdef  SYS_IS_OS2_EMX
-#include        <io.h>
-#define SETF_PERM(patl,mode)    (!chmod((patl),(int)(mode)))
-#endif
-#ifdef  SYS_IS_TOS_GCC
-#define SETF_PERM(patl,mode)    (!chmod((patl),(int)(mode)))
-#endif
-#ifndef SETF_PERM
-#define SETF_PERM(patl,mode)    (1)
-#endif
-
-
-/****************************************************************************
-**
-*F  ConvName(...) . . . . . . . . . . . . convert a file name to local format
-**
-**  'ConvName( <naml>, <namu>, <pre>,<pst>,<rpl> )'
-**
-**  'ConvName' returns in <naml> the  universal file name <namu> converted to
-**  the local format described by <pre>, <pst>, and <rpl>.
-**
-**  <pre> is the maximum number of characters  before the optional dot, <pst>
-**  is the maximum number of characters after the optional  dot, and <rpl> is
-**  the character that replaces special characters.
-*/
-int             ConvName ( naml, namu, pre, pst, rpl )
-    char *              naml;
-    char *              namu;
-    unsigned long       pre;
-    unsigned long       pst;
-    char                rpl;
+// input: pathname
+//
+// returns: pathname in common notation ('/),
+// even Windows supports correct way since Windows 2000..
+//
+std::string ConvName ( const std::string &name)
 {
-    char *              dotu;           /* position of last dot in <namu>  */
-    char *              l;              /* loop variable                   */
-    char *              u;              /* loop variable                   */
-
-    /* find the final dot                                                  */
-    dotu = 0;
-    for ( u = namu; *u != '\0'; u++ )
-        if ( *u == '.' )
-            dotu = u;
-    if ( dotu == 0 )  dotu = u;
-
-    /* copy the first part                                                 */
-    l = naml;
-    for ( u = namu; u < dotu && u < namu+pre; u++ ) {
-        if      ( 'a' <= *u && *u <= 'z' )  *l++ = *u;
-        else if ( 'A' <= *u && *u <= 'Z' )  *l++ = *u - 'A' + 'a';
-        else if ( '0' <= *u && *u <= '9' )  *l++ = *u;
-        else                                *l++ = rpl;
-    }
-
-    /* the part before the dot may not be empty                            */
-    if ( l == naml )
-        *l++ = rpl;
-
-    /* if the universal file name had no dot, thats it                     */
-    if ( *dotu == '\0' || pst == 0 ) {
-        *l = '\0';
-        return 1;
-    }
-
-    /* copy the dot                                                        */
-    *l++ = '.';
-
-    /* copy the remaining part                                             */
-    for ( u = dotu+1; *u && u < dotu+1+pst; u++ ) {
-        if      ( 'a' <= *u && *u <= 'z' )  *l++ = *u;
-        else if ( 'A' <= *u && *u <= 'Z' )  *l++ = *u - 'A' + 'a';
-        else if ( '0' <= *u && *u <= '9' )  *l++ = *u;
-        else                                *l++ = rpl;
-    }
-
-    /* terminate the local name and indicate success                       */
-    *l = '\0';
-    return 1;
-}
-
-
-/****************************************************************************
-**
-*F  ConvDire(...) . . . . . . . . .  convert a directory name to local format
-**
-**  'ConvDire( <dirl>, <diru>, <root>,<abs>,<rel>,<sep>,<end> )'
-**
-**  'ConvDire'  returns  in  <dirl>  the  universal  directory  name   <diru>
-**  converted to the  local format.  <diru> contains an  arbitrary number  of
-**  components separated by  slashes ('/'),  where each component may contain
-**  uppercase,  lowercase,  and all special characters,  and may be up to 255
-**  characters long.
-**
-**  <root> is the string that is used for the root directory in local format.
-**  <abs> is the string that starts absolute directory names in local format,
-**  <rel> starts relative names, directory components are separated by <sep>,
-**  and <end> separates the directory part and a proper file name.
-**
-**  If <diru> is the empty string, then 'ConvDire' returns in <dirl> also the
-**  empty string, instead of '<rel><end>'.
-*/
-int             ConvDire ( dirl, diru, root, abs, rel, sep, end )
-    char *              dirl;
-    char *              diru;
-    char *              root;
-    char *              abs;
-    char *              rel;
-    char *              sep;
-    char *              end;
-{
-    char                namu [256];     /* file name part, univ.           */
-    char                naml [256];     /* file name part, local           */
-    char *              d;              /* loop variable                   */
-    char *              s;              /* loop variable                   */
-
-    /* special case for the root directory                                 */
-    if ( *diru == '/' && diru[1] == '\0' ) {
-        for ( s = root; *s != '\0'; s++ )  *dirl++ = *s;
-        *dirl = '\0';
-        return 1;
-    }
-
-    /* start the file name with <abs> or <rel>                             */
-    d = diru;
-    if ( *diru == '/' )
-        for ( d++, s = abs; *s != '\0'; s++ )  *dirl++ = *s;
-    else if ( *diru != '\0' )
-        for (      s = rel; *s != '\0'; s++ )  *dirl++ = *s;
-
-    /* add the components of the directory part separated by <sep>         */
-    while ( *d != '\0' ) {
-        s = namu;
-        while ( *d != '\0' && *d != '/' )  *s++ = *d++;
-        *s = '\0';
-        CONV_NAME( naml, namu );
-        for ( s = naml; *s != '\0'; s++ )  *dirl++ = *s;
-        if ( *d == '/' )
-            for ( d++, s = sep; *s != '\0'; s++ )  *dirl++ = *s;
-    }
-
-    /* add the divisor <end>                                               */
-    if ( *diru != '\0' )
-        for ( s = end; *s != '\0'; s++ )  *dirl++ = *s;
-
-    /* terminate the file name and indicate success                        */
-    *dirl = '\0';
-    return 1;
-}
-
-
-/****************************************************************************
-**
-*F  VmsBlckWritBinr(<blk>,<len>)  .  write a block to a binary file under VMS
-*F  VmsMakeDire(<patl>) . . . . . . . . . . . .  create a directory under VMS
-**
-**  'VmsBlckWritBinr' writes  the block  <blk> of  length  <len> to  the file
-**  opened with 'OPEN_WRIT_BINR'.
-**
-**  'VmsMakeDire' creates a directory  under VMS.  It has  to change the path
-**  name from '[<components>]<dirl>' to '[<components>.<dirl>]'.
-*/
-#ifdef  SYS_IS_VMS
-
-unsigned long   VmsBlckWritBinr ( blk, len )
-    unsigned char *     blk;
-    unsigned long       len;
-{
-    unsigned char       buf [512];      /* local buffer (padded with 0)    */
-    long                i,  k,  l;      /* loop variables                  */
-
-    /* write the full 512 byte blocks                                      */
-    for ( i = 0; i+512 < len; i += 512 ) {
-        if ( (l = write( WritBinr, blk+i, 512 )) != 512 )
-            return i + l;
-    }
-
-    /* write an incomplete last block padded with 0                        */
-    for ( k = 0; k < 512; k++ )
-        buf[k] = (i+k < len ? blk[i+k] : 0);
-    if ( (l = write( WritBinr, buf, 512 )) != 512 )
-        return i + l;
-
-    /* indicate success                                                    */
-    return len;
-}
-
-int             VmsMakeDire ( patl )
-    char *              patl;
-{
-    char *              p;
-
-    /* replace the separator with a dot                                    */
-    for ( p = patl; *p != '\0' && *p != ']'; p++ )  ;
-    if ( *p == ']' )  *p = '.';
-
-    /* append another separator                                            */
-    for ( ; *p != '\0'; p++ ) ;
-    *p++ = ']';
-    *p = '\0';
-
-    /* make the directory and indicate success                             */
-    return mkdir( patl, 0 );
-}
-
-#endif
-
-
-/****************************************************************************
-**
-*F  MacOpenWritText(<patl>) . . . . .  open a text file for writing under MPW
-*F  MacClosWritText() . . . . . . . . . . . . . . close a text file under MPW
-*F  MacBlckWritText(<blk>,<len>)  . .  write a block to a text file under MPW
-*F  OPEN_WRIT_MACB(<patl>)  . . . open a MacBinary file for writing under MPW
-*F  CLOS_WRIT_MACB()  . . . . . . . . . . .  close a MacBinary file under MPW
-*F  BLCK_WRIT_MACB(<blk>,<len>) . write a block to a MacBinary file under MPW
-*F  MacMakeDire(<patl>) . . . . . . . . . . . .  create a directory under MPW
-**
-**  'MacBlckWritText' writes the block <blk> of length <len> to the text file
-**  opened   with 'OPEN_WRIT_TEXT'.  It    converts <lf> ('\012') characters,
-**  which represent <newline>  in universal text  format, to '\n' characters,
-**  which represent <newline> in the system defined text format.
-**
-**  'MacMakeDire' creates  the directory  with local  path  name <patl>.  The
-**  code comes from the Macintosh 'tar' port by Gail Zacharias.
-*/
-#ifdef  SYS_IS_MAC_MPW
-
-#include        <Devices.h>
-#include        <Files.h>
-
-#ifdef SYS_IS_MAC_THC
-
-int             MacOpenWritText ( patl )
-    char *              patl;
-{
-    FileParam               fndrInfo;
-    char            	    patp [256];     /* <patl> as a Pascal string       */
-    int                		len;            /* length of <patp>                */
-
-    /* open the file                                                       */
-    if ( ! (WritText = fopen( (patl), "w" )) )
-        return 0;
-
-    /* convert <patl> from a C string to a Pascal string                   */
-    len = strlen( patl );
-    len = len < 256 ? len : 255;
-    patp[0] = len;
-    strncpy( patp+1, patl, len );
-    
-    /* set the file type to 'TEXT' and the creator to TeachText            */
-    fndrInfo.ioNamePtr   = (unsigned char*)patp;
-    fndrInfo.ioVRefNum   = 0;
-    fndrInfo.ioFVersNum  = 0;
-    fndrInfo.ioFDirIndex = 0;
-    if ( PBGetFInfo( (ParmBlkPtr)&fndrInfo, 0 ) ) {
-        return 0;
-    }
-    fndrInfo.ioFlFndrInfo.fdType    = 'TEXT';
-	fndrInfo.ioFlFndrInfo.fdCreator = 'ttxt';
-     if ( PBSetFInfo( (ParmBlkPtr)&fndrInfo, 0 ) ) {
-        return 0;
-    }
-   /* indicate success                                                    */
-    return 1;
-}
-
-int             MacOpenWritBinr ( patl )
-    char *              patl;
-{
-    FileParam               fndrInfo;
-    char            	    patp [256];     /* <patl> as a Pascal string       */
-    int                		len;            /* length of <patp>                */
-	
-    /* open the file                                                       */
-    if ( ! (WritBinr = fopen( (patl), "wb" )) )
-        return 0;
-
-
-    /* convert <patl> from a C string to a Pascal string                   */
-    len = strlen( patl );
-    len = len < 256 ? len : 255;
-    patp[0] = len;
-    strncpy( patp+1, patl, len );
-    
-    /* set the file type and creator            */
-    fndrInfo.ioNamePtr   = (unsigned char*)patp;
-    fndrInfo.ioVRefNum   = 0;
-    fndrInfo.ioFVersNum  = 0;
-    fndrInfo.ioFDirIndex = 0;
-    if ( PBGetFInfo( (ParmBlkPtr)&fndrInfo, 0 ) ) {
-        return 0;
-    }
-    fndrInfo.ioFlFndrInfo.fdType    = 'BINA';
-	fndrInfo.ioFlFndrInfo.fdCreator = '????';
-     if ( PBSetFInfo( (ParmBlkPtr)&fndrInfo, 0 ) ) {
-        return 0;
-    }
-   /* indicate success                                                    */
-    return 1;
-}
-
-#endif
-
-#ifndef SYS_IS_MAC_THC
-int             MacOpenWritText ( patl )
-    char *              patl;
-{
-    FInfo               fndrInfo;
-
-    /* open the file                                                       */
-    if ( ! (WritText = fopen( (patl), "w" )) )
-        return 0;
-
-    /* set the file type to 'TEXT' and the creator to TeachText            */
-    getfinfo( patl, 0, &fndrInfo );
-    if ( fndrInfo.fdType == 0 )
-        fndrInfo.fdType    = 'TEXT';
-    if ( fndrInfo.fdCreator == 0 )
-        fndrInfo.fdCreator = 'ttxt';
-    setfinfo( patl, 0, &fndrInfo );
-    /* indicate success                                                    */
-    return 1;
-}
-#endif
-
-
-int             MacClosWritText ()
-{
-    return (fclose( WritText ) == 0);
-}
-
-unsigned long   MacBlckWritText ( blk, len )
-    unsigned char *     blk;
-    unsigned long       len;
-{
-    unsigned long       i;              /* loop variable                   */
-
-    for ( i = 0; i < len; i++ ) {
-        if (fputc( (blk[i] != '\012' ? blk[i] : '\n'), WritText ) == EOF)
-            return i;
-    }
-    return len;
-}
-
-char            WritName [256];         /* name of the file                */
-IOParam         WritIOPB;               /* IO parameter block              */
-FileParam       WritFIPB;               /* Finder Info parameter block     */
-unsigned long   WritPart;               /* current part of MacBinary file  */
-unsigned long   WritType;               /* type of file, e.g. 'TEXT'       */
-unsigned long   WritCrtr;               /* creator of file, e.g. 'ttxt'    */
-unsigned long   WritFlgs;               /* finder flags                    */
-unsigned long   WritCDat;               /* creation date of file           */
-unsigned long   WritMDat;               /* last modification date of file  */
-unsigned long   WritLDat;               /* nr. of bytes left in data fork  */
-unsigned long   WritLRsc;               /* nr. of bytes left in resource   */
-
-int             OPEN_WRIT_MACB ( patl )
-    char *              patl;
-{
-    unsigned long       i;              /* loop variable                   */
-
-    /* find the last semicolon                                             */
-    for ( i = strlen(patl); 0 < i && patl[i] != ':'; i-- )
-        ;
-
-    /* copy the directory part to 'WritName'                               */
-    WritName[0] = (0 < i ? i+1 : 0);
-    for ( i = 1; i <= WritName[0]; i++ )
-        WritName[i] = patl[i-1];
-
-    /* indicate success                                                    */
-    WritPart = 0;
-    return 1;
-}
-
-int             CLOS_WRIT_MACB ()
-{
-
-    /* first get the current settings                                      */
-#ifdef SYS_IS_MAC_THC
-    WritFIPB.ioNamePtr   = (StringPtr)WritName;
-#else
-    WritFIPB.ioNamePtr   = WritName;
-#endif
-    WritFIPB.ioVRefNum   = 0;
-    WritFIPB.ioFVersNum  = 0;
-    WritFIPB.ioFDirIndex = 0;
-    if ( PBGetFInfo( (ParmBlkPtr)&WritFIPB, 0 ) ) {
-        return 0;
-    }
-
-    /* now set some fields to the values found in the MacBinary header     */
-    WritFIPB.ioFlFndrInfo.fdType    = WritType;
-    WritFIPB.ioFlFndrInfo.fdCreator = WritCrtr;
-    WritFIPB.ioFlFndrInfo.fdFlags   = WritFlgs;
-    WritFIPB.ioFlCrDat              = WritCDat;
-    WritFIPB.ioFlMdDat              = WritMDat;
-    if ( PBSetFInfo( (ParmBlkPtr)&WritFIPB, 0 ) ) {
-        return 0;
-    }
-
-    /* indicate success                                                    */
-    return 1;
-}
-
-unsigned long   BLCK_WRIT_MACB ( blk, len )
-    unsigned char *     blk;
-    unsigned long       len;
-{
-    unsigned long       cnt;            /* number of bytes written         */
-    unsigned long       i;              /* loop variable                   */
-
-    /* first comes the header (128 bytes long)                             */
-    cnt = 0;
-    if ( WritPart == 0 ) {
-        for ( i = 1; i <= blk[1]; i++ )
-            WritName[WritName[0]+i] = blk[i+1];
-        WritName[0] += blk[1];
-        WritType = (blk[65]<<24) + (blk[66]<<16) + (blk[67]<< 8) + (blk[68]);
-        WritCrtr = (blk[69]<<24) + (blk[70]<<16) + (blk[71]<< 8) + (blk[72]);
-        WritFlgs = (blk[73]<< 8) + 0;
-        WritLDat = (blk[83]<<24) + (blk[84]<<16) + (blk[85]<< 8) + (blk[86]);
-        WritLRsc = (blk[87]<<24) + (blk[88]<<16) + (blk[89]<< 8) + (blk[90]);
-        WritCDat = (blk[91]<<24) + (blk[92]<<16) + (blk[93]<< 8) + (blk[94]);
-        WritMDat = (blk[95]<<24) + (blk[96]<<16) + (blk[97]<< 8) + (blk[98]);
-        cnt += 128;
-        WritPart = 1;
-    }
-
-    /* open the data fork                                                  */
-    if ( WritPart == 1 && cnt < len ) {
-#ifdef SYS_IS_MAC_THC
-    WritFIPB.ioNamePtr   = (StringPtr)WritName;
-#else
-    WritFIPB.ioNamePtr   = WritName;
-#endif
-        WritIOPB.ioVRefNum = 0;
-        WritIOPB.ioVersNum = 0;
-        WritIOPB.ioPermssn = fsWrPerm;
-        WritIOPB.ioMisc    = 0;
-        WritIOPB.ioRefNum  = 0;
-        if ( PBCreate( (ParmBlkPtr)&WritIOPB, 0 ) ) {
-            return cnt;
-        }
-        if ( PBOpenSync(   (ParmBlkPtr)&WritIOPB ) ) {
-            return cnt;
-        }
-        WritPart = 2;
-    }
-
-    /* next comes the data fork (padded to a multiple of 128 bytes)        */
-    if ( WritPart == 2 ) {
-        while ( WritLDat != 0 && cnt < len ) {
-            WritIOPB.ioReqCount  = (128 <= WritLDat ? 128 : WritLDat);
-            WritIOPB.ioPosMode   = fsAtMark;
-            WritIOPB.ioPosOffset = 0;
-            WritIOPB.ioBuffer    = (Ptr) (blk + cnt);
-            if ( PBWriteSync( (ParmBlkPtr)&WritIOPB )
-              || WritIOPB.ioActCount != WritIOPB.ioReqCount ) {
-                PBCloseSync( (ParmBlkPtr)&WritIOPB );
-                return cnt;
-            }
-            cnt += 128;
-            WritLDat -= WritIOPB.ioReqCount;
-        }
-        if ( WritLDat == 0 )  WritPart = 3;
-    }
-
-    /* close the data fork                                                 */
-    if ( WritPart == 3 ) {
-        PBCloseSync( (ParmBlkPtr)&WritIOPB );
-        WritPart = 4;
-    }
-
-    /* open the resource fork                                              */
-    if ( WritPart == 4 && cnt < len ) {
-        if ( PBOpenRF( (ParmBlkPtr)&WritIOPB, 0 ) ) {
-            return cnt;
-        }
-        WritPart = 5;
-    }
-        
-    /* and finally comes the resource fork                                 */
-    if ( WritPart == 5 ) {
-        while ( WritLRsc != 0 && cnt < len ) {
-            WritIOPB.ioReqCount  = (128 <= WritLRsc ? 128 : WritLRsc);
-            WritIOPB.ioPosMode   = fsAtMark;
-            WritIOPB.ioPosOffset = 0;
-            WritIOPB.ioBuffer    = (Ptr) (blk + cnt);
-            if ( PBWriteSync( (ParmBlkPtr)&WritIOPB )
-              || WritIOPB.ioActCount != WritIOPB.ioReqCount ) {
-                PBCloseSync( (ParmBlkPtr)&WritIOPB );
-                return cnt;
-            }
-            cnt += 128;
-            WritLRsc -= WritIOPB.ioReqCount;
-        }
-        if ( WritLRsc == 0 )  WritPart = 6;
-    }
-
-    /* close the resource fork                                             */
-    if ( WritPart == 6 ) {
-        PBCloseSync( (ParmBlkPtr)&WritIOPB );
-        WritPart = 7;
-    }
-
-    /* indicate success                                                    */
-    return cnt;
-}
-
-int             MacMakeDire ( patl )
-    char *              patl;
-{
-    HFileParam          request;        /* structure describing request    */
-    char                patp [256];     /* <patl> as a Pascal string       */
-    int                 len;            /* length of <patp>                */
-
-    /* convert <patl> from a C string to a Pascal string                   */
-    len = strlen( patl );
-    len = len < 256 ? len : 255;
-    patp[0] = len;
-    strncpy( patp+1, patl, len );
-
-    /* set up the request                                                  */
-    request.ioNamePtr = (unsigned char*)patp;
-    request.ioVRefNum = 0;
-    request.ioDirID   = 0;
-    if (noErr == PBDirCreate( (HParmBlkPtr)&request, 0 ))
-    /* return result                                                       */
-	    return (request.ioResult == 0);
-	else
-		return 0;
-}
-
-#endif
-
-
-/****************************************************************************
-**
-*F  MakeDirs(<pre>,<patu>)  . . . . . . . . . . . . . .  make all directories
-**
-**  'MakeDirs' tries  to  make all the directories   along the universal path
-**  name <patu> (i.e., with components separated by '/').   <pre> is a prefix
-**  that is prepended to all path names.
-*/
-#ifdef  MAKE_DIRE
-
-int             MakeDirs ( pre, patu )
-    char *              pre;
-    char *              patu;
-{
-    char                patl [1024];    /* path name, local                */
-    char                diru [256];     /* directory part of <patu>, univ. */
-    char                dirl [256];     /* directory part of <patl>, local */
-    char                namu [256];     /* file name part of <patu>, univ. */
-    char                naml [256];     /* file name part of <patl>, local */
-    char                * d,  * n;      /* loop variables                  */
-
-    /* if <patu> is an absolute path, copy the slash '/'                   */
-    d = diru;
-    if ( *patu == '/' )  *d++ = *patu++;
-
-    while ( *patu != '\0' ) {
-
-        /* copy the file name part of <patu> into <namu>                   */
-        for ( n = namu; *patu != '\0' && *patu != '/'; ) *n++ = *patu++;
-        if ( *patu != '\0' )  patu++;
-
-        /* convert the name into local format and make the directory       */
-        *d = '\0';  *n = '\0';
-        CONV_DIRE( dirl, diru );
-        CONV_NAME( naml, namu );
-        strcpy( patl, pre  );
-        strcat( patl, dirl );
-        strcat( patl, naml );
-        /*N 1993/11/03 martin what should I do with the return code?       */
-        /*N 1993/11/03 martin it could be 0 if the directory exists!       */
-        MAKE_DIRE( patl );
-
-        /* append the file name part to the directory part                 */
-        if ( d != diru && d[-1] != '/' )  *d++ = '/';
-        for ( n = namu; *n != '\0'; ) *d++ = *n++;
-
-    }
-
-    /* indicate success                                                    */
-    return 1;
-}
-
-#endif
-
-
-/****************************************************************************
-**
-*F  IsMatchName(<pat>,<str>)  . . test if a string matches a wildcard pattern
-**
-**  'IsMatchName' return 1 if the pattern <pat>  matches the string <str> and
-**  0 otherwise.  A   '?' in <pat>  matches any  character  in <str>,  a  '*'
-**  matches any string  in <str>, other characters in   <pat> match the  same
-**  character in <str>.  Characters for which 'IsSpec[<ch>]' is true will not
-**  be matched by '?' and '*'.
-**
-**  Jeff Damens  wrote the name match code in 'booz' (originally for Kermit).
-*/
-int             IsSpec [256];           /* nonzero for special characters  */
-
-int             IsMatchName (char *pat, char *str )
-                  //pat;            /* pattern to match against        */
-                  //str;            /* string  to match                */
-{
-	return true;
+	std::string tmp = name;
+	for (size_t n = 0; n < tmp.length(); n++)
+	{
+		if (tmp[n] == '\\')
+		{
+			tmp[n] = '/';
+		}
+	}
+	return tmp;
 }
 
 
@@ -1422,11 +705,14 @@ struct {
 int EntrReadArch (CAnsiFile &archive)
 {
     unsigned long       l;              /* 'Entry.lnamu+Entry.ldiru'       */
-    char *              p;              /* loop variable                   */
+    //char *              p;              /* loop variable                   */
 
     /* try to read the magic words                                         */
-    if ( (Entry.magic = WordReadArch()) != (unsigned long)0xfdc4a7dcL )
-        return 0;
+    Entry.magic = WordReadArch();
+    if ( Entry.magic != (unsigned long)0xfdc4a7dcL )
+    {
+		throw IOException("unsupported file type, unknown type-ID");
+    }
 
     /* read the fixed part of the directory entry                          */
     Entry.type   = ByteReadArch();
@@ -1477,27 +763,9 @@ int EntrReadArch (CAnsiFile &archive)
     Entry.modgen = (l+7 < Entry.lvar ? ByteReadArch() : 0);
     Entry.ver    = (l+7 < Entry.lvar ? HalfReadArch() : 0);
 
-    /* convert the names to local format                                   */
-    /*
-    if ( Entry.systemid == 0 || Entry.systemid == 2 ) 
-    {
-        CONV_DIRE( Entry.dirl, Entry.diru );
-        CONV_NAME( Entry.naml, (Entry.lnamu ? Entry.namu : Entry.nams) );
-    }
-    else 
-    {
-        strcpy( Entry.dirl, Entry.diru );
-        strcpy( Entry.naml, (Entry.lnamu ? Entry.namu : Entry.nams) );
-    }
-    strcpy( Entry.patl, Entry.dirl );
-    strcat( Entry.patl, Entry.naml );
-    */
-
     /* create the name with the version appended                           */
     //strcpy( Entry.patv, Entry.patl );
     /*
-    p = Entry.patv;  while ( *p != '\0' )  p++;
-    *p++ = ';';
     for ( l = 10000; 0 < l; l /= 10 )
         if ( l == 1 || l <= Entry.ver )
             *p++ = (Entry.ver / l) % 10 + '0';
@@ -1508,14 +776,6 @@ int EntrReadArch (CAnsiFile &archive)
     /* convert the time to something usable */
     Entry.timestamp = (time_t)CGenericTime(Entry.datdos, Entry.timdos);
 
-	/*    
-    Entry.year  = ((Entry.datdos >>  9) & 0x7f) + 80;
-    Entry.month = ((Entry.datdos >>  5) & 0x0f) - 1;
-    Entry.day   = ((Entry.datdos      ) & 0x1f);
-    Entry.hour  = ((Entry.timdos >> 11) & 0x1f);
-    Entry.min   = ((Entry.timdos >>  5) & 0x3f);
-    Entry.sec   = ((Entry.timdos      ) & 0x1f) * 2;
-    */
 
     /* indicate success                                                    */
     return 1;
@@ -1679,58 +939,93 @@ unsigned char   LenLog   [MAX_LOG+1];   /* number of bits used for logs    */
 unsigned short  TabPre   [256];         /* table for fast lookup of pres   */
 unsigned char   LenPre   [MAX_PRE+1];   /* number of bits used for pres    */
 
-int             MakeTablLzh ( nchar, bitlen, tablebits, table )
-    int                 nchar;
-    unsigned char       bitlen[];
-    int                 tablebits;
-    unsigned short      table[];
+int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tablebits, unsigned short *table )
 {
-    unsigned short      count[17], weight[17], start[18], *p;
-    unsigned int        i, k, len, ch, jutbits, avail, mask;
+    unsigned short      count[17], weight[17], start[18];
+    unsigned int        i, k, len;
 
-    for (i = 1; i <= 16; i++) count[i] = 0;
-    for (i = 0; i < nchar; i++) count[bitlen[i]]++;
+    for (i = 1; i <= 16; i++) 
+    {
+		count[i] = 0;
+	}
+    for (i = 0; i < nchar; i++) 
+    {
+		count[bitlen[i]]++;
+	}
 
     start[1] = 0;
     for (i = 1; i <= 16; i++)
+    {
         start[i + 1] = start[i] + (count[i] << (16 - i));
+    }
+    
     if (start[17] != (unsigned short)((unsigned) 1 << 16))
-        return 0;
+    {
+		// corrupted file,
+		// wrong offset used
+		// or bug in code
+		throw IOException("make table failed");
+    }
 
-    jutbits = 16 - tablebits;
-    for (i = 1; i <= tablebits; i++) {
+    unsigned int jutbits = 16 - tablebits;
+    for (i = 1; i <= tablebits; i++) 
+    {
         start[i] >>= jutbits;
         weight[i] = (unsigned) 1 << (tablebits - i);
     }
-    while (i <= 16) {
+    while (i <= 16) 
+    {
         weight[i] = (unsigned) 1 << (16 - i);
         i++;
     }
 
     i = start[tablebits + 1] >> jutbits;
-    if (i != (unsigned short)((unsigned) 1 << 16)) {
+    if (i != (unsigned short)((unsigned) 1 << 16)) 
+    {
         k = 1 << tablebits;
-        while (i != k) table[i++] = 0;
+        while (i != k) 
+        {
+	        table[i++] = 0;
+	    }
     }
 
-    avail = nchar;
-    mask = (unsigned) 1 << (15 - tablebits);
-    for (ch = 0; ch < nchar; ch++) {
-        if ((len = bitlen[ch]) == 0) continue;
-        if (len <= tablebits) {
-            for ( i = 0; i < weight[len]; i++ )  table[i+start[len]] = ch;
+	unsigned short *p;
+    unsigned int avail = nchar;
+    unsigned int mask = (unsigned) 1 << (15 - tablebits);
+    for (unsigned int ch = 0; ch < nchar; ch++) 
+    {
+		len = bitlen[ch];
+        if (len == 0) 
+        {
+			continue;
+		}
+        if (len <= tablebits) 
+        {
+            for ( i = 0; i < weight[len]; i++ )  
+            {
+				table[i+start[len]] = ch;
+			}
         }
-        else {
+        else 
+        {
             k = start[len];
             p = &table[k >> jutbits];
             i = len - tablebits;
-            while (i != 0) {
-                if (*p == 0) {
+            while (i != 0) 
+            {
+                if (*p == 0) 
+                {
                     TreeRight[avail] = TreeLeft[avail] = 0;
                     *p = avail++;
                 }
-                if (k & mask) p = &TreeRight[*p];
-                else          p = &TreeLeft[*p];
+                if (k & mask) 
+                {
+					p = &TreeRight[*p];
+				}
+                else
+                {
+					p = &TreeLeft[*p];
+				}
                 k <<= 1;  i--;
             }
             *p = ch;
@@ -1742,7 +1037,25 @@ int             MakeTablLzh ( nchar, bitlen, tablebits, table )
     return 1;
 }
 
-int             DecodeLzh ()
+//#define PEEK_BITS(N)            ((bits >> (bitc-(N))) & ((1L<<(N))-1))
+
+// inline: compiler can avoid function call by replacing call with function body
+inline int PEEK_BITS(const int N, const unsigned long bits, const unsigned long bitc)
+{
+	return ((bits >> (bitc - N)) & ((1L << N)-1));
+}
+
+// inline: compiler can avoid function call by replacing call with function body
+inline void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc)
+{
+	if ( (bitc -= N) < 16 ) 
+	{ 
+		bits  = (bits << 16) + FlahReadArch(); 
+		bitc += 16; 
+	}
+}
+
+bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
 {
     unsigned long       cnt;            /* number of codes in block        */
     unsigned long       cnt2;           /* number of stuff in pre code     */
@@ -1760,178 +1073,253 @@ int             DecodeLzh ()
     unsigned long       bits;           /* the bits we are looking at      */
     unsigned long       bitc;           /* number of bits that are valid   */
 
-#define PEEK_BITS(N)            ((bits >> (bitc-(N))) & ((1L<<(N))-1))
-#define FLSH_BITS(N)            if ( (bitc -= (N)) < 16 ) { bits  = (bits<<16) + FlahReadArch(); bitc += 16; }
-
     /* initialize bit source, output pointer, and crc                      */
-    bits = 0;  bitc = 0;  FLSH_BITS(0);
+    bits = 0;  bitc = 0;  
+    FLSH_BITS(0, bits, bitc);
     cur = BufFile;  end = BufFile + MAX_OFF;
     crc = 0;
 
     /* loop until all blocks have been read                                */
-    cnt = PEEK_BITS( 16 );  FLSH_BITS( 16 );
+    cnt = PEEK_BITS( 16, bits, bitc );  
+    FLSH_BITS( 16, bits, bitc );
     while ( cnt != 0 ) {
 
         /* read the pre code                                               */
-        cnt2 = PEEK_BITS( BITS_PRE );  FLSH_BITS( BITS_PRE );
+        cnt2 = PEEK_BITS( BITS_PRE, bits, bitc );  
+        FLSH_BITS( BITS_PRE, bits, bitc );
         if ( cnt2 == 0 ) {
-            pre = PEEK_BITS( BITS_PRE );  FLSH_BITS( BITS_PRE );
+            pre = PEEK_BITS( BITS_PRE, bits, bitc );  
+            FLSH_BITS( BITS_PRE, bits, bitc );
             for ( i = 0; i <      256; i++ )  TabPre[i] = pre;
             for ( i = 0; i <= MAX_PRE; i++ )  LenPre[i] = 0;
         }
         else {
             i = 0;
             while ( i < cnt2 ) {
-                len = PEEK_BITS( 3 );  FLSH_BITS( 3 );
+                len = PEEK_BITS( 3, bits, bitc );  
+                FLSH_BITS( 3, bits, bitc );
                 if ( len == 7 ) {
-                    while ( PEEK_BITS( 1 ) ) { len++; FLSH_BITS( 1 ); }
-                    FLSH_BITS( 1 );
+                    while ( PEEK_BITS( 1, bits, bitc ) ) 
+                    { 
+						len++; 
+						FLSH_BITS( 1, bits, bitc ); 
+					}
+                    FLSH_BITS( 1, bits, bitc );
                 }
                 LenPre[i++] = len;
-                if ( i == 3 ) {
-                    len = PEEK_BITS( 2 );  FLSH_BITS( 2 );
+                if ( i == 3 ) 
+                {
+                    len = PEEK_BITS( 2, bits, bitc );  
+                    FLSH_BITS( 2, bits, bitc );
                     while ( 0 < len-- )  LenPre[i++] = 0;
                 }
             }
             while ( i <= MAX_PRE )  LenPre[i++] = 0;
-            if ( ! MakeTablLzh( MAX_PRE+1, LenPre, 8, TabPre ) ) {
-                ErrMsg = "pre code description corrupted";
-                return 0;
+            if ( ! MakeTablLzh( MAX_PRE+1, LenPre, 8, TabPre ) ) 
+            {
+                throw IOException("pre code description corrupted");
             }
         }
 
         /* read the code (using the pre code)                              */
-        cnt2 = PEEK_BITS( BITS_CODE );  FLSH_BITS( BITS_CODE );
-        if ( cnt2 == 0 ) {
-            code = PEEK_BITS( BITS_CODE );  FLSH_BITS( BITS_CODE );
-            for ( i = 0; i <      4096; i++ )  TabCode[i] = code;
-            for ( i = 0; i <= MAX_CODE; i++ )  LenCode[i] = 0;
+        cnt2 = PEEK_BITS( BITS_CODE, bits, bitc );  
+        FLSH_BITS( BITS_CODE, bits, bitc );
+        if ( cnt2 == 0 ) 
+        {
+            code = PEEK_BITS( BITS_CODE, bits, bitc );  
+            FLSH_BITS( BITS_CODE, bits, bitc );
+            for ( i = 0; i <      4096; i++ )  
+            {
+				TabCode[i] = code;
+			}
+            for ( i = 0; i <= MAX_CODE; i++ )  
+            {
+				LenCode[i] = 0;
+			}
         }
-        else {
+        else 
+        {
             i = 0;
-            while ( i < cnt2 ) {
-                len = TabPre[ PEEK_BITS( 8 ) ];
-                if ( len <= MAX_PRE ) {
-                    FLSH_BITS( LenPre[len] );
+            while ( i < cnt2 ) 
+            {
+                len = TabPre[ PEEK_BITS( 8, bits, bitc ) ];
+                if ( len <= MAX_PRE ) 
+                {
+                    FLSH_BITS( LenPre[len], bits, bitc );
                 }
-                else {
-                    FLSH_BITS( 8 );
+                else 
+                {
+                    FLSH_BITS( 8, bits, bitc );
                     do {
-                        if ( PEEK_BITS( 1 ) )  len = TreeRight[len];
-                        else                   len = TreeLeft [len];
-                        FLSH_BITS( 1 );
+                        if ( PEEK_BITS( 1, bits, bitc ) ) 
+                        {
+							len = TreeRight[len];
+						}
+                        else
+                        {
+							len = TreeLeft [len];
+						}
+                        FLSH_BITS( 1, bits, bitc );
                     } while ( MAX_PRE < len );
                 }
-                if ( len <= 2 ) {
-                    if      ( len == 0 ) {
+                if ( len <= 2 ) 
+                {
+                    if      ( len == 0 ) 
+                    {
                         len = 1;
                     }
-                    else if ( len == 1 ) {
-                        len = PEEK_BITS(4)+3;  FLSH_BITS(4);
+                    else if ( len == 1 ) 
+                    {
+                        len = PEEK_BITS(4, bits, bitc)+3;  
+                        FLSH_BITS(4, bits, bitc);
                     }
-                    else {
-                        len = PEEK_BITS(BITS_CODE)+20; FLSH_BITS(BITS_CODE);
+                    else 
+                    {
+                        len = PEEK_BITS(BITS_CODE, bits, bitc)+20; 
+                        FLSH_BITS(BITS_CODE, bits, bitc);
                     }
+                    
                     while ( 0 < len-- )  LenCode[i++] = 0;
                 }
-                else {
+                else 
+                {
                     LenCode[i++] = len - 2;
                 }
             }
             while ( i <= MAX_CODE )  LenCode[i++] = 0;
-            if ( ! MakeTablLzh( MAX_CODE+1, LenCode, 12, TabCode ) ) {
-                ErrMsg = "literal/length code description corrupted";
-                return 0;
+            if ( ! MakeTablLzh( MAX_CODE+1, LenCode, 12, TabCode ) ) 
+            {
+                throw IOException("literal/length code description corrupted");
             }
         }
 
         /* read the log_2 of offsets                                       */
-        cnt2 = PEEK_BITS( BITS_LOG );  FLSH_BITS( BITS_LOG );
-        if ( cnt2 == 0 ) {
-            log = PEEK_BITS( BITS_LOG );  FLSH_BITS( BITS_LOG );
-            for ( i = 0; i <      256; i++ )  TabLog[i] = log;
-            for ( i = 0; i <= MAX_LOG; i++ )  LenLog[i] = 0;
+        cnt2 = PEEK_BITS( BITS_LOG, bits, bitc );  
+        FLSH_BITS( BITS_LOG, bits, bitc );
+        if ( cnt2 == 0 ) 
+        {
+            log = PEEK_BITS( BITS_LOG, bits, bitc );  
+            FLSH_BITS( BITS_LOG, bits, bitc );
+            for ( i = 0; i <      256; i++ )  
+            {
+				TabLog[i] = log;
+			}
+            for ( i = 0; i <= MAX_LOG; i++ )  
+            {
+				LenLog[i] = 0;
+			}
         }
-        else {
+        else 
+        {
             i = 0;
-            while ( i < cnt2 ) {
-                len = PEEK_BITS( 3 );  FLSH_BITS( 3 );
-                if ( len == 7 ) {
-                    while ( PEEK_BITS( 1 ) ) { len++; FLSH_BITS( 1 ); }
-                    FLSH_BITS( 1 );
+            while ( i < cnt2 ) 
+            {
+                len = PEEK_BITS( 3, bits, bitc );  
+                FLSH_BITS( 3, bits, bitc );
+                if ( len == 7 ) 
+                {
+                    while ( PEEK_BITS( 1, bits, bitc ) ) 
+                    { 
+						len++; 
+						FLSH_BITS( 1, bits, bitc ); 
+					}
+                    FLSH_BITS( 1, bits, bitc );
                 }
                 LenLog[i++] = len;
             }
-            while ( i <= MAX_LOG )  LenLog[i++] = 0;
-            if ( ! MakeTablLzh( MAX_LOG+1, LenLog, 8, TabLog ) ) {
-                ErrMsg = "log code description corrupted";
-                return 0;
+            while ( i <= MAX_LOG )  
+            {
+				LenLog[i++] = 0;
+			}
+            if ( ! MakeTablLzh( MAX_LOG+1, LenLog, 8, TabLog ) ) 
+            {
+                throw IOException("log code description corrupted");
             }
         }
 
         /* read the codes                                                  */
-        while ( 0 < cnt-- ) {
-
+        while ( 0 < cnt-- ) 
+        {
             /* try to decode the code the fast way                         */
-            code = TabCode[ PEEK_BITS( 12 ) ];
+            code = TabCode[ PEEK_BITS( 12, bits, bitc ) ];
 
             /* if this code needs more than 12 bits look it up in the tree */
-            if ( code <= MAX_CODE ) {
-                FLSH_BITS( LenCode[code] );
+            if ( code <= MAX_CODE ) 
+            {
+                FLSH_BITS( LenCode[code], bits, bitc );
             }
-            else {
-                FLSH_BITS( 12 );
+            else 
+            {
+                FLSH_BITS( 12, bits, bitc );
                 do {
-                    if ( PEEK_BITS( 1 ) )  code = TreeRight[code];
-                    else                   code = TreeLeft [code];
-                    FLSH_BITS( 1 );
+                    if ( PEEK_BITS( 1, bits, bitc ) )  
+                    {
+						code = TreeRight[code];
+					}
+                    else
+                    {
+						code = TreeLeft [code];
+					}
+                    FLSH_BITS( 1, bits, bitc );
                 } while ( MAX_CODE < code );
             }
 
-            /* if the code is a literal, stuff it into the buffer          */
-            if ( code <= MAX_LIT ) {
+            if ( code <= MAX_LIT ) 
+            {
+	            /* if the code is a literal, stuff it into the buffer          */
+	            
                 *cur++ = code;
                 crc = CRC_BYTE( crc, code );
-                if ( cur == end ) {
-                    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) {
-                        ErrMsg = "cannot write output file";
-                        return 0;
+                if ( cur == end ) 
+                {
+                    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+                    {
+		                throw IOException("cannot write output file");
                     }
                     cur = BufFile;
                 }
             }
-
-            /* otherwise compute match length and offset and copy          */
-            else {
+            else 
+            {
+	            /* otherwise compute match length and offset and copy          */
                 len = code - (MAX_LIT+1) + MIN_LEN;
 
                 /* try to decodes the log_2 of the offset the fast way     */
-                log = TabLog[ PEEK_BITS( 8 ) ];
+                log = TabLog[ PEEK_BITS( 8, bits, bitc ) ];
                 /* if this log_2 needs more than 8 bits look in the tree   */
                 if ( log <= MAX_LOG ) {
-                    FLSH_BITS( LenLog[log] );
+                    FLSH_BITS( LenLog[log], bits, bitc );
                 }
                 else {
-                    FLSH_BITS( 8 );
+                    FLSH_BITS( 8, bits, bitc );
                     do {
-                        if ( PEEK_BITS( 1 ) )  log = TreeRight[log];
-                        else                   log = TreeLeft [log];
-                        FLSH_BITS( 1 );
+                        if ( PEEK_BITS( 1, bits, bitc ) )  
+                        {
+							log = TreeRight[log];
+						}
+                        else
+                        {
+							log = TreeLeft [log];
+						}
+                        FLSH_BITS( 1, bits, bitc );
                     } while ( MAX_LOG < log );
                 }
 
                 /* compute the offset                                      */
-                if ( log == 0 ) {
+                if ( log == 0 ) 
+                {
                     off = 0;
                 }
-                else {
-                    off = ((unsigned)1 << (log-1)) + PEEK_BITS( log-1 );
-                    FLSH_BITS( log-1 );
+                else 
+                {
+                    off = ((unsigned)1 << (log-1)) + PEEK_BITS( log-1, bits, bitc );
+                    FLSH_BITS( log-1, bits, bitc );
                 }
 
                 /* copy the match (this accounts for ~ 50% of the time)    */
                 pos = BufFile + (((cur-BufFile) - off - 1) & (MAX_OFF - 1));
-                if ( cur < end-len && pos < end-len ) {
+                if ( cur < end-len && pos < end-len ) 
+                {
                     stp = cur + len;
                     do {
                         code = *pos++;
@@ -1939,41 +1327,42 @@ int             DecodeLzh ()
                         *cur++ = code;
                     } while ( cur < stp );
                 }
-                else {
-                    while ( 0 < len-- ) {
+                else 
+                {
+                    while ( 0 < len-- ) 
+                    {
                         code = *pos++;
                         crc = CRC_BYTE( crc, code );
                         *cur++ = code;
                         if ( pos == end ) {
                             pos = BufFile;
                         }
-                        if ( cur == end ) {
-                            if ( BlckWritFile(BufFile,cur-BufFile)
-                                 != cur-BufFile ) {
-                                ErrMsg = "cannot write output file";
-                                return 0;
+                        if ( cur == end ) 
+                        {
+                            if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+                            {
+				                throw IOException("cannot write output file");
                             }
                             cur = BufFile;
                         }
                     }
                 }
-
             }
-
         }
 
-        cnt = PEEK_BITS( 16 );  FLSH_BITS( 16 );
+        cnt = PEEK_BITS( 16, bits, bitc );  
+        FLSH_BITS( 16, bits, bitc );
     }
 
     /* write out the rest of the buffer                                    */
-    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) {
-        ErrMsg = "cannot write output file";
-        return 0;
+    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+    {
+        throw IOException("cannot write output file");
     }
 
     /* indicate success                                                    */
-    Crc = crc;
-    return 1;
+    //m_crc.m_Crc;
+    return true;
 }
 
 
@@ -1985,19 +1374,9 @@ int             DecodeLzh ()
 **  match one  of the file name  patterns '<files>[0] .. <files>[<filec>-1]'.
 **  If <ver> is 1, comments are also printed.
 */
-unsigned long   BeginMonth [12] = {
-   0,    31,   59,   90,  120,  151,  181,  212,  243,  273,  304,  334
-};
 
-/*
-char            NameMonth [12] [4] = {
-"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
-};
-*/
-
-int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
+bool CUnZoo::ListArch( const std::string &archiveName)
 {
-    //char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
     int                 chr;            /* character from comment          */
     unsigned long       i;              /* loop variable                   */
     
@@ -2005,37 +1384,32 @@ int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
     //strcpy(arczoo,arc);  
     //strcat(arczoo,".zoo");
 
-   std::string filename = arc;
    
     // just open it, stop fucking around with names
-    CAnsiFile archive(filename);
+    CAnsiFile archive(archiveName);
     if (archive.IsOk() == false)
     {
-        throw ArcException("unzoo: could not open archive", filename);
+        throw ArcException("unzoo: could not open archive", archiveName);
     }
 	if ( DescReadArch(archive) == false) 
 	{
-		//printf("unzoo: found bad description in archive '%s'\n",arczoo);
-		throw ArcException("unzoo: bad description in archive", arczoo);
-		//return 0;
+		throw ArcException("unzoo: bad description in archive", archiveName);
 	}
-    
 
     /* if present, print the archive comment                               */
     if ( ver && Descript.sizcmt != 0 ) 
     {
-        if ( ! GotoReadArch( Descript.poscmt ) ) {
-            printf("unzoo: cannot find comment in archive '%s'\n",arc);
-            return 0;
+        if ( ! GotoReadArch( Descript.poscmt ) ) 
+        {
+			throw ArcException("unzoo: cannot find comment in archive", archiveName);
         }
-        chr = '\n';
+        
+        // ? why not read already?
+        /*
         for ( i = 0; i < Descript.sizcmt; i++ ) {
-            if ( chr == '\n' )  printf("# ");
             chr = ByteReadArch();
-            if ( chr == '\012' )  chr = '\n';
-            printf("%c",chr);
         }
-        if ( chr != '\n' )  printf("\n");
+        */
     }
 
     /* print the header                                                    */
@@ -2046,23 +1420,27 @@ int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
     while ( 1 ) {
 
         /* read the directory entry for the next member                    */
-        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) {
-            printf("unzoo: found bad directory entry in archive '%s'\n",arc);
-            return 0;
+        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) 
+        {
+			throw ArcException("unzoo: bad directory entry in archive", Entry.fileName);
         }
-        if ( ! Entry.posnxt )  break;
+        if ( ! Entry.posnxt )  
+        {
+			break;
+		}
 
         /* skip members we don't care about                                */
         if ( Entry.deleted == 1 )
+        {
+			// what is this really?
             continue;
-        if ( filec == 0 && ! IsMatchName( "*", Entry.patw ) )
+        }
+        if ( filec == 0 && userSelection.contains(Entry.fileName) == false)
+        {
+			// if user-given selection -> check list,
+			// don't try regex..
             continue;
-        for ( i = 0; i < filec; i++ )
-            if ( IsMatchName( files[i], Entry.patv )
-              || IsMatchName( files[i], Entry.patw ) )
-                break;
-        if ( filec != 0 && i == filec )
-            continue;
+        }
 
         /* print the information about the member                          */
         /*
@@ -2082,21 +1460,17 @@ int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
         Descript.number += 1;
 
         /* if present print the file comment                               */
-        if ( ver && Entry.sizcmt != 0 ) {
-            if ( ! GotoReadArch( Entry.poscmt ) ) {
-                printf("unzoo: cannot find comment in archive '%s'\n",arc);
-                return 0;
+        if ( ver && Entry.sizcmt != 0 ) 
+        {
+            if ( ! GotoReadArch( Entry.poscmt ) ) 
+            {
+				throw ArcException("unzoo: cannot find comment in archive", Entry.fileName);
             }
-            chr = '\n';
-            for ( i = 0; i < Entry.sizcmt; i++ ) {
-                if ( chr == '\n' )  printf("# ");
+            for ( i = 0; i < Entry.sizcmt; i++ ) 
+            {
                 chr = ByteReadArch();
-                if ( chr == '\012' )  chr = '\n';
-                printf("%c",chr);
             }
-            if ( chr != '\n' )  printf("\n");
         }
-        fflush( stdout );
 
     }
 
@@ -2131,304 +1505,147 @@ int ListArch ( unsigned long ver, char *arc, unsigned long filec, char *files)
 **  If <ovr> is 0, members will not overwrite  existing files; otherwise they
 **  will.  <pre> is a prefix that is prepended to all path names.
 */
-int ExtrArch ( unsigned long bim, unsigned long out, unsigned long ovr, char *pre, char *arc, unsigned long filec, char *files )
+bool CUnZoo::ExtrArch(const std::string &archiveName)
 {
-    //char                arczoo [256];   /* <arc> with '.zoo' tacked on     */
-    //char                ans [256];      /* to read the answer              */
-    char                patl [1024];    /* local name with prefix          */
-    unsigned long       bin;            /* extraction mode text/binary     */
-    unsigned long       res;            /* status of decoding              */
-    unsigned long       secs;           /* seconds since 70/01/01 00:00:00 */
-    unsigned long       i;              /* loop variable                   */
-
-    /* try to open the archive under various names                         */
-    //strcpy(arczoo,arc);  
-    //strcat(arczoo,".zoo");
-   std::string filename = arc;
-   
-    // just open it, stop fucking around with names
-    CAnsiFile archive(filename);
+    CAnsiFile archive(archiveName);
     if (archive.IsOk() == false)
     {
-        throw ArcException("unzoo: could not open archive", filename);
+        throw ArcException("unzoo: could not open archive", archiveName);
     }
 	if ( DescReadArch() == false) 
 	{
-        throw ArcException("unzoo: bad description in archive", filename);
+        throw ArcException("unzoo: bad description in archive", archiveName);
     }
 
-    /* test if the archive has a comment starting with '!TEXT!'            */
-    if ( bim == 0
-      && 6 <= Descript.sizcmt  && GotoReadArch( Descript.poscmt )
-      && ByteReadArch() == '!' && ByteReadArch() == 'T'
-      && ByteReadArch() == 'E' && ByteReadArch() == 'X'
-      && ByteReadArch() == 'T' && ByteReadArch() == '!' )
-        bim = 1;
-
-    /* test if the archive has a comment starting with '!MACBINARY!'       */
-#ifdef  SYS_IS_MAC_MPW
-    else if ( bim == 0
-      && 11 <= Descript.sizcmt && GotoReadArch( Descript.poscmt )
-      && ByteReadArch() == '!' && ByteReadArch() == 'M'
-      && ByteReadArch() == 'A' && ByteReadArch() == 'C'
-      && ByteReadArch() == 'B' && ByteReadArch() == 'I'
-      && ByteReadArch() == 'N' && ByteReadArch() == 'A'
-      && ByteReadArch() == 'R' && ByteReadArch() == 'Y'
-      && ByteReadArch() == '!' )
-        bim = 3;
-#endif
-
+	// Descript.sizcmt has "!TEXT!" or "!MACBINARY!" in some cases,
+	// we should treat all files as being just blobs of binary data:
+	// just extract and if it is some obscure file let user decide what to do.
+	// (if text-encoding codepage needs changing -> any word processor can do that)
+	// (if it is different byteorder -> program using will want original order anyway)
+	// etc.
+	// -> keep it simple and generic to extract files
+	
     /* loop over the members of the archive                                */
     Entry.posnxt = Descript.posent;
     while ( 1 ) {
 
         /* read the directory entry for the next member                    */
-        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) {
-            printf("unzoo: found bad directory entry in archive '%s'\n",arc);
-            return 0;
+        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) 
+        {
+	        throw ArcException("unzoo: bad entry in archive", archiveName);
         }
-        if ( ! Entry.posnxt )  break;
+        
+        if ( ! Entry.posnxt )  
+        {
+	        break;
+	    }
 
         /* skip members we don't care about                                */
         if ( Entry.deleted == 1 )
+        {
+			// what is this really?
             continue;
-        if ( filec == 0 && ! IsMatchName( "*", Entry.patw ) )
+        }
+        if ( filec == 0 && userSelection.contains(Entry.fileName) == false)
+        {
+			// if user-given selection -> check list,
+			// don't try regex..
             continue;
-        for ( i = 0; i < filec; i++ )
-            if ( IsMatchName( files[i], Entry.patv )
-              || IsMatchName( files[i], Entry.patw ) )
-                break;
-        if ( filec != 0 && i == filec )
-            continue;
+        }
 
         /* check that we can decode this file                              */
         if ( (2 < Entry.method) || (2 < Entry.majver)
-          || (2 == Entry.majver && 1 < Entry.minver) ) {
-            printf("unzoo: unknown method, you need a later version\n");
+          || (2 == Entry.majver && 1 < Entry.minver) ) 
+        {
+            //printf("unzoo: unknown method, you need a later version\n");
             continue;
         }
-
-        /* check that such a file does not already exist                   */
-        strcpy( patl, pre );  
-        strcat( patl, Entry.patl );
-        if ( out == 2 && ovr == 0 && OpenReadFile(patl,0L) ) {
+        
+        // TODO: fix path separator also if msdos-style..
+        std::string outFilename = Entry.dirName;
+        if (outFilename.at(outFilename.length() -1) != '/')
+        {
+			outFilename += "/";
         }
-
-        /* decide whether or not we want to open the file binary           */
-        if ( bim == 0
-          && 6 <= Entry.sizcmt     && GotoReadArch( Entry.poscmt )
-          && ByteReadArch() == '!' && ByteReadArch() == 'T'
-          && ByteReadArch() == 'E' && ByteReadArch() == 'X'
-          && ByteReadArch() == 'T' && ByteReadArch() == '!' )
-            bin = 1;
-#ifdef  SYS_IS_MAC_MPW
-        else if ( bim == 0
-          && 11 <= Entry.sizcmt    && GotoReadArch( Entry.poscmt )
-          && ByteReadArch() == '!' && ByteReadArch() == 'M'
-          && ByteReadArch() == 'A' && ByteReadArch() == 'C'
-          && ByteReadArch() == 'B' && ByteReadArch() == 'I'
-          && ByteReadArch() == 'N' && ByteReadArch() == 'A'
-          && ByteReadArch() == 'R' && ByteReadArch() == 'Y'
-          && ByteReadArch() == '!' )
-            bin = 3;
-#endif
-        else if ( bim == 0 )
-            bin = 2;
-        else
-            bin = bim;
-
-        /* open the file for creation                                      */
-        if ( out == 2 && ! OpenWritFile(patl,bin)
-#ifdef  MAKE_DIRE
-          && (! MakeDirs(pre,Entry.diru) || ! OpenWritFile(patl,bin))
-#endif
-            ) {
-            printf("unzoo: '%s' cannot be created, ",patl);
-#ifndef MAKE_DIRE
-            if ( Entry.dirl[0] != '\0' )
-                printf("check that the directory '%s' exists\n",Entry.dirl);
-            else
-                printf("check the permissions\n");
-#else
-            printf("check the permissions\n");
-#endif
-            continue;
+        outFilename += Entry.fileName;
+        
+		// file creation fails if this fails
+		// -> we can detect error then
+        CPathHelper::MakePathToFile(outFilename);
+        
+        CAnsiFile outFile(outFilename, true);
+        if (outFile.IsOk() == false)
+        {
+			throw ArcException("Failed to open file for writing", outFilename);
         }
-
-        /* or ``open'' stdout for printing                                 */
-        if ( out == 1 )
-            OpenWritFile( (char*)0, 0L );
 
         /* decode the file                                                 */
-        if ( ! GotoReadArch( Entry.posdat ) ) {
-            printf("unzoo: cannot find data in archive '%s'\n",arc);
-            return 0;
+        if ( ! GotoReadArch( Entry.posdat ) ) 
+        {
+			throw ArcException("cannot find data in archive", outFilename);
         }
-        res = 0;
         
-        if ( out == 0 || out == 2 )
-            printf("%s \t-- ",Entry.patl);
-        else
-            printf("********\n%s\n********\n",Entry.patl);
-        fflush( stdout );
+        bool bRes = false;
         
         if ( Entry.method == 0 )  
-			res = DecodeCopy( Entry.siznow );
-        if ( Entry.method == 1 )  
-			res = DecodeLzd();
-        if ( Entry.method == 2 )  
-			res = DecodeLzh();
+        {
+			bRes = DecodeCopy(Entry.siznow, archive, outFile);
+		}
+        else if ( Entry.method == 1 )  
+        {
+			// "directory-only" entry ??
+			//bRes = DecodeLzd();
+			bRes = true;
+		}
+        else if ( Entry.method == 2 )  
+        {
+			bRes = DecodeLzh(Entry, archive, outFile);
+		}
 
         /* check that everything went ok                                   */
-        if      ( res == 0             )  
-			//printf("error, %s\n",ErrMsg);
-	        throw IOException("this should not happen");
-        else if ( Crc != Entry.crcdat  )  
-			printf("error, CRC failed\n");
-        else if ( out == 2 && bin == 1 )  
-			printf("extracted as text\n");
-        else if ( out == 2 && bin == 2 )  
-			printf("extracted as binary\n");
-#ifdef  SYS_IS_MAC_MPW
-        else if ( out == 2 && bin == 3 )  
-			printf("extracted as MacBinary\n");
-#endif
-        else if ( out == 0             )  
-			printf("tested\n");
+        if      ( bRes == false)  
+        {
+	        throw ArcException("Failed to extract file", outFilename);
+	    }
+        else if ( m_crc.m_Crc != Entry.crcdat  )  
+        {
+	        throw ArcException("CRC error", outFilename);
+        }
 
         /* close the file after extraction                                 */
-        if ( out == 1 || out == 2 )
-            ClosWritFile();
-
-        /* set the file time, evt. correct for timezone of packing system  */
-        secs = 24*60*60L*(365*(Entry.year - 70)
-                         + BeginMonth[Entry.month]
-                         + Entry.day - 1
-                         + (Entry.year -  69) / 4
-                         + (Entry.year %   4 ==   0 && 1 < Entry.month)
-                         - (Entry.year + 299) / 400
-                         - (Entry.year % 400 == 100 && 1 < Entry.month))
-                 +60*60L*Entry.hour + 60L*Entry.min + Entry.sec;
-        if      ( Entry.timzon < 127 )  secs += 15*60*(Entry.timzon      );
-        else if ( 127 < Entry.timzon )  secs += 15*60*(Entry.timzon - 256);
-        if ( out == 2 ) {
-            if ( ! SETF_TIME( patl, secs ) )
-                printf("unzoo: '%s' could not set the times\n",patl);
-        }
-
-        /* set the file permissions                                        */
-        if ( out == 2 && (Entry.permis >> 22) == 1 ) {
-            if ( ! SETF_PERM( patl, Entry.permis ) )
-                printf("unzoo: '%s' could not set the permissions\n",patl);
-        }
-
+        outFile.Close();
     }
 
 
     /* indicate success                                                    */
-    return 1;
+    return true;
 }
 
 
-/****************************************************************************
-**
-*F  HelpArch()  . . . . . . . . . . . . . . . . . . . . . . . print some help
-**
-**  'HelpArch' prints some help about 'unzoo'.
-*/
+
 /*
-int             HelpArch ()
+bool CUnZoo::GetEntryList(tEntryList &lstArchiveInfo)
 {
-    printf("unzoo -- a zoo archive extractor by Martin Schoenert\n");
-    printf("  ($Id: unzoo.c,v 4.4 2000/05/29 08:56:57 sal Exp $)\n");
-    printf("  based on 'booz' version 2.0 by Rahul Dhesi\n");
-    printf("\n");
-    printf("unzoo -x [-abnpo] [-j <prefix>] <archive>[.zoo] [<file>..]\n");
-    printf("  extract the members of the archive\n");
-    
-    // do we get problems with this?
-    // apparently it does some data conversion instead of raw extract?
-    //
-    printf("  -a:  extract all members as text files ");
-    printf("(not only those with !TEXT! comments)\n");
-    printf("  -b:  extract all members as binary files ");
-    printf("(even those with !TEXT! comments)\n");
+	// just read contents and give list to caller
+	ReadArchive();
+	
 }
 */
 
-/****************************************************************************
-**
-*F  main(<argc>,<argv>) . . . . . . . . . . . . . . . . . . . .  main program
-**
-**  'main' is the main program, it decodes the arguments  and then  calls the
-**  appropriate function.
-*/
-#if 0
-int             main ( argc, argv )
-    int                 argc;
-    char *              argv [];
-{
-    unsigned long       res;            /* result of command               */
-    unsigned long       cmd;            /* command help/list/extract       */
-    unsigned long       ver;            /* list verbose option             */
-    unsigned long       bim;            /* extraction mode option          */
-    unsigned long       out;            /* output destination option       */
-    unsigned long       ovr;            /* overwrite file option           */
-    char *              pre;            /* prefix to prepend to path names */
-    char                argl [256];     /* interactive command line        */
-    int                 argd;           /* interactive command count       */
-    char *              argw [256];     /* interactive command vector      */
-    char *              p;              /* loop variable                   */
-
-
-    /* repeat until the user enters an empty line                          */
-    InitCrc();
-    IsSpec['\0'] = 1;  IsSpec[';'] = 1;
-    argd = 1;
-
-        /* scan the command line arguments                                 */
-        cmd = 1;  ver = 0;  bim = 0;  out = 2;  ovr = 0;
-        pre = "";
-        while ( 1 < argc && argv[1][0] == '-' ) {
-            if ( argv[1][2] != '\0' )  cmd = 0;
-            switch ( argv[1][1] ) {
-            case 'l': case 'L': if ( cmd != 0 )  cmd = 1;            break;
-            case 'v': case 'V': if ( cmd != 1 )  cmd = 0;  ver = 1;  break;
-            case 'x': case 'X': if ( cmd != 0 )  cmd = 2;            break;
-            case 'a': case 'A': if ( cmd != 2 )  cmd = 0;  bim = 1;  break;
-            case 'b': case 'B': if ( cmd != 2 )  cmd = 0;  bim = 2;  break;
-            case 'n': case 'N': if ( cmd != 2 )  cmd = 0;  out = 0;  break;
-            case 'p': case 'P': if ( cmd != 2 )  cmd = 0;  out = 1;  break;
-            case 'o': case 'O': if ( cmd != 2 )  cmd = 0;  ovr = 1;  break;
-            case 'j': case 'J': if ( argc == 2 ) { cmd = 0;  break; }
-                                pre = argv[2];  argc--;  argv++;
-                                break;
-            default:            cmd = 0;  break;
-            }
-            argc--;  argv++;
-        }
-
-        /* execute the command or print help                               */
-        if      ( cmd == 1 && 1 < argc )
-            res = ListArch( ver, argv[1],
-                            (unsigned long)argc-2, argv+2 );
-        else if ( cmd == 2 && 1 < argc )
-            res = ExtrArch( bim, out, ovr, pre, argv[1],
-                            (unsigned long)argc-2, argv+2 );
-        else
-            res = HelpArch();
-
-
-    /* just to please lint                                                 */
-    return ! res;
-}
-#endif // 0
-
+// test integrity, try extracting without output
 bool CUnZoo::TestArchive()
 {
+	return ListArch(m_szArchive);
 }
 
+// extract all files to path given before,
+// just extract "as-is": users have other tools to convert text-encoding etc.
 bool CUnZoo::Extract()
 {
+	return ExtrArch(m_szArchive);
 }
 
+// with user selections
+//
+//bool CUnZoo::ExtractSelection(QList<QString> &lstSelectedFiles)
+//{}

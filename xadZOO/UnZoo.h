@@ -33,6 +33,15 @@ protected:
 	//tEntryList m_EntryList;
 
 	bool DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile);
+	//bool DecodeLzd();
+	//bool DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile);
+
+	// read contents of archive
+	void ReadArchive(CAnsiFile &archive);
+
+
+	bool ListArch(const std::string &archiveName);
+	bool ExtrArch(const std::string &archiveName);
 
 public:
     CUnZoo(const std::string &szArchive)
@@ -44,13 +53,13 @@ public:
     {
     }
     
-	//bool GetEntryList(tArchiveEntryList &lstArchiveInfo) const;
-
 	bool SetExtractPath(const std::string &szOutPath)
 	{
 		m_szExtractionPath = szOutPath;
 		return true;
 	}
+
+	bool GetEntryList(tEntryList &lstArchiveInfo);
     
 	bool TestArchive();
 
@@ -59,6 +68,10 @@ public:
 	// additional directories are created under that (if necessary)
 	//
 	bool Extract();
+
+	// with user selections
+	//
+	//bool ExtractSelection(QList<QString> &lstSelectedFiles);
 	
 	// information about archive file itself
 	std::string GetArchiveFileName()
