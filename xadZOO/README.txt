@@ -1,15 +1,12 @@
 
 xadZOO - ZOO unpack library
 
-
-Author: Ilkka Prusi
-Contact ilkka.prusi@gmail.com
+Based on Public Domain code of unzoo.c by Martin Schoenert
+Modified for use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
 
 
 Summary:
-ZOO implementation for qXpkLib to load.
-
-Original author: TODO: add
+ZOO archive unpacking implementation for qXpkLib to load.
 
 In progress..
 
