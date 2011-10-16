@@ -77,7 +77,7 @@ public:
     explicit CLibMaster(QObject *parent = 0);
 	virtual ~CLibMaster(void);
 
-	bool xpkInfo(QXpkLib::CEntryInfo &info);
+	bool xpkInfo(QXpkLib::CArchiveInfo &info);
 	
 	bool xpkUnpack(XpkProgress *pProgress);
 

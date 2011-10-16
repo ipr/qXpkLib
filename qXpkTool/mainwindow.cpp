@@ -7,7 +7,7 @@
 #include <QTextCodec>
 #include <QDateTime>
 
-#include <QListWidgetItem>
+#include <QTreeWidgetItem>
 
 #include "qxpklib.h"
 
@@ -20,12 +20,25 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pXpkLib(nullptr)
 {
     ui->setupUi(this);
+	m_szBaseTitle = windowTitle();
 	connect(this, SIGNAL(FileSelection(QString)), this, SLOT(onFileSelected(QString)));
 	
 	m_pXpkLib = new QXpkLib(this);
 	connect(m_pXpkLib, SIGNAL(message(QString)), this, SLOT(onMessage(QString)));
 	connect(m_pXpkLib, SIGNAL(warning(QString)), this, SLOT(onWarning(QString)));
 	connect(m_pXpkLib, SIGNAL(error(QString)), this, SLOT(onError(QString)));
+
+	QStringList treeHeaders;
+	treeHeaders << "Name" 
+			<< "Unpacked size" 
+			<< "Packed size" 
+			<< "Time" 
+			<< "Date" 
+			<< "Packing" 
+			<< "Comment";
+	ui->treeWidget->setColumnCount(treeHeaders.size());
+	ui->treeWidget->setHeaderLabels(treeHeaders);
+
 	
 	// if file given in command line
 	QStringList vCmdLine = QApplication::arguments();
@@ -41,12 +54,111 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::onMessage(QString szData)
+{
+	ui->statusBar->showMessage(QString("Message: ").append(szData));
+}
+
+void MainWindow::onWarning(QString szData)
+{
+	ui->statusBar->showMessage(QString("Warning: ").append(szData));
+}
+
+void MainWindow::onError(QString szData)
+{
+	ui->statusBar->showMessage(QString("Error: ").append(szData));
+}
+
+void MainWindow::onFileSelected(QString szFile)
+{
+	ClearAll();
+
+	m_pXpkLib->setInputFile(szFile);
+
+	setWindowTitle(m_szBaseTitle + " - " + szArchiveFile);
+	m_szCurrentArchive = szArchiveFile;
+
+	QXpkLib::CArchiveInfo info;
+	if (m_pXpkLib->xpkInfo(info) == false)
+	{
+		// should show error message from signal instead
+		//ui->statusBar->showMessage("Error retrieving information");
+		return;
+	}
+
+	QString szMessage;
+	szMessage.append(" Total files in archive: ").append(QString::number(info.m_fileList.count()))
+			.append(" Total unpacked size: ").append(QString::number(info.m_archiveInfo.m_ulUnpackedSize))
+			.append(" Archive file size: ").append(QString::number(info.m_archiveInfo.m_ulFileSize))
+			.append(" Packing: ").append(info.m_archiveInfo.m_packing);
+	ui->statusBar->showMessage(szMessage);
+	
+	auto it = info.m_archiveInfo.begin();
+	auto itEnd = info.m_archiveInfo.end();
+	while (it != itEnd)
+	{
+		QXpkLib::CEntryInfo &Entry = (*it);
+		
+		// empty name?
+		/*
+		if (Entry.m_fileName.length() < 1)
+		{
+			++it;
+			continue;
+		}
+		*/
+
+		QString szPath;
+		QString szFile;
+		
+		if (SplitPathFileName(Entry.m_fileName, szPath, szFile) == false)
+		{
+			// no path
+			szFile = Entry.m_fileName;
+			szPath = "/";
+		}
+		
+		// get top-level item of path
+		QTreeWidgetItem *pTopItem = m_PathToItem.value(szPath, nullptr);
+		if (pTopItem == nullptr)
+		{
+			pTopItem = new QTreeWidgetItem((QTreeWidgetItem*)0);
+			pTopItem->setText(0, szPath);
+			ui->treeWidget->addTopLevelItem(pTopItem);
+			m_PathToItem.insert(szPath, pTopItem);
+		}
+
+		// add sub-item of file
+		QTreeWidgetItem *pSubItem = new QTreeWidgetItem(pTopItem);
+		pSubItem->setText(0, szFile);
+		pSubItem->setText(1, QString::number(Entry.m_ulUnpackedSize)); // always given
+		pSubItem->setText(2, QString::number(Entry.m_ulPackedSize)); // always given
+		
+		QTime Time(Entry.m_Stamp.time());
+		pSubItem->setText(3, Time.toString("hh:mm:ss"));
+		
+		QDate Date(Entry.m_Stamp.date());
+		pSubItem->setText(4, Date.toString("dd-MM-yyyy"));
+		
+		// packing information
+		pSubItem->setText(5, Entry.m_packing);
+		
+		// file-related comment (if any stored)
+		pSubItem->setText(6, Entry.m_szComment);
+
+
+		pTopItem->addChild(pSubItem);
+		++it;
+	}
+	
+	ui->treeWidget->expandAll();
+	ui->treeWidget->resizeColumnToContents(0);
+	ui->treeWidget->sortByColumn(0);
+}
+
+
 void MainWindow::on_actionFile_triggered()
 {
-#ifdef _DEBUG
-	m_lastPath = "C:/testdata/xpk";
-#endif
-	
 	QString szFile = QFileDialog::getOpenFileName(this, tr("Open file"), m_lastPath);
 	if (szFile != NULL)
 	{
@@ -62,34 +174,36 @@ void MainWindow::on_actionFile_triggered()
 	}
 }
 
-void MainWindow::onFileSelected(QString szFile)
-{
-	m_pXpkLib->setInputFile(szFile);
 
-	ui->listWidget->clear();
-	QXpkLib::CXpkFileInfo info;
-	if (m_pXpkLib->xpkInfo(info) == true)
+void MainWindow::on_actionDecrunch_triggered()
+{
+	// if is multi-file archive
+	// -> select dest folder dialog
+	/*
+    QString szDestPath = QFileDialog::getExistingDirectory(this, tr("Select path to extract to.."), szCurrentFilePath);
+    if (szDestPath == NULL)
+    {
+		return;
+    }
+    */
+	
+	// if is single file
+	// -> select dest file dialog
+	
+	
+
+	if (m_pXpkLib->xpkUnpack() == true)
 	{
-		// something for simple info..
-		// TODO: make column/tree based display later..?
-		//QListWidgetItem *pItem = nullptr;
-		//pItem = new QListWidgetItem(
+		ui->statusBar->showMessage("Extract completed", 10000);
 	}
 }
 
-void MainWindow::onMessage(QString szData)
+void MainWindow::on_actionTest_triggered()
 {
-	ui->statusBar->showMessage(QString("Message: ").append(szData));
-}
-
-void MainWindow::onWarning(QString szData)
-{
-	ui->statusBar->showMessage(QString("Warning: ").append(szData));
-}
-
-void MainWindow::onError(QString szData)
-{
-	ui->statusBar->showMessage(QString("Error: ").append(szData));
+	if (m_pXpkLib->xpkTest() == true)
+	{
+		ui->statusBar->showMessage("Test completed successfully", 10000);
+	}
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -111,15 +225,33 @@ void MainWindow::on_actionAbout_triggered()
 	pTxt->show();
 }
 
-void MainWindow::on_actionDecrunch_triggered()
+bool MainWindow::SplitPathFileName(const QString &szName, QString &szPath, QString &szFile)
 {
-	if (m_pXpkLib->xpkUnpack() == true)
+	QString szFilePath = szName;
+	szFilePath.replace('\\', "/");
+	int iPos = szFilePath.lastIndexOf('/');
+	if (iPos == -1)
 	{
-		ui->statusBar->showMessage(QString("Unpack done: ").append(szFile));
+		// no path
+		return false;
 	}
+
+	szFile = szFilePath.right(szFilePath.length() - iPos -1);
+	if (szFilePath.at(0) != '/')
+	{
+		szPath = "/";
+	}
+	szPath += szFilePath.left(iPos);
+	
+	// split done
+	return true;
 }
 
-void MainWindow::on_actionTest_triggered()
+void MainWindow::ClearAll()
 {
-    
+	setWindowTitle(m_szBaseTitle);
+	
+	m_szCurrentArchive.clear();
+	m_PathToItem.clear();
+	ui->treeWidget->clear();
 }

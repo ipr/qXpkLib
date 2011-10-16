@@ -22,6 +22,8 @@
 
 #include <QObject>
 #include <QByteArray>
+#include <QDateTime>
+#include <QList>
 
 
 //// fwd. decl.
@@ -50,27 +52,69 @@ public:
     QXpkLib(QObject *parent = 0);
 	virtual ~QXpkLib();
 
-	// info to caller about compressed file
-	// (metadata such as cruncher etc.)
+	// info to caller for each file
+	// included in compressed file (archive)
+	//
 	class CEntryInfo
 	{
 	public:
 		CEntryInfo() {}
 		
+		QString m_fileName; // name&path of file
+
+		// "last modified" time usually
+		QDateTime m_Stamp;
+
+		// for entry packed to archive, packed size should be same as file size,
+		// for archive itself, metadata has overhead over actual data size.
+		// -> does it matter to us/user at all?
+		//
+		unsigned long m_ulFileSize; // actual file size (inc. metadata)
+		unsigned long m_ulPackedSize; // size of compressed data
+		unsigned long m_ulUnpackedSize; // uncompressed data size
+		
+		// file cruncher/packing type,
+		// may have different methods per-file
+		QString m_packing;
+		
+		// file-related comment from archive (if any)
+		// (usually in Amiga-packed files)
+		QString m_szComment;
+		
+		// other contained file metadata?
+		//filetype (module/image/executable..?);
+	};
+	
+	// general information on archive/compressed file
+	// (metadata such as cruncher, packing mode, list of files etc.)
+	//
+	class CArchiveInfo
+	{
+	public:
+		CArchiveInfo() {}
+		
 		// for archive-files, may be larger than 1
 		// for single-file packers, at most 1
-		unsigned long m_ulFileCount; // files in archive
+		//unsigned long m_ulFileCount; // files in archive
 		
-		unsigned long m_ulFileSize; // actual file size
-		unsigned long m_ulPackedDataSize; // size of compressed data
-		unsigned long m_ulUnpackedSize; // uncompressed size
+		// if is multifile-archive:
+		// may or may not have information on contained file
+		bool m_bIsMultifile;
 		
-		QString m_CompressionType; // cruncher type
+		// for convenience of single-file crunching only?
+		// (obscure XFD-cruncher might not have any metadata..)
+		CEntryInfo m_archiveInfo;
+
+		// for each contained file 
+		// when multi-file and information available
+		//
+		QList<CEntryInfo> m_fileList;
 	};
+	
 	
 	// get information on selected file
 	// (compression, type etc.)
-	bool xpkInfo(QXpkLib::CEntryInfo &info);
+	bool xpkInfo(QXpkLib::CArchiveInfo &info);
 
 	// pack/unpack to/from given input&output
 	bool xpkPack();

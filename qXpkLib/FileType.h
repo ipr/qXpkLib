@@ -37,6 +37,8 @@ typedef enum tHeaderType
 	//HEADERTYPE_SHAR, // Un*x shell-archive..
 	//HEADERTYPE_STUFFIT, // MacOS Stuffit (SIT)
 	//HEADERTYPE_PACKIT, // MacOS Packit (PIT)
+	//HEADERTYPE_MACBINARY, // MacBinary (BIN)
+	//HEADERTYPE_BINHEX, // MacOS BinHex (HQX)
 	//HEADERTYPE_ACE, // 
 	//HEADERTYPE_ARC, // 
 	//HEADERTYPE_ARJ, // 

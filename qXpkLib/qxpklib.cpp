@@ -62,7 +62,7 @@ QXpkLib::~QXpkLib()
 
 // information on selected file
 // (compression, type etc.)
-bool QXpkLib::xpkInfo(QXpkLib::CEntryInfo &info)
+bool QXpkLib::xpkInfo(QXpkLib::CArchiveInfo &info)
 {
 	try
 	{

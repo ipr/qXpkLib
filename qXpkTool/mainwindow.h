@@ -2,12 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMap>
 
 namespace Ui {
     class MainWindow;
 }
 
 class QXpkLib;
+class QTreeWidgetItem;
 
 class MainWindow : public QMainWindow
 {
@@ -20,26 +22,40 @@ public:
 signals:
 	void FileSelection(QString szFile);
 
-	
-private slots:
-	void on_actionFile_triggered();
-	void onFileSelected(QString szFile);
-	
+protected slots:
+
 	void onMessage(QString szData);
 	void onWarning(QString szData);
 	void onError(QString szData);
 	
-	void on_actionAbout_triggered();
+private slots:
+	void onFileSelected(QString szFile);
+	
+	void on_actionFile_triggered();
 	
 	void on_actionDecrunch_triggered();
 	
 	void on_actionTest_triggered();
+	void on_actionAbout_triggered();
 	
 private:
     Ui::MainWindow *ui;
     QString m_lastPath;
+
+	QString m_szBaseTitle;
+	QString m_szCurrentArchive;
 	
 	QXpkLib *m_pXpkLib;
+	
+	// key: path (without filename)
+	// value: top-level item
+	//
+	QMap<QString, QTreeWidgetItem*> m_PathToItem;
+	
+	//QString GetPath(const QString &szName);
+	bool SplitPathFileName(const QString &szName, QString &szPath, QString &szFile);
+	
+	void ClearAll();
 };
 
 #endif // MAINWINDOW_H

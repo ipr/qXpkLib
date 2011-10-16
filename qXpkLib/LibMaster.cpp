@@ -247,7 +247,7 @@ CLibMaster::~CLibMaster(void)
 	}
 }
 
-bool CLibMaster::xpkInfo(QXpkLib::CEntryInfo &info)
+bool CLibMaster::xpkInfo(QXpkLib::CArchiveInfo &info)
 {
 	// TODO: get info to caller..
 	// - compressor (SQSH, NUKE... PP20, IMPL..)
