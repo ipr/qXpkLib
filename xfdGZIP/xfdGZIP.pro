@@ -6,16 +6,16 @@
 
 QT       -= gui
 
-TARGET = xpkGZIP
+TARGET = xfdGZIP
 TEMPLATE = lib
 
-DEFINES += XPKGZIP_LIBRARY
+DEFINES += XFDGZIP_LIBRARY
 DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xpkGZIP.cpp
+SOURCES += xfdGZIP.cpp
 
-HEADERS += xpkGZIP.h\
-        xpkGZIP_global.h
+HEADERS += xfdGZIP.h\
+        xfdGZIP_global.h
 

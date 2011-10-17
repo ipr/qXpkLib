@@ -1,5 +1,5 @@
 
-LZX-archive uncompression in reusable library.
+xadLZX - LZX-archive uncompression in reusable library.
 
 Summary:
 Library in Qt&C++ for handling LZX-archive files.

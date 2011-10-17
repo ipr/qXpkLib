@@ -1,5 +1,5 @@
 
-Reusable library in Qt&C++ for LhA-archive support.
+xadLha - Reusable library in Qt&C++ for LhA-archive support.
 
 Author: Ilkka Prusi
 Contact: ilkka.prusi@gmail.com
@@ -12,8 +12,8 @@ and: http://www2m.biglobe.ne.jp/~dolphin/lha/lha-unix.htm
 Also: http://homepage1.nifty.com/dangan/en/Content/Program/Java/jLHA/Notes/Notes.html
 Original ANSI-C sources also in: http://gnuwin32.sourceforge.net/packages/lha.htm
 
-qLhaLib is a Qt-DLL based on based on lha-1.14i-ac20040929.
-qLhaLib should be relatively easily reusable on most platforms where Qt can be compiled
+xadLha is a Qt-DLL based on based on lha-1.14i-ac20040929.
+xadLha should be relatively easily reusable on most platforms where Qt can be compiled
 (with differences regarding compilers..).
 
 This version uses "xad" interface for supporting use from qXpkLib.
@@ -26,7 +26,7 @@ lha-1.14i-ac20040929 copyrights:
  LHa      for UNIX  V 1.14  Modified     1995  Nobutaka Watazaki
  LHa      for UNIX  V 1.14i Modified     2000  Tsugio Okamoto
                     Autoconfiscated 2001-2004  Koji Arai
-qLhaLib copyright(c) 2011 Ilkka Prusi
+xadLha copyright(c) 2011 Ilkka Prusi
 
 This is free software. 
 You can use, distribute and/or modify this software and source code free-of-charge.

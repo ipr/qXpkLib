@@ -1,5 +1,5 @@
 
-xpkGZIP - "GZIP" GNU-zip pack/unpack library
+xfdGZIP - "GZIP" GNU-zip unpack library
 
 
 Author: Ilkka Prusi
@@ -12,7 +12,6 @@ Summary:
 Common GNU-zip unpacking support library.
 
 Support for another "stand-alone" compression format for qXpkLib.
-
 
 (placeholder, implementation coming..)
 
