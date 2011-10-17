@@ -1,3 +1,19 @@
+////////////////////////////////////////
+//
+// xadISO - unpacking extension library for qXpkLib
+//
+// Allows "extracting" files from ISO-image of CD/DVD rom
+// without mounting as virtual-device.
+//
+// Note: currently planning only "base" ISO 9660 support,
+// RockRidge/Joliet/HFS/UDF not planned for now..
+//
+// Note2: will not include CDDA, use other tools for that.
+//
+// Author: Ilkka Prusi, 2011
+// ilkka.prusi@gmail.com
+//
+
 #ifndef XADISO_H
 #define XADISO_H
 
@@ -28,8 +44,12 @@ public:
 	virtual bool Decrunch(XpkProgress *pProgress);
 	
 private:
+	QString m_destPath;
 	QString m_filename;
+	
 	QFile *m_pFile;
+	
+	uchar *findDescriptorIdentifier(uchar *pos, const uchar *end, const char *identifier);
 	
 };
 

@@ -20,6 +20,14 @@ Yes, there are ways to mount CD-images as drives.
 However, this library could be used for different requirements
 such as extracting files from "batch" of CD-images or something similar.
 
-Not done yet, placeholder..
+Licensing:
+GPL v2, see ../COPYING.txt
 
+Status:
+Not completed, in progress..
+
+Implementation plan:
+* step 1: "base" ISO 9660 - in progress
+* step 2: RockRidge/Joliet extensions
+* step 3: HFS, UDF etc.
 
