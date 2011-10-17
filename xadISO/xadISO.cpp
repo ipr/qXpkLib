@@ -25,6 +25,11 @@
  ISO 9660 volume structure definitions from freely available documentation in:
  http://users.telenet.be/it3.consultants.bvba/handouts/ISO9960.html
  
+ Also: http://alumnus.caltech.edu/~pje/iso9660.html
+ 
+ Also see ECMA-119 standard:
+ http://www.ecma-international.org/publications/standards/Ecma-119.htm
+ 
  733 refers to "binary palindrome" encoding of little&big endian values
  where 32-bit integer is given in both byteorders, 
  e.g. 0x11223344 is stored as sequence: 0x44 0x33 0x22 0x11 0x11 0x22 0x33 0x44
@@ -36,6 +41,9 @@ typedef uint64_t iso733; // 2*4 bytes sequence for one 4 byte integer
 typedef uint32_t iso723; // 2*2 bytes sequence for on 2 byte integer?
 
 typedef uint8_t iso711; // 1 byte
+
+static const size_t nSectorSize = 2048; // sector size 
+static const size_t nBootSectorCount = 16; // empty/boot sectors at start (0..15)
 
 // Volume descriptor types
 enum ISOVolumeDescriptorType : iso711
@@ -50,6 +58,18 @@ enum ISOVolumeDescriptorType : iso711
 
 // force align, no padding
 #pragma pack(push, 1)
+
+struct iso_date_time
+{
+	uint32_t year; // 1..9999
+	uint16_t month; // 1..12
+	uint16_t day; // 1..31
+	uint16_t hour; // 0..23
+	uint16_t minute; // 0..59
+	uint16_t second; // 0..59
+	uint16_t fractions; // hundreths of a second
+	int8_t gmt_offset; // 15min intervals from -48(W) +52(E)
+};
 
 // total size: 2048 bytes
 struct iso_primary_descriptor
@@ -160,7 +180,8 @@ bool xadISO::Decrunch(XpkProgress *pProgress)
 	
 	// seek first primary volume descriptor in file
 	// (skip boot record if any)
-	uchar *pos = findDescriptorIdentifier((pView + 32768), (pView + size), "CD001");
+	const size_t nStart = (nBootSectorCount * nSectorSize);
+	uchar *pos = findDescriptorIdentifier((pView + nStart), (pView + size), "CD001");
 	if (pos == nullptr)
 	{
 		// did not find supported identifier
