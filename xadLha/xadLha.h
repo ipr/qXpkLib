@@ -17,7 +17,8 @@ public:
     xadLha();
     virtual ~xadLha();
 
-	//virtual bool fileList(QList<archiveEntry> &entryList);
+	// list files in archive, get other metadata also..
+	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);

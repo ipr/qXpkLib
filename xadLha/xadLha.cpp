@@ -24,8 +24,14 @@ xadLha::~xadLha()
 	}
 }
 
+// TODO: something like this needed?
+void xadLha::setArchive(QString &file)
+{
+	m_pArchive = new CLhArchive(this, file);
+}
+
 /*
-bool xadLha::fileList(QList<archiveEntry> &entryList)
+bool xadLha::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
 	//m_pArchive->getHeaderList();
 }

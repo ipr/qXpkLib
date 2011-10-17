@@ -493,14 +493,21 @@ struct {
     unsigned char       spared;         /* spare entry to pad entry        */
     unsigned long       poscmt;         /* position of comment, 0 if none  */
     unsigned short      sizcmt;         /* length   of comment, 0 if none  */
+
+	////////////    
+    // remove this, pointless old hack:
+    // only use if proper name is empty, read to temp and determine there..
+    // only msdos ever needed this kind of stuff?
     char                nameshort [14];      /* short name of member or archive */
+	////////////    
+    
     unsigned short      lvar;           /* length of variable part         */
     unsigned char       timzon;         /* time zone                       */
     unsigned short      crcent;         /* crc value of entry              */
     unsigned char       lnamu;          /* length of long name             */
     unsigned char       ldiru;          /* length of directory             */
     
-    // TODO: replace with std::string
+    // TODO: replace with QString / std::string
     char                fileName [256];     /* namu: univ. name of member of archive */
     char                dirName [256];     /* diru: univ. name of directory         */
     

@@ -15,6 +15,9 @@ public:
     xadZOO();
     virtual ~xadZOO();
 
+	// list files in archive, get other metadata also..
+	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
+
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
 	

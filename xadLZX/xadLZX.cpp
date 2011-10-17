@@ -25,6 +25,19 @@ xadLZX::~xadLZX()
 	}
 }
 
+// TODO: something like this needed?
+void xadLZX::setArchive(QString &file)
+{
+	m_pArchive = new CUnLzx(file);
+}
+
+/*
+bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+	//m_pArchive->getHeaderList();
+}
+*/
+
 // set path to uncompress files to
 bool xadLZX::setExtractPath(QString &szPath)
 {

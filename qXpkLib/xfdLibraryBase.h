@@ -3,13 +3,22 @@
 // Pure virtual interface-class
 // for external "foreign/alien" decrunch handling.
 //
+// General information for XFD-libraries:
+// - fileformat is "alien", non-XPK format
+// - generally single packed file only (not collection)
+// - decrunch as whole file, not in XPK-chunks
+// - output to buffer only (in XpkProgress)
+// -> master-library will either push to file or user buffer as needed
+//
 
 
 #ifndef XFDLIBRARYBASE_H
 #define XFDLIBRARYBASE_H
 
-#include "XpkProgress.h"
+#include <QString>
 
+
+#include "XpkProgress.h"
 #include "AnsiFile.h"
 
 

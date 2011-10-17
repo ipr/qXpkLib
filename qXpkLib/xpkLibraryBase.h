@@ -3,14 +3,22 @@
 // Pure virtual interface-class
 // for each decoder-library.
 //
+// General information for XPK-libraries:
+// - fileformat is XPK-native format
+// - generally single packed file only (not collection)
+// - decrunch as XPK-chunks
+// - output to buffer only (in XpkProgress)
+// -> master-library will either push to file or user buffer as needed
+//
 
 
 #ifndef XPKLIBRARYBASE_H
 #define XPKLIBRARYBASE_H
 
-#include "XpkProgress.h"
-#include "XpkTags.h"
+#include <QString>
 
+
+#include "XpkProgress.h"
 #include "AnsiFile.h"
 
 
@@ -29,7 +37,8 @@ public:
 	//virtual QString GetPackerLongName()=0;
 
 	// pack/compress
-	virtual bool Crunch(XpkProgress *pProgress)=0;
+	// (optional, so far nowhere..)
+	//virtual bool Crunch(XpkProgress *pProgress)=0;
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress)=0;
