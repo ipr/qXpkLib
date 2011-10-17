@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "AnsiFile.h"
+#include "FileType.h"
 
 #include "XfdSlave.h"
 
@@ -60,7 +61,7 @@ public:
     CXfdMaster(QObject *parent = 0);
     virtual ~CXfdMaster(void);
     
-    bool isSupported(CReadBuffer *pInputBuffer);
+    bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
     
 	bool decrunch(XpkProgress *pProgress);
 

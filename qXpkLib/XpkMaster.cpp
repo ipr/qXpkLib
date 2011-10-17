@@ -26,42 +26,6 @@
 
 ///////// protected methods
 
-std::string CXpkMaster::getCruncherType(CReadBuffer *pInputBuffer)
-{
-	// simplify, use std::string and get it done
-	std::string szSubType;
-	
-	if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
-	{
-		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
-		// also others:
-		// in xpk-dev: NUKE, DUKE, RLEN, HUFF, FAST..
-		// others: SMPL, SLZ3, SHRI, PWPK, PPMQ, 
-		// IDEA?, MASH, LHLB, ILZR, FRLE, FBR2, 
-		// DMCB, DLTA, CBR0, BLZW, BLFH..
-		//
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
-		szSubType = "xpk";
-		szSubType.append(m_InputBuffer.GetAt(8), 4);
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
-	{
-		szSubType = "xpkSQSH";
-	}
-	/* testing generic detection -> commented out
-	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
-	{
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_RLEN)
-	{
-		// already detected as XPK
-		// -> load sub-library (get actual type)
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
-	}
-	*/
-	
-	return szSubType;
-}
 
 void CXpkMaster::PrepareUnpacker(std::string &subType)
 {
@@ -104,8 +68,42 @@ CXpkMaster::~CXpkMaster(void)
 {
 }
 
-bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer)
+bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 {
+	// simplify, use std::string and get it done
+	std::string szSubType;
+	
+	if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
+	{
+		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
+		// also others:
+		// in xpk-dev: NUKE, DUKE, RLEN, HUFF, FAST..
+		// others: SMPL, SLZ3, SHRI, PWPK, PPMQ, 
+		// IDEA?, MASH, LHLB, ILZR, FRLE, FBR2, 
+		// DMCB, DLTA, CBR0, BLZW, BLFH..
+		//
+		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
+		szSubType = "xpk";
+		szSubType.append(m_InputBuffer.GetAt(8), 4);
+		
+		// TODO: try loading library to see if we can decrunch it too
+	}
+	/* testing generic detection -> commented out
+	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
+	{
+		szSubType = "xpkSQSH";
+	}
+	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
+	{
+	}
+	else if (type.m_enFileType == HEADERTYPE_XPK_RLEN)
+	{
+		// already detected as XPK
+		// -> load sub-library (get actual type)
+		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
+	}
+	*/
+
 	return m_Tags.IsXpkFile(pInputBuffer);
 }
 

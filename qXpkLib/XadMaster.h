@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "AnsiFile.h"
+#include "FileType.h"
 
 #include "XpkProgress.h"
 #include "xadLibraryBase.h"
@@ -41,7 +42,7 @@ public:
     CXadMaster(QObject *parent = 0);
     virtual ~CXadMaster(void);
 
-	bool isSupported(CReadBuffer *pInputBuffer);
+	bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
     
 	//void setArchive(QString &szArchive);
 	void setExtractPath(QString &szPath);

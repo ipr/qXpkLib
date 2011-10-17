@@ -80,6 +80,22 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
             return HEADERTYPE_S3M;
         }
     }
+
+    if (ulLength >= 24)
+    {
+		// 0..19  = "ZOO 2.10 Archive.<ctr>Z"
+		// 20..23 = 0xfdc4a7dc
+		//
+        if (::memcmp(pBuffer, "ZOO ", 4) == 0
+			&& pBuffer[20] == 0xfd
+			&& pBuffer[21] == 0xc4
+			&& pBuffer[22] == 0xa7
+			&& pBuffer[23] == 0xdc
+			)
+        {
+            return HEADERTYPE_ZOO;
+        }
+    }
 	
     if (ulLength >= 20)
     {
@@ -237,12 +253,12 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// determine actual packer..
 	    enFileType = HEADERTYPE_XPK_GENERIC;
 
+		/* // test generic detection -> commented out
 		const uint8_t *pTmp = (pBuffer +8);
 		if (::memcmp(pTmp, "SQSH", 4) == 0)
 		{
 			return HEADERTYPE_XPK_SQSH;
 		}
-		/* // test generic detection -> commented out
 		else if (::memcmp(pTmp, "NUKE", 4) == 0)
 		{
 			return HEADERTYPE_XPK_NUKE;
@@ -403,7 +419,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		&& pBuffer[2] == 'h')
 	{
 		// "BZh?", where ? = 0..9
-		// for variations: "BZ0", "BZh1".."BZh9"
+		// for variations: "BZh1".."BZh9"
 		return HEADERTYPE_BZIP2;
 	}
 	else if (pBuffer[0] == 0x1F
@@ -415,36 +431,6 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// only "deflate" (0x8) is supported?
 		// -> see http://www.gzip.org/zlib/rfc-gzip.html
 		return HEADERTYPE_GZIP;
-	}
-	else if (pBuffer[0] == 0x1F
-		&& pBuffer[1] == 0x9D)
-	{
-		// Unix-compress (really old..)
-		/*
-		if (pBuffer[2] & 0x60)
-		{
-			// unknown format (unsupported variation?)
-		}
-		else if ((pBuffer[2] & 0x1f) > 16)
-		{
-			// too many bits -> unsupported
-		}
-		*/
-		return HEADERTYPE_ZCOMPRESS;
-	}
-	/*
-	else if (pBuffer[0] == 0x1F
-		&& pBuffer[1] == 0x0A)
-	{
-		// LHA-compressed TAR?
-		//enFileType = ;
-	}
-	*/
-	else if (pBuffer[0] == 0x4D
-		&& pBuffer[1] == 0x5A)
-	{
-		// executable
-		return HEADERTYPE_MSDOSWINDOWS;
 	}
 	else if (pBuffer[0] == 0xFF
 		 && pBuffer[1] == 0xD8
@@ -478,6 +464,36 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	{
 		// xMash
 		return HEADERTYPE_XMASH;
+	}
+	else if (pBuffer[0] == 0x1F
+		&& pBuffer[1] == 0x9D)
+	{
+		// Unix-compress (really old..)
+		/*
+		if (pBuffer[2] & 0x60)
+		{
+			// unknown format (unsupported variation?)
+		}
+		else if ((pBuffer[2] & 0x1f) > 16)
+		{
+			// too many bits -> unsupported
+		}
+		*/
+		return HEADERTYPE_ZCOMPRESS;
+	}
+	/*
+	else if (pBuffer[0] == 0x1F
+		&& pBuffer[1] == 0x0A)
+	{
+		// LHA-compressed TAR?
+		//enFileType = ;
+	}
+	*/
+	else if (pBuffer[0] == 0x4D
+		&& pBuffer[1] == 0x5A)
+	{
+		// 'MZ' executable header
+		return HEADERTYPE_MSDOSWINDOWS;
 	}
 	
 	// try to determine from first four bytes.. (in case "magic number" as non-ASCII chars)
@@ -574,9 +590,9 @@ tHeaderCategory CFileType::FileCategoryByType(const tHeaderType enType) const
 	case HEADERTYPE_POWERPACKER:
 	case HEADERTYPE_IMPLODER:
 	case HEADERTYPE_XPK_GENERIC:
-	case HEADERTYPE_XPK_SQSH:
-	case HEADERTYPE_XPK_NUKE:
-	case HEADERTYPE_XPK_RLEN:
+	//case HEADERTYPE_XPK_SQSH:
+	//case HEADERTYPE_XPK_NUKE:
+	//case HEADERTYPE_XPK_RLEN:
 	case HEADERTYPE_XFD_GENERIC:
 	case HEADERTYPE_GZIP:
 	case HEADERTYPE_BZIP2:

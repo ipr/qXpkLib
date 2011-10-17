@@ -14,8 +14,6 @@
 
 #include "XadMaster.h"
 
-#include "FileType.h"
-
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
@@ -37,15 +35,38 @@ CXadMaster::~CXadMaster(void)
 	}
 }
 
-bool CXadMaster::isSupported(CReadBuffer *pInputBuffer)
+bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 {
+	std::string szSubType;
+
 	// TODO: enumerate available clients to handle..
+
+	// Note: these are all "foreign"/"alien" fileformats
+	// that we are dealing with here 
+	// -> no commonalities except library interface usully
+	// -> each library separate..
+	//
+	if (type.m_enFileType == HEADERTYPE_LHA)
+	{
+		szSubType = "xadLha";
+		return true;
+	}
+	else if (type.m_enFileType == HEADERTYPE_LZX)
+	{
+		szSubType = "xadLZX";
+		return true;
+	}
+	else if (type.m_enFileType == HEADERTYPE_ZOO)
+	{
+		szSubType = "xadZOO";
+		return true;
+	}
 	
-	// if lha -> qLhaLib (already done separately)
-	// if lzx -> qLZXLib (already done separately)
+	// TODO: also try loading sub-library 
+	// before we know that we can unpack it?
+	
 	
 	// add other decrunchers:
-	// ZOO
 	// TAR
 	// SHAR, CPIO ?
 	// ACE, ARC, ARJ

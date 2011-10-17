@@ -12,11 +12,6 @@
 #include <exception>
 #include <string>
 
-// reuse type detection,
-// multiple variations etc.
-//
-#include "FileType.h"
-
 #include "XpkLibrarian.h"
 
 
@@ -27,7 +22,7 @@ std::string CLibMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	// simplify, use std::string and get it done
 	std::string szSubType;
 	
-	// determine file datatype by header information
+	// try determine file datatype by header information
 	CFileType type(pInputBuffer->GetBegin(), pInputBuffer->GetSize());
 	if (type.m_enFileType == HEADERTYPE_POWERPACKER)
 	{
@@ -59,11 +54,11 @@ std::string CLibMaster::getCruncherType(CReadBuffer *pInputBuffer)
 	{
 		// XFD-packed file ("XFDD" or "XFDF")
 	}
+	/* testing generic detection -> commented out
 	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
 	{
 		szSubType = "xpkSQSH";
 	}
-	/* testing generic detection -> commented out
 	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
 	{
 	}
@@ -74,11 +69,6 @@ std::string CLibMaster::getCruncherType(CReadBuffer *pInputBuffer)
 		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
 	*/
-	else if (type.m_enFileType == HEADERTYPE_GZIP)
-	{
-		// load sub-library for handling GZIP
-		szSubType = "xpkGZIP";
-	}
 	else if (type.m_enFileType == HEADERTYPE_AMIGAOS)
 	{
 		// AmigaOS executable (M68k),
@@ -95,32 +85,6 @@ std::string CLibMaster::getCruncherType(CReadBuffer *pInputBuffer)
 		// -> needs more extensive checking
 		// if there is "decrunchable" data after loader
 		// or if it needs to be run in emulator or natively..
-	}
-	else if (type.m_enFileType == HEADERTYPE_ZCOMPRESS)
-	{
-		// standalone sub-library available now..
-		szSubType = "xfdZCompress";
-	}
-	else if (type.m_enFileType == HEADERTYPE_SZDD)
-	{
-		// standalone sub-library available now..
-		szSubType = "xfdSZDD";
-	}
-	else
-	{
-		// others?
-		// -> should be as sub-libraries..
-		
-		if (m_pXadMaster->isSupported(pInputBuffer) == true)
-		{
-		}
-		
-		// detect some more types: files which XFD supports
-		// but have "alien" fileformat..
-		if (m_pXfdMaster->isSupported(pInputBuffer) == true)
-		{
-			// handle as "XFD-GENERIC" type..
-		}
 	}
 	
 	return szSubType;
@@ -148,63 +112,6 @@ void CLibMaster::PrepareUnpacker(std::string &subType)
 		// not supported/can't load -> can't decrunch it
 		throw ArcException("Unsupported cruncher type", subType);
 	}
-}
-
-bool CLibMaster::OwnDecrunch(XpkProgress *pProgress)
-{
-	// XPK-container format in file:
-	// we need to process XPK-tags in file
-	// and pass chunks to sub-library for decrunching
-	// -> not done yet..
-	// temp, testing
-	
-	XpkChunk *pChunk = m_Tags.getFirst();
-	while (pChunk != nullptr)
-	{
-		if (pChunk->m_Type == XPKCHUNK_END) // end of file
-		{
-			break;
-		}
-		else if (pChunk->m_Type == XPKCHUNK_RAW) // unpacked raw data
-		{
-			// unpacked raw data:
-			// direct copy to output
-			pProgress->pOutputBuffer->Append(
-						pProgress->pInputBuffer->GetAt(pChunk->m_nDataOffset), 
-						pChunk->m_ChunkLength);
-		}
-		else if (pChunk->m_Type == XPKCHUNK_PACKED) // packed
-		{
-			pProgress->xp_chunkIn = pChunk->m_ChunkLength;
-			pProgress->xp_chunkOut = pChunk->m_UnLen;
-		
-			// locate data of chunk
-			pProgress->pInputBuffer->SetCurrentPos(pChunk->m_nDataOffset);
-			
-			// prepare space for uncompressed data
-			if (pChunk->m_UnLen > 0)
-			{
-				pProgress->pOutputBuffer->Reserve(pChunk->m_UnLen);
-			}
-			
-			// decrunch chunk into output buffer
-			if (m_pSubLibrary->Decrunch(pProgress) == false)
-			{
-				// .. or throw exception now
-				return false;
-			}
-		}
-		else
-		{
-			// unknown type, error or skip it?
-			throw ArcException("Unknown chunk type", pChunk->m_Type);
-		}
-
-		// next chunk to process..	
-		pChunk = pChunk->m_pNext;
-	}
-	
-	return true;
 }
 
 
@@ -287,6 +194,8 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	pProgress->xp_WholePackedFileSize = InFile.GetSize(); // info to decruncher
 	InFile.Close(); // not needed any more
 	
+	// try determine file datatype by header information
+	CFileType type(m_InputBuffer->GetBegin(), m_InputBuffer->GetSize());
 
 	// setup info for decrunch
 	pProgress->pInputBuffer = &m_InputBuffer;
@@ -294,19 +203,30 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	
 	// just decrunch all at once, write file when done
 	bool bRet = false;
-	if (m_pXadMaster->isSupported(&m_InputBuffer) == true)
+	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
 	{
+		// in this case, library should manage loading of data
+		// per each file-entry being decrunched (possibly many)
+		// and format is "alien" (only library might know..)
+	
 		m_pXadMaster->setExtractPath(m_outputPath);
 		bRet = m_pXadMaster->extractArchive(pProgress);
 	}
-	else if (m_pXfdMaster->isSupported(&m_InputBuffer) == true)
+	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
 	{
+		// in this case, we need to load whole file before decrunching
+		// as format is "alien" (only cruncher might know..)
+	
 		bRet = m_pXfdMaster->decrunch(pProgress);
 	}
-	else if (m_pXpkMaster->IsXpkFile(m_InputBuffer) == true)
+	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
 	{
+		// this case is common XPK-style chunk-based format
+		// -> we can handle loading chunks as needed
+		
 		bRet = m_pXpkMaster->decrunch(pProgress);
 	}
+	/*
 	else
 	{
 	
@@ -330,6 +250,7 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 		
 		bRet = m_pSubLibrary->Decrunch(pProgress);
 	}
+	*/
 	
 	if (bRet == false)
 	{
@@ -359,4 +280,40 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 void CLibMaster::setInputFile(QString &szFile)
 {
 	m_InputName = szFile;
+	
+	CAnsiFile InFile;
+	if (InFile.Open(m_InputName.toStdString()) == false)
+	{
+		throw ArcException("Failed to open input", m_InputName.toStdString());
+	}
+
+	// just read it all to buffer, change later if wanted..
+	m_nInputFileSize = InFile.GetSize();
+	size_t nReadSize = (1024 < m_nInputFileSize) ? 1024 : m_nInputFileSize;
+	m_InputBuffer.PrepareBuffer(nReadSize, false);
+	if (InFile.Read(m_InputBuffer.GetBegin(), nReadSize) == false)
+	{
+		throw IOException("Failed reading file data");
+	}
+	InFile.Close(); // not needed any more
+	
+	// try determine file datatype by header information
+	CFileType type(m_InputBuffer->GetBegin(), nReadSize);
+	
+	// TODO : keep info on which handling is needed
+	// for later
+	
+	bool bIsSupported = false;
+	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bIsSupported = true;
+	}
+	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bIsSupported = true;
+	}
+	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bIsSupported = true;
+	}
 }

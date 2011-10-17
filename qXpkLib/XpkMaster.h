@@ -23,13 +23,7 @@
 #include <qxpklib.h>
 
 #include "AnsiFile.h"
-#include "IoContext.h"
-
-// XFD-support
-#include "XfdMaster.h"
-
-// XAD-support
-#include "XadMaster.h"
+#include "FileType.h"
 
 // pure virtual interface
 // for lower-level library (level 0)
@@ -37,7 +31,7 @@
 #include "xpkLibraryBase.h"
 #include "XpkProgress.h"
 
-// temp..
+// temp.. move here?
 #include "XpkTags.h"
 
 
@@ -63,14 +57,13 @@ private:
 	XpkTags m_Tags;
 	
 protected:
-	std::string getCruncherType(CReadBuffer *pInputBuffer);
 	void PrepareUnpacker(std::string &subType);
 	
 public:
     CXpkMaster(QObject *parent = 0);
 	virtual ~CXpkMaster(void);
 
-    bool isSupported(CReadBuffer *pInputBuffer);
+    bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
 	bool decrunch(XpkProgress *pProgress);
 	
 	bool xpkUnpack(XpkProgress *pProgress);

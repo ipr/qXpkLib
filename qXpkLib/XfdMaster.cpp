@@ -128,8 +128,40 @@ CXfdMaster::~CXfdMaster(void)
 
 // detect XFD-supported decrunching from buffer..
 //
-bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer)
+bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 {
+	std::string szSubType;
+
+	if (type.m_enFileType == HEADERTYPE_POWERPACKER)
+	{
+		// Amiga PowerPacker:
+		// not XPK-file but we support it in standalone-format also.
+		szSubType = "xfdPowerPacker";
+	}
+	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
+	{
+		// Amiga Imploder:
+		// multiple identifiers (clones, variations)
+		// but can use same unpacking..
+		szSubType = "xfdImploder";
+	}
+	else if (type.m_enFileType == HEADERTYPE_ZCOMPRESS)
+	{
+		// standalone sub-library available now..
+		szSubType = "xfdZCompress";
+	}
+	else if (type.m_enFileType == HEADERTYPE_GZIP)
+	{
+		// load sub-library for handling GZIP
+		szSubType = "xfdGZIP";
+	}
+	else if (type.m_enFileType == HEADERTYPE_SZDD)
+	{
+		// standalone sub-library available now..
+		szSubType = "xfdSZDD";
+	}
+
+
 	release(); // release existing if necessary
 	m_pXfdSlave = loadDecruncher(pInputBuffer);
 	if (m_pXfdSlave != nullptr)

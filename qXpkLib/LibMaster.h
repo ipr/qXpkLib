@@ -25,6 +25,11 @@
 #include "AnsiFile.h"
 #include "IoContext.h"
 
+// reuse type detection,
+// multiple variations etc.
+//
+#include "FileType.h"
+
 // XPK-support
 #include "XpkMaster.h"
 
@@ -89,10 +94,8 @@ public:
 
 public slots:
 	void setInputFile(QString &szFile);
-	{
-		// TODO: read metadata when this is set or later only?
-		m_InputName = szFile;
-	}
+	
+	// TODO: check what to do with these..
 	void setOutputFile(QString &szFile) 
 	{
 		m_Output.setName(szFile);
