@@ -1,5 +1,5 @@
 
-XPK/XFD decruncher library in Qt&C++.
+XPK/XFD/XAD style decruncher library in Qt&C++.
 
 
 Author: Ilkka Prusi
@@ -7,13 +7,21 @@ Contact ilkka.prusi@gmail.com
 
 
 Summary:
-Reusable XPK/XFD decrunching library in Qt&C++.
-Additional decruncher plugins planned (some technical difficulties currently).
-More of a rewrite and redesign than just a port from Amiga/Unix versions.
+Reusable XPK/XFD/XAD style decrunching library in Qt&C++.
+Additional decruncher plugins planned for extendability (some technical difficulties currently).
 
+This is more of a rewrite and redesign than just a port from Amiga/Unix versions,
+large parts of previous code uses old-style C or M68k assembler or the implementation 
+is just unnecessarily complex for half-way modern systems.
+
+This implementation is much more rewrite from scratch (at least on master-libraries)
+and code reuse is mainly in decrunching/unpacking extension-libraries.
+
+Credits and thanks for original effort and design belong to: Dirk Stöcker <stoecker@amigaworld.com>
 
 Description:
 Library to support XPK and XFD decrunching (various algorithms).
+Also archive-file (multiple-entry files) unpacking with XAD-style libraries (various fileformats).
 
 XPK-library was originally created on Amiga for transparent decrunching support
 of various packers and files (such as sound modules, images, text and executables).
@@ -22,15 +30,25 @@ XFD-library was made for same goals but slightly different: where XPK mostly use
 it's own chunk-based fileformat layout (independently of crunchers) XFD is more of
 support for other crunchers with their own fileformats (or so I gather..).
 
-Support on other platforms for either of these is rather limited (read: non-existant)
+XAD-library was created on Amiga to handle unpacking archive-files of various types
+with same library/interface to all programs. Different libraries were possible
+for practically any type of fileformats.
+
+Support on other platforms for any of these is rather limited (read: non-existant)
 and this is attempt to make (extensible) decrunching possible on other platforms also.
 Plans include support for crunchers native to other platforms such as Unix-compress, GZIP,
 Bzip2 and so on..
 
 Credits:
-Original XPK-libraries were made by Dirk Stöcker and others, see: http://www.dstoecker.eu/
-The Unix-version made by Vesa Halttunen, see: http://www.jormas.com/~vesuri/xpk/
-This version made by Ilkka Prusi (ilkka.prusi@gmail.com).
+* Amiga XPK-libraries written by Dirk Stöcker <stoecker@amigaworld.com> 
+ and others, see: http://www.dstoecker.eu/
+
+* various authors per extension-library, see respective library details
+
+* UNIX-version made by Vesa Halttunen <vesuri@jormas.com>, 
+ see: http://www.jormas.com/~vesuri/xpk/
+
+* Qt&C++ version made by Ilkka Prusi <ilkka.prusi@gmail.com>.
 
 Licensing:
 GPL v2, see COPYING.txt

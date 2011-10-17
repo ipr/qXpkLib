@@ -2,6 +2,14 @@
 
 #include "LhArchive.h"
 
+// (see header)
+xadLha g_Instance;
+xadLibraryBase *GetXpkInstance(void)
+{
+  // TODO: switch to: new lib() when there are members..
+	return &g_Instance;
+}
+
 xadLha::xadLha()
  : xadLibraryBase()
  , m_pArchive(nullptr)

@@ -2,6 +2,13 @@
 
 #include "UnLzx.h"
 
+// (see header)
+xadLZX g_Instance;
+xadLibraryBase *GetXpkInstance(void)
+{
+  // TODO: switch to: new lib() when there are members..
+	return &g_Instance;
+}
 
 xadLZX::xadLZX()
  : xadLibraryBase()

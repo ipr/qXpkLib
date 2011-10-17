@@ -259,182 +259,6 @@
 *H  Initial revision
 *H
 */
-#include        <stdio.h>
-
-
-/****************************************************************************
-**
-*F  BLCK_READ_ARCH(<blk>,<len>) . . . . . . . .  read a block from an archive
-*F  RWND_READ_ARCH()  . . . . . . . . . . . reset file read position to start 
-*F  SEEK_READ_ARCH(pos) . . . . . . . . . . . . . . move read position to pos
-**
-**  'BLCK_READ_ARCH' reads up  to  <len>  characters  from the   archive file
-**  opened with 'OPEN_READ_ARCH'  into  the  blkfer  <blk>, and  returns  the
-**  actual number of characters read.
-**
-**  This operation is  operating system  dependent  because the archive  file
-**  must be opened in binary mode, so that for example no  <cr>/<lf> <-> <lf>
-**  translation happens.  You must supply a definition for each new port.
-*/
-#ifdef  SYS_IS_UNIX
-FILE *          ReadArch;
-#define BLCK_READ_ARCH(blk,len) fread( (blk), 1L, (len), ReadArch )
-#define RWND_READ_ARCH()        (fseek( ReadArch, 0, 0 ) == 0)
-#define SEEK_READ_ARCH(pos)		(fseek( ReadArch, pos, SEEK_SET) == 0)
-#endif
-#endif
-
-
-/****************************************************************************
-**
-*F  OPEN_READ_TEXT(<patl>)  . . . . . . . . . . . . . open a file for reading
-*F  CLOS_READ_TEXT()  . . . . . . . . . . . . . . . . . . . . .  close a file
-*F  BLCK_READ_TEXT(<blk>,<len>) . . . . . . . . . .  read a block from a file
-**
-**  'OPEN_READ_TEXT' returns 1  if  the file with  the  path name  <patl> (as
-**  specified by  the user on the command  line) could be opened  for reading
-**  and 0 otherwise.   'OPEN_READ_TEXT' is  used  only for text files,  so it
-**  should open the file in text mode.
-**
-**  'CLOS_READ_TEXT' closes the file opened by 'OPEN_READ_TEXT' again.
-**
-**  'BLCK_READ_TEXT' reads up  to <len> characters from  the file opened with
-**  'OPEN_READ_TEXT' into the blkfer <blk>, and  returns the actual number of
-**  characters read.
-**
-**  In 'unzoo' these functions are only used to test if a file exists.
-**
-**  This operation is operating system dependent because it may be neccessary
-**  to translate between the local text format and the UNIX style text format
-**  usually used in archives.   The default is to  use 'fopen', 'fread',  and
-**  'fclose', which  should work everywhere  according  to the ANSI standard.
-**  You may want to use 'open', 'read', and 'close' for better performance.
-*/
-#ifndef OPEN_READ_TEXT
-FILE *          ReadText;
-#define OPEN_READ_TEXT(patl)    ((ReadText = fopen( (patl), "r" )) != 0)
-#define BLCK_READ_TEXT(blk,len) fread( (blk), 1L, (len), ReadText )
-#endif
-
-
-/****************************************************************************
-**
-*F  OPEN_WRIT_TEXT(<patl>)  . . . . . . . . . . . . . open a file for writing
-*F  CLOS_WRIT_TEXT()  . . . . . . . . . . . . . . . . . . . . .  close a file
-*F  BLCK_WRIT_TEXT(<blk>,<len>) . . . . . . . . . . . write a block to a file
-**
-**  'OPEN_WRIT_TEXT'   returns 1 if the  file  with the path  name <patl> (as
-**  specified by the  user on the command  line) could be  opened for writing
-**  and  0 otherwise.  'OPEN_WRIT_TEXT'  is used only for  text  files, so it
-**  must open the file in text mode.
-**
-**  'CLOS_WRIT_TEXT' closes the file opened by 'OPEN_WRIT_TEXT' again.
-**
-**  'BLCK_WRIT_TEXT' writes up  to <len> characters  from <blk> into the file
-**  opened with 'OPEN_WRIT_TEXT', and returns the actual number of characters
-**  written.
-**
-**  This operation is operating system dependent because it may be neccessary
-**  to translate between the UNIX style text format  usually used in archives
-**  and the local text format.  The default is to  use 'fopen', 'fwrite', and
-**  'fclose', which should work   everywhere according to the  ANSI standard.
-**  You may want to use 'open', 'write', and 'close' for better performance.
-*/
-#ifdef  SYS_IS_MAC_MPW
-#ifndef  SYS_IS_MAC_THC
-FILE *          WritText;
-#define OPEN_WRIT_TEXT(patl)    MacOpenWritText( (patl) )
-#define CLOS_WRIT_TEXT()        MacClosWritText()
-#define BLCK_WRIT_TEXT(blk,len) MacBlckWritText( (blk), (len) )
-#else
-FILE *          WritText;
-#define OPEN_WRIT_TEXT(patl)    MacOpenWritText( (patl) )
-#define CLOS_WRIT_TEXT()        (fclose( WritText ) == 0)
-#define BLCK_WRIT_TEXT(blk,len) fwrite( (blk), 1L, (len), WritText )
-#endif
-#endif
-#ifndef OPEN_WRIT_TEXT
-FILE *          WritText;
-#define OPEN_WRIT_TEXT(patl)    ((WritText = fopen( (patl), "w" )) != 0)
-#define CLOS_WRIT_TEXT()        (fclose( WritText ) == 0)
-#define BLCK_WRIT_TEXT(blk,len) fwrite( (blk), 1L, (len), WritText )
-#endif
-
-
-/****************************************************************************
-**
-*F  OPEN_READ_BINR(<patl>)  . . . . . . . . . . . . . open a file for reading
-*F  CLOS_READ_BINR()  . . . . . . . . . . . . . . . . . . . . .  close a file
-*F  BLCK_READ_BINR(<blk>,<len>) . . . . . . . . . .  read a block from a file
-**
-**  'OPEN_READ_BINR'  returns 1 if   the file with  the  path name <patl> (as
-**  specified by  the user on the  command line) could  be opened for reading
-**  and 0  otherwise.  'OPEN_READ_BINR' is used only  for binary files, so it
-**  should open the file in binary mode.
-**
-**  'CLOS_READ_BINR' closes the file opened by 'OPEN_READ_BINR' again.
-**
-**  'BLCK_READ_BINR' reads up  to <len> characters from  the file opened with
-**  'OPEN_READ_BINR' into the blkfer <blk>, and  returns the actual number of
-**  characters read.
-**
-**  In 'unzoo' these functions are currently not used at all.
-**
-**  This operation is  operating system dependent   because the file  must be
-**  opened  in binary mode,  so  that   for  example  no <cr>/<lf>  <->  <lf>
-**  translation happens.  The default   is to use  'fopen'  with  mode  'rb',
-**  'fwrite', and 'fclose', with should work on most systems.
-*/
-#ifndef OPEN_READ_BINR
-FILE *          ReadBinr;
-#define OPEN_READ_BINR(patl)    ((ReadBinr = fopen( (patl), "rb" )) != 0)
-#define BLCK_READ_BINR(blk,len) fread( (blk), 1L, (len), ReadBinr )
-#endif
-
-
-/****************************************************************************
-**
-*F  OPEN_WRIT_BINR(<patl>)  . . . . . . . . . . . . . open a file for writing
-*F  CLOS_WRIT_BINR()  . . . . . . . . . . . . . . . . . . . . .  close a file
-*F  BLCK_WRIT_BINR(<blk>,<len>) . . . . . . . . . . . write a block to a file
-**
-**  'OPEN_WRIT_BINR' returns 1   if the file  with the  path name <patl>  (as
-**  specified  by the user  on the command line) could  be opened for writing
-**  and 0 otherwise.   'OPEN_WRIT_BINR' is used  only for binary files, so it
-**  must open the file in binary mode.
-**
-**  'CLOS_WRIT_BINR' closes the file opened by 'OPEN_WRIT_BINR' again.
-**
-**  'BLCK_WRIT_BINR' writes up  to <len> characters  from <blk> into the file
-**  opened with 'OPEN_WRIT_BINR', and returns the actual number of characters
-**  written.
-**
-**  This  operation is operating  system dependent  because the  file must be
-**  opened  in   binary mode, so  that  for  example no   <cr>/<lf>  <-> <lf>
-**  translation happens.   The default is   to use 'fopen'  with  mode  'wb',
-**  'fwrite', and  'fclose', with should   work  on most systems.  You   must
-**  supply a definition is this does not work and you want 'unzoo' to extract
-**  binary files.
-*/
-#ifdef  SYS_IS_VMS
-#include        <file.h>
-long            WritBinr;
-#define OPEN_WRIT_BINR(patl)    ((WritBinr = creat( (patl), 0, "rfm=fix", "mrs=512" )) != -1)
-#define BLCK_WRIT_BINR(blk,len) VmsBlckWritBinr( WritBinr, (blk), (len) )
-#define CLOS_WRIT_BINR()        (close( WritBinr ) == 0)
-#endif
-#ifdef  SYS_IS_MAC_THC
-FILE *          WritBinr;
-#define OPEN_WRIT_BINR(patl)    MacOpenWritBinr (patl)
-#define BLCK_WRIT_BINR(blk,len) fwrite( (blk), 1L, (len), WritBinr )
-#define CLOS_WRIT_BINR()        (fclose( WritBinr ) == 0)
-#endif
-#ifndef OPEN_WRIT_BINR
-FILE *          WritBinr;
-#define OPEN_WRIT_BINR(patl)    ((WritBinr = fopen( (patl), "wb" )) != 0)
-#define BLCK_WRIT_BINR(blk,len) fwrite( (blk), 1L, (len), WritBinr )
-#define CLOS_WRIT_BINR()        (fclose( WritBinr ) == 0)
-#endif
 
 
 
@@ -458,20 +282,6 @@ std::string ConvName ( const std::string &name)
 
 
 /****************************************************************************
-**
-*F  GotoReadArch(<pos>) . . . . . .  goto an absolute position in the archive
-*F  ByteReadArch()  . . . . . . . . . read a  8 bit unsigned from the archive
-*F  HalfReadArch()  . . . . . . . . . read a 16 bit unsigned from the archive
-*F  TripReadArch()  . . . . . . . . . read a 24 bit unsigned from the archive
-*F  WordReadArch()  . . . . . . . . . read a 32 bit unsigned from the archive
-*V  Descript  . . . . . . . . . . . . . . . . . . . . header from the archive
-*F  DescReadArch()  . . . . . . . . . . . .  read the header from the archive
-*V  Entry . . . . . . . . . . . . . . . . header of a member from the archive
-*F  EntrReadArch()  . . . . . .  read the header of a member from the archive
-**
-**  'OpenReadArch' tries to open the archive with  local path name <patl> (as
-**  specified by the user on the command  line) for reading  and returns 1 to
-**  indicate success or 0 to indicate that the file cannot be opened.
 **
 **  'GotoReadArch'  positions the  archive  at the  position <pos>, i.e., the
 **  next call to 'ByteReadArch' will return the byte at position <pos>.  Note
@@ -540,37 +350,36 @@ int FillReadArch (zooArchBuf *ArchBuf, CAnsiFile &archive)
     return (ArchBuf->PtrArch < ArchBuf->EndArch ? *ArchBuf->PtrArch++ : EOF);
 }
 
-int GotoReadArch ( unsigned long pos )
+int GotoReadArch ( zooArchBuf *ArchBuf, size_t pos, CAnsiFile &archive )
 {
-    /* for long backward seeks goto the beginning of the file              */
-    if ( pos+64 < PosArch ) {
-#ifdef SEEK_READ_ARCH
-		if (!SEEK_READ_ARCH(pos))
-			return 0;
-        PtrArch = EndArch = BufArch+64;
-        PosArch = pos;
-#else
-        if ( ! RWND_READ_ARCH() )
-            return 0;
-        PtrArch = EndArch = BufArch+64;
-        PosArch = 0;
-#endif
-    }
-
+	if (ArchiveFile.Seek(pos, SEEK_SET) == false)
+	{
+		throw IOException("Failure seeking entry data");
+	}
+ 
+ 
     /* jump forward bufferwise                                             */
-    while ( PosArch + (EndArch - (BufArch+64)) <= pos ) {
+    while ( ArchBuf->PosArch + (ArchBuf->EndArch - (ArchBuf->BufArch+64)) <= pos ) 
+    {
         if ( FillReadArch() == EOF )
-            return 0;
+        {
+            return false;
+        }
     }
 
     /* and goto the position (which is now in the buffer)                  */
-    PtrArch = (BufArch+64) + (pos - PosArch);
+    ArchBuf->PtrArch = (ArchBuf->BufArch+64) + (pos - ArchBuf->PosArch);
 
     /* indicate success                                                    */
-    return 1;
+    return true;
 }
 
-#define ByteReadArch()          (PtrArch<EndArch?*PtrArch++:FillReadArch())
+
+unsigned long   ByteReadArch ()
+{
+    return ((PtrArch < EndArch) ? *PtrArch++ : FillReadArch());
+}
+
 
 unsigned long   HalfReadArch ()
 {
@@ -608,7 +417,8 @@ unsigned long   WordReadArch ()
 }
 
 
-struct {
+struct 
+{
     char                text[20];       /* "ZOO 2.10 Archive.<ctr>Z"       */
     unsigned long       magic;          /* magic word 0xfdc4a7dc           */
     unsigned long       posent;         /* position of first directory ent.*/
