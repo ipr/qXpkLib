@@ -25,6 +25,8 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+#include "qxpklib.h"
+
 // fwd. decl.
 class QFile;
 
@@ -33,6 +35,9 @@ class XADISOSHARED_EXPORT xadISO : public xadLibraryBase
 public:
     xadISO();
     virtual ~xadISO();
+
+	// list files and retrieve metadata
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
