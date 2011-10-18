@@ -92,6 +92,9 @@ bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
 				entry.m_packing = "normal";
 			}
 		}
+
+		// TODO: other information also
+		//entry.m_Stamp = pEntry->m_Timestamp
 	
 		++it;
 	}

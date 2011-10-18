@@ -20,6 +20,13 @@ xadZOO::~xadZOO()
 {
 }
 
+// TODO:
+bool xadZOO::setArchive(QString archive)
+{
+
+	return false;
+}
+
 // set path to uncompress files to
 bool xadZOO::setExtractPath(QString &szPath)
 {

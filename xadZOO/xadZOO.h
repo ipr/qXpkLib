@@ -15,6 +15,9 @@ public:
     xadZOO();
     virtual ~xadZOO();
 
+	// TODO: something like to base-interface
+	virtual bool setArchive(QString archive);
+
 	// list files in archive, get other metadata also..
 	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 

@@ -95,7 +95,8 @@ public:
     {
 		InitCrc();
     }
-    void ClearCrc()
+    
+    void ClearCrc() // just to detect places
     {
 		m_Crc = 0;
     }

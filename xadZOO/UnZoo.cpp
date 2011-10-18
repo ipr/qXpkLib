@@ -436,6 +436,7 @@ struct
 
 }               Descript;
 
+// read archive metadata
 bool CUnZoo::DescReadArch(CAnsiFile &archive)
 {
     /* read the text at the beginning                                      */
@@ -653,11 +654,11 @@ bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFi
 *N  1993/10/21 martin add LZD.
 */
 /**/
-int             DecodeLzd ()
+bool CUnZoo::DecodeLzd(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
 {
-    //ErrMsg = "LZD not yet implemented";
-	throw IOException("LZD not implemented");
-    //return 0;
+	// just ignore this for now
+	//throw IOException("LZD not implemented");
+    return false;
 }
 /**/
 
@@ -854,25 +855,7 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
     return 1;
 }
 
-//#define PEEK_BITS(N)            ((bits >> (bitc-(N))) & ((1L<<(N))-1))
-
-// inline: compiler can avoid function call by replacing call with function body
-inline int PEEK_BITS(const int N, const unsigned long bits, const unsigned long bitc)
-{
-	return ((bits >> (bitc - N)) & ((1L << N)-1));
-}
-
-// inline: compiler can avoid function call by replacing call with function body
-inline void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc)
-{
-	if ( (bitc -= N) < 16 ) 
-	{ 
-		bits  = (bits << 16) + FlahReadArch(); 
-		bitc += 16; 
-	}
-}
-
-bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
+bool CUnZoo::DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
 {
     unsigned long       cnt;            /* number of codes in block        */
     unsigned long       cnt2;           /* number of stuff in pre code     */
@@ -885,34 +868,47 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
     char *              pos;            /* position of match               */
     char *              end;            /* pointer to the end of BufFile   */
     char *              stp;            /* stop pointer during copy        */
-    unsigned long       crc;            /* cyclic redundancy check value   */
+    //unsigned long       crc;            /* cyclic redundancy check value   */
     unsigned long       i;              /* loop variable                   */
-    unsigned long       bits;           /* the bits we are looking at      */
-    unsigned long       bitc;           /* number of bits that are valid   */
+    //unsigned long       bits;           /* the bits we are looking at      */
+    //unsigned long       bitc;           /* number of bits that are valid   */
 
     /* initialize bit source, output pointer, and crc                      */
-    bits = 0;  bitc = 0;  
+    unsigned long bits = 0;  /* the bits we are looking at      */
+    unsigned long bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
-    cur = BufFile;  end = BufFile + MAX_OFF;
-    crc = 0;
+    cur = BufFile;  
+    end = BufFile + MAX_OFF;
+	m_crc.ClearCrc();
 
     /* loop until all blocks have been read                                */
     cnt = PEEK_BITS( 16, bits, bitc );  
     FLSH_BITS( 16, bits, bitc );
-    while ( cnt != 0 ) {
-
+    while ( cnt != 0 ) 
+    {
         /* read the pre code                                               */
         cnt2 = PEEK_BITS( BITS_PRE, bits, bitc );  
         FLSH_BITS( BITS_PRE, bits, bitc );
-        if ( cnt2 == 0 ) {
+        if ( cnt2 == 0 ) 
+        {
             pre = PEEK_BITS( BITS_PRE, bits, bitc );  
             FLSH_BITS( BITS_PRE, bits, bitc );
-            for ( i = 0; i <      256; i++ )  TabPre[i] = pre;
-            for ( i = 0; i <= MAX_PRE; i++ )  LenPre[i] = 0;
+            for ( i = 0; i < 256; i++ )  
+            {
+				TabPre[i] = pre;
+			}
+			
+			// just memset() it to zero..
+            for ( i = 0; i <= MAX_PRE; i++ )  
+            {
+				LenPre[i] = 0;
+			}
         }
-        else {
+        else 
+        {
             i = 0;
-            while ( i < cnt2 ) {
+            while ( i < cnt2 ) 
+            {
                 len = PEEK_BITS( 3, bits, bitc );  
                 FLSH_BITS( 3, bits, bitc );
                 if ( len == 7 ) {
@@ -928,10 +924,16 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                 {
                     len = PEEK_BITS( 2, bits, bitc );  
                     FLSH_BITS( 2, bits, bitc );
-                    while ( 0 < len-- )  LenPre[i++] = 0;
+                    while ( 0 < len-- )  
+                    {
+						LenPre[i++] = 0;
+					}
                 }
             }
-            while ( i <= MAX_PRE )  LenPre[i++] = 0;
+            while ( i <= MAX_PRE )  
+            {
+				LenPre[i++] = 0;
+			}
             if ( ! MakeTablLzh( MAX_PRE+1, LenPre, 8, TabPre ) ) 
             {
                 throw IOException("pre code description corrupted");
@@ -967,7 +969,8 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                 else 
                 {
                     FLSH_BITS( 8, bits, bitc );
-                    do {
+                    do 
+                    {
                         if ( PEEK_BITS( 1, bits, bitc ) ) 
                         {
 							len = TreeRight[len];
@@ -981,7 +984,7 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                 }
                 if ( len <= 2 ) 
                 {
-                    if      ( len == 0 ) 
+                    if ( len == 0 ) 
                     {
                         len = 1;
                     }
@@ -996,14 +999,20 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                         FLSH_BITS(BITS_CODE, bits, bitc);
                     }
                     
-                    while ( 0 < len-- )  LenCode[i++] = 0;
+                    while ( 0 < len-- )  
+                    {
+						LenCode[i++] = 0;
+					}
                 }
                 else 
                 {
                     LenCode[i++] = len - 2;
                 }
             }
-            while ( i <= MAX_CODE )  LenCode[i++] = 0;
+            while ( i <= MAX_CODE )  
+            {
+				LenCode[i++] = 0;
+			}
             if ( ! MakeTablLzh( MAX_CODE+1, LenCode, 12, TabCode ) ) 
             {
                 throw IOException("literal/length code description corrupted");
@@ -1086,10 +1095,10 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
 	            /* if the code is a literal, stuff it into the buffer          */
 	            
                 *cur++ = code;
-                crc = CRC_BYTE( crc, code );
+                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
                 if ( cur == end ) 
                 {
-                    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+				    if (outFile.Write(BufFile, cur-BufFile) == false)
                     {
 		                throw IOException("cannot write output file");
                     }
@@ -1104,7 +1113,8 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                 /* try to decodes the log_2 of the offset the fast way     */
                 log = TabLog[ PEEK_BITS( 8, bits, bitc ) ];
                 /* if this log_2 needs more than 8 bits look in the tree   */
-                if ( log <= MAX_LOG ) {
+                if ( log <= MAX_LOG ) 
+                {
                     FLSH_BITS( LenLog[log], bits, bitc );
                 }
                 else {
@@ -1138,9 +1148,10 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                 if ( cur < end-len && pos < end-len ) 
                 {
                     stp = cur + len;
-                    do {
+                    do 
+                    {
                         code = *pos++;
-                        crc = CRC_BYTE( crc, code );
+		                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
                         *cur++ = code;
                     } while ( cur < stp );
                 }
@@ -1149,14 +1160,15 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
                     while ( 0 < len-- ) 
                     {
                         code = *pos++;
-                        crc = CRC_BYTE( crc, code );
+		                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
                         *cur++ = code;
-                        if ( pos == end ) {
+                        if ( pos == end ) 
+                        {
                             pos = BufFile;
                         }
                         if ( cur == end ) 
                         {
-                            if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+						    if (outFile.Write(BufFile, cur-BufFile) == false)
                             {
 				                throw IOException("cannot write output file");
                             }
@@ -1172,7 +1184,7 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
     }
 
     /* write out the rest of the buffer                                    */
-    if ( BlckWritFile(BufFile,cur-BufFile) != cur-BufFile ) 
+    if (outFile.Write(BufFile, cur-BufFile) == false)
     {
         throw IOException("cannot write output file");
     }
@@ -1183,32 +1195,22 @@ bool DecodeLzh (CAnsiFile &archive, CAnsiFile &outFile)
 }
 
 
-/****************************************************************************
-**
-*F  ListArch(<ver>,<arc>,<filec>,<files>) . . list the members of the archive
-**
-**  'ListArch'  lists the members  of the  archive with  the name  <arc> that
-**  match one  of the file name  patterns '<files>[0] .. <files>[<filec>-1]'.
-**  If <ver> is 1, comments are also printed.
-*/
-
-bool CUnZoo::ListArch( const std::string &archiveName)
+// read archive metadata (description) from file
+//
+bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 {
-    int                 chr;            /* character from comment          */
-    unsigned long       i;              /* loop variable                   */
-    
-    /* try to open the archive under various names                         */
-    //strcpy(arczoo,arc);  
-    //strcat(arczoo,".zoo");
+}
 
-   
-    // just open it, stop fucking around with names
+// read list of archive contents into entry-list
+//
+bool CUnZoo::ListArchive(const std::string &archiveName)
+{
     CAnsiFile archive(archiveName);
     if (archive.IsOk() == false)
     {
         throw ArcException("unzoo: could not open archive", archiveName);
     }
-	if ( DescReadArch(archive) == false) 
+	if (readArchiveDescription(archive) == false) 
 	{
 		throw ArcException("unzoo: bad description in archive", archiveName);
 	}
@@ -1220,6 +1222,10 @@ bool CUnZoo::ListArch( const std::string &archiveName)
         {
 			throw ArcException("unzoo: cannot find comment in archive", archiveName);
         }
+        
+		// agh.. just read it and get it done
+		m_ReadBuffer.PrepareBuffer(Entry.sizcmt, false);
+		archive.Read(m_ReadBuffer.GetBegin(), Entry.sizcmt);
         
         // ? why not read already?
         /*
@@ -1283,10 +1289,17 @@ bool CUnZoo::ListArch( const std::string &archiveName)
             {
 				throw ArcException("unzoo: cannot find comment in archive", Entry.fileName);
             }
-            for ( i = 0; i < Entry.sizcmt; i++ ) 
+            
+            // agh.. just read it and get it done
+            m_ReadBuffer.PrepareBuffer(Entry.sizcmt, false);
+            archive.Read(m_ReadBuffer.GetBegin(), Entry.sizcmt);
+            
+            /*
+            for (int i = 0; i < Entry.sizcmt; i++ ) 
             {
                 chr = ByteReadArch();
             }
+            */
         }
 
     }
@@ -1301,9 +1314,7 @@ bool CUnZoo::ListArch( const std::string &archiveName)
            Descript.number );
            */
 
-
-    /* indicate success                                                    */
-    return 1;
+    return true;
 }
 
 
@@ -1329,7 +1340,7 @@ bool CUnZoo::ExtrArch(const std::string &archiveName)
     {
         throw ArcException("unzoo: could not open archive", archiveName);
     }
-	if ( DescReadArch() == false) 
+	if (DescReadArch(archive) == false) 
 	{
         throw ArcException("unzoo: bad description in archive", archiveName);
     }
