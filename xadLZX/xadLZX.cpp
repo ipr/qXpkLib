@@ -25,13 +25,13 @@ xadLZX::~xadLZX()
 }
 
 // TODO: something like this needed?
-void xadLZX::setArchive(QString &file)
+virtual bool xadLZX::setArchive(QString &file)
 {
 	if (m_pArchive != nullptr)
 	{
 		delete m_pArchive;
 	}
-	m_pArchive = new CUnLzx(file);
+	m_pArchive = new CUnLzx(file.toStdString());
 	return m_pArchive->View(); // get list of contents for later
 }
 
@@ -83,7 +83,7 @@ bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
 		}
 		else if (pEntry->m_PackMode == tLzxArchiveHeader::HDR_PACK_NORMAL)
 		{
-			if (pEntry->m_bPackedSizeAvailable == true)
+			if (pEntry->m_bPackedSizeAvailable == false)
 			{
 				entry.m_packing = "(merged)";
 			}

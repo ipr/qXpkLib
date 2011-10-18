@@ -19,6 +19,9 @@ public:
     xadLZX();
     virtual ~xadLZX();
 
+	// TODO: something like this needed to interface-base?    
+	virtual bool setArchive(QString &file);
+
 	// list files in archive, get other metadata also..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
