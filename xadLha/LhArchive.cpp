@@ -10,7 +10,7 @@
 
 #include "LhArchive.h"
 
-CLhArchive::CLhArchive(QObject *parent, QString &szArchive)
+CLhArchive::CLhArchive(QString &szArchive, QObject *parent)
 	: QObject(parent),
 	m_szArchive(szArchive),
 	m_nFileSize(0),
@@ -82,7 +82,7 @@ void CLhArchive::SeekHeader(CAnsiFile &ArchiveFile)
 	}
 	
 	CReadBuffer Buffer(nMaxSeekSize);
-	if (ArchiveFile.Read(Buffer) == false)
+	if (ArchiveFile.Read(Buffer.GetBegin(), nMaxSeekSize) == false)
 	{
 		throw IOException("Failed reading header");
 	}
@@ -296,8 +296,9 @@ bool CLhArchive::ExtractToUserBuffer(QString &szFileEntry, QByteArray &outArray)
 	return false;
 }
 
-bool CLhArchive::List(QLhALib::tArchiveEntryList &lstArchiveInfo)
+bool CLhArchive::List(QList<LzHeader*> &lstArchiveInfo)
 {
+
 	// same instance, called again
 	// TODO: need better way to check when reopening same (unchanged) file
 	Clear();
@@ -311,54 +312,7 @@ bool CLhArchive::List(QLhALib::tArchiveEntryList &lstArchiveInfo)
 	SeekContents(ArchiveFile);
 	
 	// information to caller
-	auto it = m_pHeaders->m_HeaderList.begin();
-	auto itEnd = m_pHeaders->m_HeaderList.end();
-	while (it != itEnd)
-	{
-		LzHeader *pHeader = (*it);
-		
-		// if it's directory-entry -> nothing more to do here
-		if (pHeader->isDir())
-		{
-			++it;
-			continue;
-		}
-		
-		lstArchiveInfo.push_back(QLhALib::CArchiveEntry());
-		
-		QLhALib::CArchiveEntry &Entry = lstArchiveInfo.back();
-		Entry.m_szFileName = pHeader->filename;
-		Entry.m_uiCrc = pHeader->getFileCrc();
-		Entry.m_ucHeaderLevel = pHeader->header_level;
-		Entry.m_ulPackedSize = pHeader->packed_size;
-		Entry.m_ulUnpackedSize = pHeader->original_size;
-		Entry.m_szPackMode = pHeader->pack_method;
-		Entry.m_Stamp = pHeader->last_modified_stamp;
-		Entry.m_extendType = pHeader->GetOSTypeName();
-		Entry.m_szComment = pHeader->file_comment;
-		
-		if (pHeader->os_type == EXTEND_UNIX)
-		{
-			LzUnixHeader *pUxh = pHeader->GetUnixHeader();
-			Entry.m_szUser = pUxh->unix_user;
-			Entry.m_szGroup = pUxh->unix_group;
-			Entry.m_unix_uid = pUxh->unix_uid;
-			Entry.m_unix_gid = pUxh->unix_gid;
-		}
-		
-		// file attributes/protection flags? which ones?
-		// unix? msdos? (amiga?) 
-		// -> depends on where packed..?
-		// -> give all supported..?
-		
-		// update archive statistics
-		m_ulTotalPacked += pHeader->packed_size;
-		m_ulTotalUnpacked += pHeader->original_size;
-		m_ulTotalFiles++;
-		
-		++it;
-	}
-	
+	lstArchiveInfo = m_pHeaders->m_HeaderList;
 	return true;
 }
 

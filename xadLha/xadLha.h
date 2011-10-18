@@ -8,6 +8,8 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+#include "qxpklib.h"
+
 // fwd. decl.
 class CLhArchive;
 
@@ -17,8 +19,11 @@ public:
     xadLha();
     virtual ~xadLha();
 
+	// TODO: something like this needed to interface-base?    
+	virtual bool setArchive(QString &file);
+
 	// list files in archive, get other metadata also..
-	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);

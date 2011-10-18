@@ -1460,10 +1460,16 @@ bool CUnZoo::GetEntryList(tEntryList &lstArchiveInfo)
 }
 */
 
+// get list of archive entries to entry-list
+bool CUnZoo::ListContents()
+{
+	return ListArchive(m_szArchive);
+}
+
 // test integrity, try extracting without output
 bool CUnZoo::TestArchive()
 {
-	return ListArch(m_szArchive);
+	//return ExtractNoOutput(m_szArchive);
 }
 
 // extract all files to path given before,

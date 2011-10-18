@@ -15,6 +15,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTextCodec>
+#include <QList>
 
 // use typedefs from parent
 //#include <qlhalib.h>
@@ -30,7 +31,7 @@ class CLhArchive : public QObject
 	Q_OBJECT
 
 public:
-    CLhArchive(QObject *parent, QString &szArchive);
+    CLhArchive(QString &szArchive, QObject *parent = 0);
 	virtual ~CLhArchive(void);
 	
 protected:
@@ -69,7 +70,7 @@ public slots:
 	bool ExtractToUserBuffer(QString &szFileEntry, QByteArray &outArray);
 
 	// list contents in archive
-	bool List(QLhALib::tArchiveEntryList &lstArchiveInfo);
+	bool List(QList<LzHeader*> &lstArchiveInfo);
 
 	// test archive integrity
 	bool Test();

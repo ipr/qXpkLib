@@ -11,7 +11,7 @@
 #include "crcsum.h"
 
 
-typedef vector<Entry*> tEntryList;
+typedef vector<ZooEntry*> tEntryList;
 
 class CUnZoo
 {
@@ -31,6 +31,7 @@ private:
 	crcsum m_crc;
 
 protected:
+	ZooDescription m_description;
 	tEntryList m_EntryList;
 
 	// inline: compiler can avoid function call by replacing call with function body
@@ -79,7 +80,7 @@ public:
 		auto itend = m_EntryList.end();
 		while (it != itend)
 		{
-			Entry *pEntry = (*it);
+			ZooEntry *pEntry = (*it);
 			delete pEntry;
 			++it;
 		}
@@ -93,6 +94,9 @@ public:
 	}
 
 	bool GetEntryList(tEntryList &lstArchiveInfo);
+
+	// get list of archive entries to entry-list
+	bool ListContents();
     
 	bool TestArchive();
 

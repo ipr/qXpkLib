@@ -47,6 +47,7 @@ bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
 	info.m_archiveInfo.m_ulFileSize = m_pArchive->GetArchiveFileSize();
 	info.m_archiveInfo.m_ulPackedSize = m_pArchive->GetTotalSizePacked();
 	info.m_archiveInfo.m_ulUnpackedSize = m_pArchive->GetTotalSizeUnpacked();
+	info.m_archiveInfo.m_packing = "LZX";
 	
 	tArchiveEntryList entryList;
 	if (m_pArchive->GetEntryList(entryList) == false)
@@ -93,8 +94,10 @@ bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
 			}
 		}
 
-		// TODO: other information also
+		// TODO: other information also (this needs conversion from struct..)
 		//entry.m_Stamp = pEntry->m_Timestamp
+		
+		entry.m_szComment = QString::fromStdString(pEntry->m_szComment);
 	
 		++it;
 	}

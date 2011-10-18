@@ -8,6 +8,10 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+#include "qxpklib.h"
+
+// fwd. decl.
+class CUnZoo;
 
 class XADZOOSHARED_EXPORT xadZOO : public xadLibraryBase
 {
@@ -15,11 +19,11 @@ public:
     xadZOO();
     virtual ~xadZOO();
 
-	// TODO: something like to base-interface
-	virtual bool setArchive(QString archive);
+	// TODO: something like this needed to interface-base?    
+	virtual bool setArchive(QString &file);
 
 	// list files in archive, get other metadata also..
-	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
@@ -29,6 +33,9 @@ public:
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
+	
+private:
+	CUnZoo *m_pArchive;
 };
 
 
