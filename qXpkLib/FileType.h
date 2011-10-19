@@ -39,9 +39,9 @@ typedef enum tHeaderType
 	//HEADERTYPE_PACKIT, // MacOS Packit (PIT)
 	//HEADERTYPE_MACBINARY, // MacBinary (BIN)
 	//HEADERTYPE_BINHEX, // MacOS BinHex (HQX)
-	//HEADERTYPE_ACE, // 
+	HEADERTYPE_ACE, // "**ACE**"
 	//HEADERTYPE_ARC, // 
-	//HEADERTYPE_ARJ, // 
+	HEADERTYPE_ARJ, // ARJ
 	//HEADERTYPE_MSCAB, // Microsoft CAB-file
 	
 	// packer types

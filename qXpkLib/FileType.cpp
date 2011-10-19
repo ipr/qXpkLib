@@ -119,6 +119,16 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
         }
     }
     
+    if (ulLength >= 14)
+    {
+        char *pData = (char*)(pBuffer + 7);
+        if (::memcmp(pData, "**ACE**", 7) == 0)
+        {
+			// ACE archiver
+			return HEADERTYPE_ACE;
+        }
+    }
+    
     // LhA, Lzh variations..
     if (ulLength >= 8)
     {
@@ -480,6 +490,12 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		}
 		*/
 		return HEADERTYPE_ZCOMPRESS;
+	}
+	else if (pBuffer[0] == 0x60
+		&& pBuffer[1] == 0xEA)
+	{
+		// ARJ
+		return HEADERTYPE_ARJ;
 	}
 	/*
 	else if (pBuffer[0] == 0x1F
