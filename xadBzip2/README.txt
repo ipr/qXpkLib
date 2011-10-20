@@ -4,15 +4,12 @@ xadBzip2 - Bzip2 unpack library
 Uses bzip2/libbzip2 code:
 Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
 
-Modified to use in C++ library:
-Author: Ilkka Prusi
-Contact ilkka.prusi@gmail.com
+Modified to use in C++ library by: Ilkka Prusi <ilkka.prusi@gmail.com>
 
-
+Original notices, see also LICENSE.txt:
 "   This program is free software; you can redistribute it and/or modify"
 "   it under the terms set out in the LICENSE file, which is included"
 "   in the bzip2-1.0.6 source distribution."
-
 
 Summary:
 Bzip2 implementation for qXpkLib to load.

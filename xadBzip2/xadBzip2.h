@@ -8,6 +8,8 @@
 // base for library interface
 #include "xadLibraryBase.h"
 
+// fwd. decl.
+class CBzip2;
 
 class XADBZIP2SHARED_EXPORT xadBzip2 : public xadLibraryBase
 {
@@ -17,12 +19,18 @@ public:
 
 	// set path to uncompress files to
 	virtual bool setExtractPath(QString &szPath);
+
+	// file to decompress
+	virtual void setArchive(QString &szArchive)=0;
 	
 	// test archive integrity
 	virtual bool testArchive();
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
+	
+private:
+	CBzip2 *m_pArchive;
 };
 
 
