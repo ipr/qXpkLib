@@ -8,16 +8,21 @@
 // base for library interface
 #include "xpkLibraryBase.h"
 
+// fwd. decl. for internal decrunch-helper
+class XfdFAST;
+
 class XPKFASTSHARED_EXPORT xpkFAST : public xpkLibraryBase
 {
 public:
     xpkFAST();
     virtual ~xpkFAST();
 
-	virtual bool Crunch(XpkProgress *pProgress);
+	//virtual bool Crunch(XpkProgress *pProgress);
 	
 	virtual bool Decrunch(XpkProgress *pProgress);
 	
+private:
+	XfdFAST *m_pFast;
 };
 
 #ifdef __cplusplus

@@ -1,16 +1,17 @@
 
 xpkFAST - "FAST" pack/unpack library
 
+Original author unknown, assuming: Dirk Stöcker <stoecker@amigaworld.com>
 
-Author: Ilkka Prusi
-Contact ilkka.prusi@gmail.com
-
+M68k-assembler to C-like code by: Ilkka Prusi <ilkka.prusi@gmail.com>
 
 Summary:
 "FAST" implementation for qXpkLib to load.
 
+Description:
 
-Original author: TODO: add
+Notes: 
 
+Status:
 In progress..
 
