@@ -75,7 +75,7 @@ bool XfdFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunk
 	A1.src = pOut->GetBegin();
 	
 //decompress:
-	//movem.l	a0-a2/a4-a5/d1-d5,-(sp) // stack
+	//movem.l	a0-a2/a4-a5/d1-d5,-(sp) // keep stack
 
 	//move.l	d0,a4
 	//add.l	a0,a4		;a4:=behind the end of input block
@@ -84,8 +84,126 @@ bool XfdFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunk
 	//moveq.l	#0,d4		;d4:=0
 	D4.l = 0;
 
+/*
+DOCOPY_MACRO:
+	D4.w = A4.wM(); //move.w	-(a4),d4	;Grab the copy item description
+	
+	D3.l = 0x0F;	//moveq	#$0F,d3
+	
+	and.b	d4,d3		;extract length.
+	add.b	d3,d3		;adjust length to length*2
+	lsr.w	#4,d4		;extract offset
+
+	//move.l	a1,a2		;Subtract the offset yielding the
+	A2.src = A1.src;
+	//suba.l	d4,a2		;address from which we copy.
+	A2.src -= D4.l;
+	
+	jmp	MOVE\@(PC,d3.w)	;jump to the right place
+MOVE\@	
+	move.b	(a2)+,(a1)+	;0
+	move.b	(a2)+,(a1)+	;1
+	move.b	(a2)+,(a1)+	;2
+	move.b	(a2)+,(a1)+	;3
+	move.b	(a2)+,(a1)+	;4
+	move.b	(a2)+,(a1)+	;5
+	move.b	(a2)+,(a1)+	;6
+	move.b	(a2)+,(a1)+	;7
+	move.b	(a2)+,(a1)+	;8
+	move.b	(a2)+,(a1)+	;9
+	move.b	(a2)+,(a1)+	;10
+	move.b	(a2)+,(a1)+	;11
+	move.b	(a2)+,(a1)+	;12
+	move.b	(a2)+,(a1)+	;13
+	move.b	(a2)+,(a1)+	;14
+	move.b	(a2)+,(a1)+	;15
+	move.b	(a2)+,(a1)+
+	move.b	(a2)+,(a1)+
+	
+	// C-like version
+	for (int i = 0; i <= 18; i++)
+	{
+		// auto-increment both and set
+		A1.setb(A2);
+	}
+    ENDM
+*/
+
+/*
+DOLITERAL_MACRO:
+	move.b	(a0)+,(a1)+	;Literal item means copy a byte.
+	-> only two places using, replace with macro body
+    ENDM
+*/
+
+    //;This loop processes one 16-item item group per iteration.
+    //;This loop terminates when we definitely have decompressed all
+    //;16-item blocks.  It may overwrite 15+17 innocent bytes AFTER the
+    //;end of outbuf.
+
+	
+	D1.w = 0x8000;	//move.w	#$8000,d1
+	D1.w += D1.w;	// add.w	d1,d1
+	
+/*
+oloop:	
+
+	D1.w = A4.wM(); // auto-decrement //move.w	-(a4),d1
+	
+	addx.w	d1,d1 ; add extended, source+dest+x-bit
+	bcs.s	Copy0 // carry-set branch -> goto Copy0;
+
+Lit0:	
+	//DOLITERAL // 	move.b	(a0)+,(a1)+	;Literal item means copy a byte.
+	A1.setb(A0); // (macro inlined)
+
+	D1.w += D1.w;	//add.w	d1,d1
+	
+	bcc.W	Lit1 // carry-clear branch -> goto Lit1;
+
+Copy1:	
+	DOCOPY
+	
+	D1.w += D1.w;	//add.w	d1,d1
+	
+	bcc.s	Lit0 // carry-clear branch -> goto Lit0;
+	bne.s	Copy0 // not equal branch -> goto Copy0;
+	
+	cmp.l	a4,a0 // decrement and test compare
+	; if ((A0.src - A4.src) == 0 ?? (carry clear..)
+	; goto finish;
+	bcc.s	finish // carry clear -> goto finish;
+	
+	D1.w = A4.wM(); // auto-decrement //move.w	-(a4),d1
+	
+	addx.w	d1,d1 ; add extended, source+dest+x-bit
+	bcc.s	Lit0 // carry clear -> goto Lit0;
+
+Copy0:	
+	DOCOPY
+	
+	; uint32_t d1tmp = (D1.w + D1.w);
+	D1.w += D1.w; //add.w	d1,d1
+	; if ((d1tmp >> 16) > 0)
+	bcs.s	Copy1 // carry-set branch -> goto Copy1;
+	
+Lit1:	
+	//DOLITERAL // 	move.b	(a0)+,(a1)+	;Literal item means copy a byte.
+	A1.setb(A0); // (macro inlined)
+
+	D1.w += D1.w;	//add.w	d1,d1
+	bcc.W	Lit0 // carry-clear branch -> goto Lit0;
+	bne.s	Copy0 // not equal branch -> goto Copy0;
+	
+	cmp.l	a4,a0
+	bcs.W	oloop // carry-set branch -> goto oloop;
+
+*/
 	
 
+finish:	
+//	movem.l	(sp)+,a0-a2/a4-a5/d1-d5 // restore stack
+//	rts
 	return true;
 	
 err:

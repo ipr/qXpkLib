@@ -55,7 +55,9 @@ xpkFAST::~xpkFAST()
 	}
 }
 
-/* compress.a and compress2.a available..
+/* 
+compress.a and compress2.a available..
+(which are just "fast" and "slow" alternatives of same packing)
 bool xpkFAST::Crunch(XpkProgress *pProgress)
 {
 	return false;
