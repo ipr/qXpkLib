@@ -27,6 +27,10 @@
 // for future compatibility
 #include <stdint.h>
 
+// use wrappers from parent-library
+#include "AnsiFile.h"
+
+
 /*-- states for decompression. --*/
 
 enum BzDecompressStates // in C++0x : uint32_t
@@ -92,7 +96,8 @@ protected:
 	// is this all really needed here??
 	// seems much extra stuff..
 	//
-	struct {
+	struct DState
+	{
       /* pointer back to the struct bz_stream */
       bz_stream* strm;
 
@@ -183,8 +188,47 @@ protected:
       int32_t*   save_gLimit;
       int32_t*   save_gBase;
       int32_t*   save_gPerm;
-   }
-   DState;
+      
+      // constructor
+      DState()
+      {
+		init();
+      }
+      
+      void init()
+      {
+		if (state != BZ_X_MAGIC_1) 
+		{
+			return;
+		}
+		
+		/*initialise the save area*/
+		save_i           = 0;
+		save_j           = 0;
+		save_t           = 0;
+		save_alphaSize   = 0;
+		save_nGroups     = 0;
+		save_nSelectors  = 0;
+		save_EOB         = 0;
+		save_groupNo     = 0;
+		save_groupPos    = 0;
+		save_nextSym     = 0;
+		save_nblockMAX   = 0;
+		save_nblock      = 0;
+		save_es          = 0;
+		save_N           = 0;
+		save_curr        = 0;
+		save_zt          = 0;
+		save_zn          = 0;
+		save_zvec        = 0;
+		save_zj          = 0;
+		save_gSel        = 0;
+		save_gMinlen     = 0;
+		save_gLimit      = NULL;
+		save_gBase       = NULL;
+		save_gPerm       = NULL;
+      }
+   };
 
 	/*-- Macros for decompression. --*/
 	
@@ -290,14 +334,14 @@ protected:
 									Int32 maxLen,
 									Int32 alphaSize );
 
+*/
 
 	int32_t BZ2_decompress(DState *s);
-*/
 
 public:
     CBzDecompress();
     
-    //bool Decompress(CAnsiFile &archive, CReadBuffer *pOut);
+    //bool Decompress(CReadBuffer &pIn, const size_t nRead, CReadBuffer *pOut);
 };
 
 #endif // BZDECOMPRESS_H
