@@ -65,6 +65,8 @@ Current status:
 * some "foreign" external decrunchers are prepared (PowerPacker, Imploder), not yet tested with new master-library
 * the "native" XPK crunchers need rewrite to work with new master-library
 * some initial XFD "alien" format decrunching (needs conversions from M68k-asm to C/C++ for portability..)
+* some support for loading archive-unpackers in XAD-style
 * many placeholders to be written for new library handling (much needed changes..)
+* plan includes support for 64-bit builds eventually..
 * ...
 
