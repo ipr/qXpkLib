@@ -38,67 +38,25 @@
 // from master-project for buffer-class
 #include "AnsiFile.h"
 
-#define BITS		   16
+const uint32_t STACKSIZE = 8000L; 
+const uint32_t FIRST = 257;		/* first free entry */
+const uint32_t CLEAR = 256;		/* table clear output code */
+const uint32_t INIT_BITS = 9;		/* initial number of bits/code */
+
+const uint32_t BITS			= 16;
 /* Defines for third byte of header */
-#define BIT_MASK	0x1f
-#define BLOCK_MASK	0x80
-#define LZW_RESERVED	0x60
+const uint32_t BIT_MASK		= 0x1f;
+const uint32_t BLOCK_MASK	= 0x80;
+const uint32_t LZW_RESERVED	= 0x60;
 	/* Masks 0x40 and 0x20 are free. I think 0x20 should mean that
 	   there is a fourth header byte (for expansion). */
 
+
 class CompressData 
 {
-public:
+protected:
 
-	uint16_t  	block_compress;
-	int16_t		clear_flg;
-	uint16_t		n_bits;			/* number of bits/code */
-	uint16_t  	maxbits;		/* user settable max # bits/code */
-	uint32_t 	maxcode;		/* maximum code, given n_bits */
-	uint32_t 	maxmaxcode;
-	int32_t 		free_ent;
-	int32_t		offset;
-	int32_t		size;
-	int8_t * inptr;			/* current input pointer */
-	int8_t * inendptr;		/* end of input buffer */
-	uint16_t * tab_prefixof;
-	int8_t * tab_suffixof;
-	int8_t * stack;
-	uint8_t		buf[BITS];
-	
-	CompressData()
-		: tab_prefixof(NULL)
-		, stack(NULL)
-		, tab_suffixof(NULL)
-	{
-	}
-	~CompressData()
-	{
-		if (tab_prefixof != NULL)
-		{
-			free(tab_prefixof);
-		}
-		if (stack != NULL)
-		{
-			free(stack);
-		}
-		if (tab_suffixof != NULL)
-		{
-			free(tab_suffixof);
-		}
-	}
-	
-	void initTable()
-	{
-		/* Initialize the first 256 entries in the table. */
-		for(int32_t code = 255; code >= 0; code--)
-		{
-			tab_prefixof[code] = 0;
-			tab_suffixof[code] = (uint8_t)code;
-		}
-	}
-	
-	bool allocBuf(uint32_t maxmaxcode, size_t stacksize)
+	bool allocBuf(const size_t stacksize)
 	{
 		tab_prefixof = (uint16_t*)::malloc(sizeof(uint16_t)*maxmaxcode);
 		if (tab_prefixof == NULL)
@@ -117,35 +75,84 @@ public:
 		}
 		return true;
 	}
+
+	void initTable()
+	{
+		/* Initialize the first 256 entries in the table. */
+		for(int32_t code = 255; code >= 0; code--)
+		{
+			tab_prefixof[code] = 0;
+			tab_suffixof[code] = (uint8_t)code;
+		}
+	}
+
+public:
+
+	uint16_t  	block_compress;
+	int16_t		clear_flg;
+	uint16_t	n_bits;			/* number of bits/code */
+	uint16_t  	maxbits;		/* user settable max # bits/code */
+	uint32_t 	maxcode;		/* maximum code, given n_bits */
+	uint32_t 	maxmaxcode;
+	int32_t 	free_ent;
+	int32_t		offset;
+	int32_t		size;
+	int8_t		*inptr;			/* current input pointer */
+	int8_t		*inendptr;		/* end of input buffer */
+	uint16_t	*tab_prefixof;
+	int8_t		*tab_suffixof;
+	int8_t		*stack;
+	uint8_t		buf[BITS];
+	
+	CompressData()
+		: tab_prefixof(NULL)
+		, stack(NULL)
+		, tab_suffixof(NULL)
+		, n_bits(INIT_BITS)
+		, clear_flg(0)
+		, offset(0)
+		, size(0)
+	{}
+	~CompressData()
+	{
+		if (tab_prefixof != NULL)
+		{
+			free(tab_prefixof);
+		}
+		if (stack != NULL)
+		{
+			free(stack);
+		}
+		if (tab_suffixof != NULL)
+		{
+			free(tab_suffixof);
+		}
+	}
+	
+	bool init(const uint8_t bits, const uint32_t initmaxcode)
+	{
+		maxbits = bits;
+		maxcode = initmaxcode;
+		block_compress = bits & BLOCK_MASK;
+		maxbits &= BIT_MASK;
+		maxmaxcode = (1 << maxbits);
+		free_ent = ((block_compress) ? FIRST : 256);
+		
+		if (allocBuf(STACKSIZE) == false)
+		{
+			return false;
+		}
+		
+		/* Initialize the first 256 entries in the table. */
+		initTable();
+		return true;
+	}
 };
 
 
 class CUnZCompress
 {
 protected:
-	// buffer descriptor for in/out buffers
-	struct tBuffer 
-	{
-		tBuffer()
-		{
-			ptr = NULL;
-			size = 0;
-	
-			pos = NULL;
-			pos_end = NULL;
-		};
-	
-		uint8_t *ptr; // buffer of data
-		uint32_t size; // size of buffer
-	
-		// position pointers for decompression
-		uint8_t *pos;
-		uint8_t *pos_end;
-	};
-
-	// buffer descriptors for input and output buffers
-	//struct tBuffer m_in_list;
-	//struct tBuffer m_out_list;
 
 	inline uint32_t MAXCODE(uint32_t n)
 	{
@@ -155,7 +162,7 @@ protected:
 	int32_t decomp(CompressData &cd);
 	int32_t getcode(CompressData &cd);
 
-
+	// buffers for input&output
 	CReadBuffer *m_pInput;
 	CReadBuffer *m_pOutput;
 
@@ -184,7 +191,7 @@ public:
 		return false;
     }
     
-    bool uncompress();
+    size_t uncompress();
 };
 
 #endif // UNZCOMPRESS_H

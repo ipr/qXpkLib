@@ -14,7 +14,7 @@
 #include "xfdLibraryBase.h"
 
 
-class XFDGZIPSHARED_EXPORT xpkGZIP : public xfdLibraryBase
+class XFDGZIPSHARED_EXPORT xfdGZIP : public xfdLibraryBase
 {
 public:
     xfdGZIP();

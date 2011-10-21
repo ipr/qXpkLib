@@ -10,5 +10,5 @@ for using with XPK/XFD implementation currently in progress..
 
 Unpacking (decompress) only.
 
-Not tested (at all), not finished.
+Not tested, compiles anyway..
 

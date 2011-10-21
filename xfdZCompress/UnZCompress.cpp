@@ -33,12 +33,6 @@
 #include "UnZCompress.h"
 
 
-#define STACKSIZE	 (8000L)
-#define FIRST		  (257)		/* first free entry */
-#define CLEAR		  (256)		/* table clear output code */
-#define INIT_BITS	    (9)		/* initial number of bits/code */
-
-
 static uint8_t rmask[9] = {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
 
@@ -50,34 +44,8 @@ static uint8_t rmask[9] = {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff}
 /* negative values are error codes, positive value is resulting size */
 int32_t CUnZCompress::decomp(CompressData &cd)
 {
-	// TODO: replace direct pointers by buffer-wrapper
-	// -> we can grow when needed
-	//
-	int8_t *inbuf = (int8_t*)m_pInput->GetBegin();
-	uint32_t insize = m_pInput->GetSize();
-	int8_t *outbuf = (int8_t*)m_pOutput->GetBegin();
-	uint32_t outsize = m_pOutput->GetSize();
-	
-	int8_t *outptr = outbuf;
-	int8_t *stackp = cd.stack;
-	int8_t *stack = cd.stack;
-	int8_t *outend = outbuf+outsize;
-
-	cd.maxbits = inbuf[2];
-	cd.block_compress = cd.maxbits & BLOCK_MASK;
-	cd.maxbits &= BIT_MASK;
-	cd.maxmaxcode = 1 << cd.maxbits;
-	cd.n_bits = INIT_BITS;
-	cd.maxcode = MAXCODE(INIT_BITS);
-	cd.free_ent = ((cd.block_compress) ? FIRST : 256);
-	cd.clear_flg = 0;
-	cd.offset = 0;
-	cd.size = 0;
-	cd.inptr = inbuf+3;
-	cd.inendptr = inbuf+insize;
-
-	/* Initialize the first 256 entries in the table. */
-	cd.initTable();
+	cd.inptr = (int8_t*)m_pInput->GetAt(3); // two for id, one for bits
+	cd.inendptr = (int8_t*)m_pInput->GetEnd();
 
 	int32_t finchar, code, oldcode;
 	finchar = oldcode = getcode(cd);
@@ -86,7 +54,12 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 		throw IOException("corrupted data (EOF)");
 		//return -XFDERR_CORRUPTEDDATA;		/* Get out of here */
 	}
-	*(outptr++) = (uint8_t)finchar; /* first code must be 8 bits = UBYTE */
+	//*(outptr++) = (uint8_t)finchar; /* first code must be 8 bits = UBYTE */
+	m_pOutput->SetNextByte(finchar); /* first code must be 8 bits = UBYTE */
+
+	// stack for collecting "plaintext" from uncompression
+	int8_t *stackp = cd.stack;
+	int8_t *stack = cd.stack; // no need to keep, can access whenever..
 
 	while((code = getcode(cd)) > -1)
 	{
@@ -96,6 +69,7 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 			{
 				cd.tab_prefixof[code] = 0;
 			}
+			
 			cd.clear_flg = 1;
 			cd.free_ent = FIRST - 1;
 			code = getcode(cd);
@@ -121,18 +95,31 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 			*stackp++ = cd.tab_suffixof[code];
 			code = cd.tab_prefixof[code];
 		}
-		*stackp++ = finchar = cd.tab_suffixof[code];
-
-		if(stackp - stack > outend - outptr) /* buffer was to short :-( */
+		
+		finchar = cd.tab_suffixof[code];
+		*stackp++ = cd.tab_suffixof[code];
+		
+		size_t nStackOut = (stackp - stack);
+		if (nStackOut > m_pOutput->GetSpaceSize()) 
+		{
+			// prepare more
+			m_pOutput->Reserve(nStackOut);
+		}
+		/*
+		if ((stackp - stack) > (outend - outptr)) // buffer was to short :-( 
 		{
 			throw IOException("buffer too short");
-			//return -XFDERR_CORRUPTEDDATA;
 		}
+		*/
 
 		/* And put them out in forward order */
+		// (may be overlapped?) 
+		// reversed anyway so no direct buf copying/appending..
+		//
 		do
 		{
-			*(outptr++) = *(--stackp);
+			//--stackp; // can we separate or does this screw up order..?
+			m_pOutput->SetNextByte(*(--stackp));
 		} while(stackp > stack);
 
 		/* Generate the new entry. */
@@ -146,7 +133,7 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 		/* Remember previous code. */
 		oldcode = incode;
 	}
-	return (outptr-outbuf);
+	return m_pOutput->GetCurrentPos();
 }
 
 /* Read one code from input. If EOF, return -1. */
@@ -181,7 +168,9 @@ int32_t CUnZCompress::getcode(CompressData &cd)
 
 		if(cd.inendptr <= cd.inptr)
 		{
-			// error case?
+			// error case? 
+			// if current larger than end -> error
+			// what if it's equal? error or ok? (EOF?)
 			//throw IOException("untimely death");
 			return -1;			/* end of file */
 		}
@@ -227,29 +216,30 @@ int32_t CUnZCompress::getcode(CompressData &cd)
 
 ///////////// public methods
 
-bool CUnZCompress::uncompress()
+size_t CUnZCompress::uncompress()
 {
-	uint8_t bits = *(m_pInput->GetAt(2));
-	uint32_t maxmaxcode = 1 << (bits & BIT_MASK);
+	uint8_t bits = *(m_pInput->GetAt(2));  // skip two (id)
 
 	// allocate from stack
 	// -> automatic cleanup in destructor on leaving scope
 	CompressData cd;
-	if (cd.allocBuf(maxmaxcode, STACKSIZE) == false)
+	if (cd.init(bits, MAXCODE(INIT_BITS)) == false)
 	{
 		throw IOException("allocation failed");
 	}
 	
 	// start with twice the size,
-	// no need to keep old data (full file only)
-	m_pOutput->PrepareBuffer(m_pInput->GetSize(), false);
+	// no need to keep old data (full file only).
+	// we don't know exact output size
+	// so allocate enough at once (more efficient than growing later..)
+	m_pOutput->PrepareBuffer(m_pInput->GetSize() * 4, false);
 
 	// decompress now
 	int32_t outSize = decomp(cd);
 	if (outSize > 0)
 	{
-		return true;
+		return outSize;
 	}
-	return false;
+	return 0;
 }
 
