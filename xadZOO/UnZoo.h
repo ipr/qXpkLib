@@ -33,6 +33,13 @@
 
 #include "crcsum.h"
 
+enum ZooPackMethod // : in C++0x uint8_t
+{
+	PackCopyOnly = 0,
+	PackLzd = 1, // not supported currently ? (is it directory only like in normal Lha/Lzh ?)
+	PackLzh = 2
+};
+
 // metadata from archive
 // note: we parse this member-by-member from file,
 // don't cast buffer to this since it's not byte-packed 
@@ -68,11 +75,9 @@ struct ZooDescription
     uint8_t     member_type;         // type of current member (0,1)    
     uint32_t    comment_pos;         // position of comment, 0 if none  
     uint32_t    comment_size;        // length   of comment, 0 if none  
-    
-    // -> read comment here, remove extra values from here
-    //std::string comment;
-    
     uint8_t     modgen;              // gens. on, gen. limit  (??? WTF ??? any LESS descriptive comment?)
+
+    std::string comment;
     
     // note: part of header fields don't exist in old-style files,
     // they were added later -> keep track of amount actually read
@@ -265,9 +270,9 @@ protected:
 	}
 
 
-	bool DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile);
-	bool DecodeLzd(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile);
-	bool DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile);
+	bool DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
+	bool DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
+	bool DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
 
 	// read contents of archive
 	bool readArchiveDescription(CAnsiFile &archive);

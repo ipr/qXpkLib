@@ -495,11 +495,16 @@ int EntrReadArch (CAnsiFile &archive)
 **  'DecodeCopy' simply  copies <size> bytes  from the  archive to the output
 **  file.
 */
-bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
+//
+// note: caller should seek data position already
+//
+bool CUnZoo::DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 {
     /* initialize the crc value                                            */
     m_crc.ClearCrc(); // = 0;
     m_ReadBuffer.PrepareBuffer(8192, false); // clear, allocate if not enough
+    
+    size_t size = pEntry->compressed_size;
 
     /* loop until everything has been copied                               */
     while ( 0 < size ) 
@@ -535,7 +540,7 @@ bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFi
 *N  1993/10/21 martin add LZD.
 */
 /**/
-bool CUnZoo::DecodeLzd(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
+bool CUnZoo::DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 {
 	// just ignore this for now
 	//throw IOException("LZD not implemented");
@@ -736,8 +741,10 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
     return 1;
 }
 
-bool CUnZoo::DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
+bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 {
+	size_t size = pEntry->compressed_size;
+	
     unsigned long       cnt;            /* number of codes in block        */
     unsigned long       cnt2;           /* number of stuff in pre code     */
     unsigned long       code;           /* code from the Archive           */
@@ -1185,6 +1192,13 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 		m_archiveInfo.modgen = m_ReadBuffer.GetNextByte();
 		m_archiveInfo.is_new_style = true;
 		m_archiveInfo.header_size += 8; // update (extension included)
+		
+		if (m_archiveInfo.comment_size > 0 && m_archiveInfo.comment_pos > 0)
+		{
+			archive.Seek(m_archiveInfo.comment_pos, SEEK_SET);
+			archive.Read(m_ReadBuffer.GetBegin(), m_archiveInfo.comment_size);
+			m_archiveInfo.comment.assign(m_ReadBuffer.GetBegin(), m_archiveInfo.comment_size);
+		}
 	}
     return true;
 }
@@ -1378,26 +1392,33 @@ bool CUnZoo::ExtrArch(CAnsiFile &archive)
         }
 
         /* decode the file                                                 */
+        /*
         if ( ! GotoReadArch( Entry.posdat ) ) 
         {
 			throw ArcException("cannot find data in archive", outFilename);
         }
+        */
+        //ZooEntry *pEntry;
+		if (archive.Seek(pEntry->data_position, SEEK_SET) == false)
+		{
+			throw ArcException("Failed to seek entry", pEntry->fileName);
+		}
         
         bool bRes = false;
         
-        if ( Entry.method == 0 )  
+        if (pEntry->method == PackCopyOnly)
         {
-			bRes = DecodeCopy(Entry.siznow, archive, outFile);
+			bRes = DecodeCopy(pEntry, archive, outFile);
 		}
-        else if ( Entry.method == 1 )  
+        else if ( Entry.method == PackLzd )  
         {
 			// "directory-only" entry ??
-			//bRes = DecodeLzd();
+			//bRes = DecodeLzd(pEntry);
 			bRes = true;
 		}
-        else if ( Entry.method == 2 )  
+        else if ( Entry.method == PackLzh )  
         {
-			bRes = DecodeLzh(Entry, archive, outFile);
+			bRes = DecodeLzh(pEntry, archive, outFile);
 		}
 
         /* check that everything went ok                                   */
