@@ -1076,6 +1076,24 @@ bool CUnZoo::DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFil
 //
 bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 {
+	// TODO: check, can we just assume we are at correct offset now
+	// or do we really need these below..
+	
+	long lPos = 0;
+	if (archive.Tell(lPos) == false)
+	{
+		throw IOException("Failed to determine position");
+	}
+	// should be at end of archive header now
+	if (lPos != m_archiveInfo.header_size)
+	{
+		// if not, seek first entry
+		if (archive.Seek(m_archiveInfo.first_entry_pos, SEEK_SET) == false)
+		{
+			throw IOException("Failed to seek first entry");
+		}
+	}
+
 	size_t nReadCount = m_archiveInfo.header_size;
 	while (nReadCount+34 < m_nFileSize)
 	{
@@ -1129,12 +1147,6 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 //
 bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 {
-	// initialize statistical counters
-	// (constructor should already do this..)
-	m_ulTotalUnpacked = 0;
-	m_ulTotalPacked = 0;
-	m_ulTotalFiles = 0;
-
     if (archive.Read(m_ReadBuffer.GetBegin(), 34) == false)
     {
 		// file less than header size or just not readable,
@@ -1421,6 +1433,9 @@ bool CUnZoo::GetEntryList(tEntryList &lstArchiveInfo)
 // get list of archive entries to entry-list
 bool CUnZoo::ListContents()
 {
+	// TODO: better way of handling multiple reads of same file?
+	Clear();
+	
     CAnsiFile archive(m_szArchive);
     if (archive.IsOk() == false)
     {
@@ -1432,6 +1447,11 @@ bool CUnZoo::ListContents()
 	if (readArchiveDescription(archive) == false)
 	{
         throw ArcException("failed reading header", m_szArchive);
+	}
+	
+	if (readArchiveEntryList(archive) == false)
+	{
+        throw ArcException("failed reading entry list", m_szArchive);
 	}
 	
 	return ListArchive(m_szArchive);

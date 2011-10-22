@@ -276,6 +276,24 @@ protected:
 
 	bool ListArchive(const std::string &archiveName);
 	bool ExtrArch(const std::string &archiveName);
+	
+	void Clear()
+	{
+		m_nFileSize = 0;
+		m_ulTotalUnpacked = 0;
+		m_ulTotalPacked = 0;
+		m_ulTotalFiles = 0;
+		
+		auto it = m_EntryList.begin();
+		auto itend = m_EntryList.end();
+		while (it != itend)
+		{
+			ZooEntry *pEntry = (*it);
+			delete pEntry;
+			++it;
+		}
+		m_EntryList.clear();
+	}
 
 public:
     CUnZoo(const std::string &szArchive)
@@ -294,15 +312,7 @@ public:
     }
     ~CUnZoo()
     {
-		auto it = m_EntryList.begin();
-		auto itend = m_EntryList.end();
-		while (it != itend)
-		{
-			ZooEntry *pEntry = (*it);
-			delete pEntry;
-			++it;
-		}
-		m_EntryList.clear();
+		Clear();
     }
     
 	bool SetExtractPath(const std::string &szOutPath)
