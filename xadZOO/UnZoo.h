@@ -157,7 +157,7 @@ struct ZooEntry
     uint16_t    comment_size;      // length   of comment, 0 if none  
 
     // -> read comment here, remove extra values from here
-    //std::string comment;
+    std::string comment;
 
 
 	////////////    
@@ -325,8 +325,19 @@ public:
 		m_szExtractionPath = szOutPath;
 		return true;
 	}
+	
+	ZooDescription *GetArchiveInfo()
+	{
+		return &m_archiveInfo;
+	}
 
-	bool GetEntryList(tEntryList &lstArchiveInfo);
+	// note: caller must not destroy objects,
+	// just access the information
+	bool GetEntryList(tEntryList &lstArchiveInfo)
+	{
+		lstArchiveInfo = m_EntryList;
+		return true;
+	}
 
 	// get list of archive entries to entry-list
 	bool ListContents();

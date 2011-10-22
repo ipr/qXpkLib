@@ -1441,16 +1441,6 @@ bool CUnZoo::ExtrArch(CAnsiFile &archive)
 }
 
 
-
-/*
-bool CUnZoo::GetEntryList(tEntryList &lstArchiveInfo)
-{
-	// just read contents and give list to caller
-	ReadArchive();
-	
-}
-*/
-
 // get list of archive entries to entry-list
 bool CUnZoo::ListContents()
 {

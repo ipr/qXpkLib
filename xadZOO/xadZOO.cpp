@@ -49,8 +49,64 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 	{
 		return false;
 	}
+	
+	info.m_bIsMultifile = true;
+	info.m_archiveInfo.m_fileName = QString::fromStdString(m_pArchive->GetArchiveFileName());
+	info.m_archiveInfo.m_ulFileSize = m_pArchive->GetArchiveFileSize();
+	info.m_archiveInfo.m_ulPackedSize = m_pArchive->GetTotalSizePacked();
+	info.m_archiveInfo.m_ulUnpackedSize = m_pArchive->GetTotalSizeUnpacked();
+	info.m_archiveInfo.m_packing = "ZOO";
+	
+	ZooDescription *pDesc = m_pArchive->GetArchiveInfo();
+	info.m_archiveInfo.m_szComment = QString::fromStdString(pDesc->comment);
 
-	//m_pArchive->GetEntryList();
+	tEntryList entryList;
+	if (m_pArchive->GetEntryList(entryList) == false)
+	{
+		return false;
+	}
+
+	auto it = entryList.begin();
+	auto itEnd = entryList.end();
+	while (it != itEnd)
+	{
+		// must make copy of information
+		// from internal format for eventual user..
+		//
+		ZooEntry *pEntry = it->second;
+		
+		info.m_fileList.push_back(QXpkLib::CEntryInfo());
+		QXpkLib::CEntryInfo &entry = info.m_fileList.back();
+		
+		entry.m_fileName = QString::fromStdString(pEntry->pathName);
+		if (entry.m_fileName.at(entry.m_fileName.length() -1) != '/')
+		{
+			entry.m_fileName += "/";
+		}
+		entry.m_fileName += QString::fromStdString(pEntry->fileName);
+		
+		entry.m_Stamp = pEntry->timestamp;
+		entry.m_ulUnpackedSize = pEntry->original_size;
+		entry.m_ulPackedSize = pEntry->compressed_size;
+		
+		if (pEntry->method == PackCopyOnly)
+		{
+			entry.m_packing = "copy only";
+		}
+		else if (pEntry->method == PackLzd)
+		{
+			entry.m_packing = "Lzd";
+		}
+		else if (pEntry->method == PackLzh)
+		{
+			entry.m_packing = "Lzh";
+		}
+
+		entry.m_szComment = QString::fromStdString(pEntry->comment);
+	
+		++it;
+	}
+	return true;
 }
 
 // set path to uncompress files to
