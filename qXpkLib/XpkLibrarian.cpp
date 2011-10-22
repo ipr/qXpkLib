@@ -13,43 +13,32 @@
 
 //#include <QDir>
 
-// fix missing definition
+#ifdef _WIN32
+// fix missing definition (both needed)
 #ifdef UNICODE
 #ifndef _UNICODE
 #define _UNICODE
 #endif
 #endif
-
+// get correct types now
 #include <tchar.h>
 #include <Windows.h>
+#endif // _WIN32
 
 
-QList<QString> CXpkLibrarian::availableLibraries()
+////////////// protected methods
+
+// determine library-path for (de-)compressor libraries/plugins,
+// this stuff is platform-dependant..
+//
+QString CXpkLibrarian::getLibPath()
 {
-	QList<QString> lstTypes;
+	QString szLibPath;
 	
-	// enumerate existing decruncher-libraries on disk,
-	// add to list each supported file/algorithm type supported
-	
-	return lstTypes;
-}
-
-QString CXpkLibrarian::libNameFromType(tHeaderType enType)
-{
-	switch (enType)
-	{
-	}
-	return "";
-}
-
-xpkLibraryBase *CXpkLibrarian::getDecruncher(QString &szLib, QLibrary &lib)
-{
-	// we want module-path (where loaded) and not working directory!
+	// we want module-path (where loaded) and not working directory,
 	// is there any way to get it on different platforms
 	// or must we assume sub-libraries will be in some global path always??
-
-	QString szLibName;
-
+	
 #ifdef _WIN32
 	TCHAR szModulePath[_MAX_PATH + 1];
 	DWORD dwRes = ::GetModuleFileName(NULL, // TODO: get handle to this lib somewhere..
@@ -58,20 +47,26 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(QString &szLib, QLibrary &lib)
 	szModulePath[dwRes] = 0x000; // 
 
 #ifdef _UNICODE
-	szLibName = QString::fromWCharArray(szModulePath, dwRes);
+	szLibPath = QString::fromWCharArray(szModulePath, dwRes);
 #else
-	szLibName = QString::fromLocal8Bit(szModulePath, dwRes);
+	szLibPath = QString::fromLocal8Bit(szModulePath, dwRes);
 #endif
-	szLibName.replace('\\', "/"); // fix MSDOS pathnames if any
+	szLibPath.replace('\\', "/"); // fix MSDOS pathnames if any
 
-	int iIndex = szLibName.lastIndexOf('/');
-	szLibName = szLibName.left(iIndex); // remove module (dll) name
+	int iIndex = szLibPath.lastIndexOf('/');
+	szLibPath = szLibPath.left(iIndex); // remove module (dll) name
 	
 #else
 	// Unix-equivalent?
 	// TODO: use plugins-path?
 #endif
-	
+
+	return szLibPath;
+}
+
+QString CXpkLibrarian::getLibName(QString &szLib, QString &szPath)
+{
+	QString szLibName = szPath;
 	if (szLibName.at(szLibName.length() -1) != '/')
 	{
 		szLibName += "/";
@@ -98,6 +93,25 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(QString &szLib, QLibrary &lib)
 	szLibName.append(".dll");
 #endif
 
+	return szLibName;
+
+}
+
+////////////// public methods
+
+QList<QString> CXpkLibrarian::availableLibraries()
+{
+	QList<QString> lstTypes;
+	
+	// enumerate existing decruncher-libraries on disk,
+	// add to list each supported file/algorithm type supported
+	
+	return lstTypes;
+}
+
+xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib, QLibrary &lib)
+{
+	QString szLibName = getLibName(szLib, getLibPath());
 	lib.setFileName(szLibName);
 	if (lib.load() == false)
 	{
@@ -111,9 +125,41 @@ xpkLibraryBase *CXpkLibrarian::getDecruncher(QString &szLib, QLibrary &lib)
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
 	return (xpkLibraryBase*)(*pGetInstance)();
+}
 
-	// temp: use dummy
-	//return new XpkDummy();
+xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib, QLibrary &lib)
+{
+	QString szLibName = getLibName(szLib, getLibPath());
+	lib.setFileName(szLibName);
+	if (lib.load() == false)
+	{
+		throw ArcException("Failed locating library", szLibName.toStdString());
+	}
 	
+	GetXfdInstance *pGetInstance = (GetXfdInstance*)lib.resolve("GetXpkInstance");
+	if (pGetInstance == nullptr)
+	{
+		QString szError = lib.errorString();
+		throw ArcException("Failed locating symbol", szError.toStdString());
+	}
+	return (xfdLibraryBase*)(*pGetInstance)();
+}
+
+xadLibraryBase *CXpkLibrarian::getXadInstance(QString &szLib, QLibrary &lib)
+{
+	QString szLibName = getLibName(szLib, getLibPath());
+	lib.setFileName(szLibName);
+	if (lib.load() == false)
+	{
+		throw ArcException("Failed locating library", szLibName.toStdString());
+	}
+	
+	GetXadInstance *pGetInstance = (GetXadInstance*)lib.resolve("GetXpkInstance");
+	if (pGetInstance == nullptr)
+	{
+		QString szError = lib.errorString();
+		throw ArcException("Failed locating symbol", szError.toStdString());
+	}
+	return (xadLibraryBase*)(*pGetInstance)();
 }
 

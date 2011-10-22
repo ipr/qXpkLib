@@ -24,6 +24,8 @@
 // for lower-level library (level 0)
 //
 #include "xpkLibraryBase.h"
+#include "xfdLibraryBase.h"
+#include "xadLibraryBase.h"
 #include "XpkProgress.h"
 
 
@@ -33,14 +35,18 @@ class CXpkLibrarian : public QObject
 {
 protected:
 	typedef xpkLibraryBase *GetXpkInstance();
+	typedef xfdLibraryBase *GetXfdInstance();
+	typedef xadLibraryBase *GetXadInstance();
+	
+	static QString getLibPath();
+	static QString getLibName(QString &szLib, QString &szPath);
 	
 public:
 	static QList<QString> availableLibraries();
 	
-	static QString libNameFromType(tHeaderType enType);
-	
-	//static xpkLibraryBase *getDecruncher(QString szType, QLibrary &lib);
-	static xpkLibraryBase *getDecruncher(QString &szLib, QLibrary &lib);
+	static xpkLibraryBase *getXpkInstance(QString &szLib, QLibrary &lib);
+	static xfdLibraryBase *getXfdInstance(QString &szLib, QLibrary &lib);
+	static xadLibraryBase *getXadInstance(QString &szLib, QLibrary &lib);
 };
 
 
