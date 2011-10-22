@@ -147,20 +147,43 @@ void QXpkLib::getToBuffer(QByteArray &Array)
 // file to process
 void QXpkLib::setInputFile(QString &szFile)
 {
-	// temp, change to on instance creation
+	// keep path, fix crap from MSDOS if that shit still exists..
+	// it's not needed since 1999 for fucks sake..
+	// even W2k doesn't need it any more: kill it already!
+	//
+	szFile.replace('\\', "/"); // fix path-separator
+
 	m_pMaster->setInputFile(szFile);
 }
 
 // file to write
 void QXpkLib::setOutputFile(QString &szFile)
 {
-	// temp, change to on instance creation
+	// keep path, fix crap from MSDOS if that shit still exists..
+	// it's not needed since 1999 for fucks sake..
+	// even W2k doesn't need it any more: kill it already!
+	//
+	szFile.replace('\\', "/"); // fix path-separator
+
 	m_pMaster->setOutputFile(szFile);
 }
 
 // destination path for multi-file archive extraction
 void QXpkLib::setOutputPath(QString &szPath)
 {
+	// keep path, fix crap from MSDOS if that shit still exists..
+	// it's not needed since 1999 for fucks sake..
+	// even W2k doesn't need it any more: kill it already!
+	//
+	szPath.replace('\\', "/"); // fix path-separator
+
+	// verify path ends correctly	
+	if (szPath.at(szPath.length() - 1) != '/')
+	{
+		// end path with separator
+		szPath += "/";
+	}
+
 	// temp, change to on instance creation
 	m_pMaster->setOutputPath(szPath);
 }

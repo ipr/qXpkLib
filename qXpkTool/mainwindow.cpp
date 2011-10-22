@@ -162,10 +162,9 @@ void MainWindow::on_actionFile_triggered()
 	QString szFile = QFileDialog::getOpenFileName(this, tr("Open file"), m_lastPath);
 	if (szFile != NULL)
 	{
-		// keep path
-		//
-		// note: fix path-separator if still msdos-style,
+		// keep path, fix crap from MSDOS if that shit still exists..
 		// it's not needed since 1999 for fucks sake..
+		// even W2k doesn't need it any more: kill it already!
 		//
         szFile.replace('\\', "/"); // fix path-separator
         m_lastPath = szFile.left(szFile.lastIndexOf('/'));

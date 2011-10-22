@@ -104,6 +104,11 @@ protected:
 	//
 	size_t m_nCurrentPos;
 
+	// we could keep amount of buffer actually used
+	// here, but accounting for it would be problem
+	// in each caller which may use direct buffer access..
+	//size_t m_nUsedSize;
+
 public:
 	CReadBuffer(void) 
 		: m_pReadBuffer(nullptr)
@@ -222,7 +227,11 @@ public:
 	}
 
 	// amount of space after current position
-	// (note: we can grow automatically..)
+	// (note: we can grow automatically..).
+	// note: if caller has different idea of position
+	// (not using wrapper-methods)
+	// then this will not be usable value (position different)
+	//
 	size_t GetSpaceSize() const
 	{
 		return (GetSize() - GetCurrentPos());
@@ -300,6 +309,19 @@ public:
 		unsigned char *pBuf = GetAt(m_nCurrentPos);
 		(*pBuf) = ucValue;
 		m_nCurrentPos++;
+	}
+	
+	// move buffer contents to beginning
+	bool MoveToBegin(const size_t nStartOffset)
+	{
+		// should support overlapped IO..
+		::memmove(GetBegin(), 
+				GetAt(nStartOffset), 
+				m_nReadBufferSize - nStartOffset);
+		m_nCurrentPos -= nStartOffset;
+		// TODO: we might want actual amount of buffer used
+		// in this but might not know it depending on how caller is using buffer..
+		return true;
 	}
 };
 

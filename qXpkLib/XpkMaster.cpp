@@ -167,14 +167,22 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			pProgress->pOutputBuffer->Append(
 						pProgress->pInputBuffer->GetAt(pChunk->m_nDataOffset), 
 						pChunk->m_ChunkLength);
+						
+			// accounting in master-library
+			pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
+			pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		}
 		else if (pChunk->m_Type == XPKCHUNK_PACKED) // packed
 		{
 			pProgress->xp_chunkIn = pChunk->m_ChunkLength;
 			pProgress->xp_chunkOut = pChunk->m_UnLen;
 		
-			// locate data of chunk
-			pProgress->pInputBuffer->SetCurrentPos(pChunk->m_nDataOffset);
+			// locate data of chunk,
+			// currently we have entire file in buffer
+			// so move data to beginning for simplicity in sub-library..
+			//pProgress->pInputBuffer->SetCurrentPos(pChunk->m_nDataOffset);
+			pProgress->pInputBuffer->MoveToBegin(pChunk->m_nDataOffset);
+			pProgress->pInputBuffer->SetCurrentPos(0);
 			
 			// prepare space for uncompressed data
 			if (pChunk->m_UnLen > 0)
@@ -186,9 +194,17 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			if (m_pSubLibrary->Decrunch(pProgress) == false)
 			{
 				// .. or throw exception now
-				return false;
-				//throw ArcException("Decrunching failed", m_InputName.toStdString());
+				throw ArcException("Decrunching failed", m_InputName.toStdString());
+				//return false;
 			}
+
+			// keep accounting in master,
+			// no need to bother sub-libraries with it			
+			pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
+			pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
+			
+			// TODO: if we have output to file,
+			// append it now? (IOContext in parent..)
 		}
 		else
 		{
@@ -199,6 +215,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 		// next chunk to process..	
 		pChunk = pChunk->m_pNext;
 	}
+	
+	// flush output now? (lib-parent does it?)
 	
 	return true;
 }
