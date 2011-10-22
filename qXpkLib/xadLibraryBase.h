@@ -16,7 +16,9 @@
 // -> may need user-selection to given buffer?
 // -> special cases (differs from XPK/XFD here..)
 //
-
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
 
 #ifndef XADLIBRARYBASE_H
 #define XADLIBRARYBASE_H

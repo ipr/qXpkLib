@@ -10,7 +10,9 @@
 // - output to buffer only (in XpkProgress)
 // -> master-library will either push to file or user buffer as needed
 //
-
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
 
 #ifndef XPKLIBRARYBASE_H
 #define XPKLIBRARYBASE_H

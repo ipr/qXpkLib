@@ -67,6 +67,20 @@ Current status:
 * some initial XFD "alien" format decrunching (needs conversions from M68k-asm to C/C++ for portability..)
 * some support for loading archive-unpackers in XAD-style
 * many placeholders to be written for new library handling (much needed changes..)
+* combination of file/buffer input/output needs some more work
+ - also possible "chaining" of libraries (such as GZIP -> Tar -> actual file..)
 * plan includes support for 64-bit builds eventually..
 * ...
+
+Implementation, design:
+* qXpkLib implements master-library levels 2 and 1 of original XPK design
+ - includes XPK, XFD and XAD master libraries
+ - most of file-IO, type detection and sub-library loading is in master-library
+* extension sub-libraries implement only level 0 of original design
+ - decrunch/decompress/extraction only in level 0
+* sub-libraries depend at compile-time on code and definitions in master-library 
+ - these may be considered "derived" from master in places (shared code)
+* master library does not depend on sub-libraries at compile-time
+ - sub-libraries can be replaced with others by same name implementing same base-interface defined in master-library
+ - only naming and interface are defined in master-library, actual decompression only in sub-libraries
 
