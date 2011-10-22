@@ -25,7 +25,7 @@
 class CIoContext
 {
 protected:
-	QString m_Name;
+	QString m_Name; // in/out name
 	//QString m_Path; // for multi-file output?
 	CReadBuffer m_Buffer;
 	
@@ -33,13 +33,19 @@ protected:
 	//CAnsiFile m_File;
 	
 public:
+	/*
     CIoContext(void)
 	    : m_Name()
 	    , m_Buffer(1024)
 	{}
-    CIoContext(QString &Name)
+	*/
+    CIoContext(size_t nBufferSize = 1024)
+	    : m_Name()
+	    , m_Buffer(nBufferSize)
+	{}
+    CIoContext(QString &Name, size_t nBufferSize = 1024)
 	    : m_Name(Name)
-	    , m_Buffer(1024)
+	    , m_Buffer(nBufferSize)
 	{}
     CIoContext(const unsigned char *pBuf, const size_t nSize)
 	    : m_Name()
@@ -60,10 +66,24 @@ public:
 		return m_Name;
 	}
 
-	/*
 	bool Read(XpkProgress *pProgress)
-	{}
-    */
+	{
+		CAnsiFile InFile;
+		if (InFile.Open(m_Name.toStdString()) == false)
+		{
+			throw ArcException("Failed to open input", m_Name.toStdString());
+		}
+		pProgress->xp_WholePackedFileSize = InFile.GetSize();
+		
+		size_t nReadSize = (1024 < InFile.GetSize()) ? 1024 : InFile.GetSize();
+		m_Buffer.PrepareBuffer(nReadSize, false);
+		if (InFile.Read(m_Buffer.GetBegin(), nReadSize) == false)
+		{
+			throw IOException("Failed reading file data");
+		}
+		InFile.Close(); // not needed any more
+		return true;
+	}
 	
 	// write output to file
 	bool WriteFile(XpkProgress *pProgress)

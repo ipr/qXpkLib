@@ -11,12 +11,17 @@
 #ifndef XPKCAPABILITIES_H
 #define XPKCAPABILITIES_H
 
+#include <QString>
+
+
 struct XpkCapabilities
 {
 	// constructor
 	XpkCapabilities()
 	 : input()
 	 , output()
+	 , m_LibIdentifier()
+	 , m_LibDescription()
 	{}
 
 	struct IOtypes
@@ -40,6 +45,9 @@ struct XpkCapabilities
 
 	IOtypes input;
 	IOtypes output;
+	
+	QString m_LibIdentifier;
+	QString m_LibDescription;
 
 };
 

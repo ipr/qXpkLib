@@ -59,7 +59,6 @@ CXpkMaster::CXpkMaster(QObject *parent)
     , m_InputName()
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
-    , m_Output()
     , m_pSubLibrary(nullptr)
 {
 }
@@ -103,8 +102,23 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
 	*/
+	
+	if (m_Tags.IsXpkFile(pInputBuffer) == false)
+	{
+		// should have detected already..
+		return false;
+	}
 
-	return m_Tags.IsXpkFile(pInputBuffer);
+	/*
+	m_pSubLibrary = XpkLibrarian::getDecruncher(pInputBuffer);
+	if (m_pSubLibrary == nullptr)
+	{
+		// not library -> not supported
+		return false;
+	}
+	*/
+
+	return true;
 }
 
 bool CXpkMaster::decrunch(XpkProgress *pProgress)

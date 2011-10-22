@@ -119,6 +119,8 @@ void CLibMaster::PrepareUnpacker(std::string &subType)
 
 CLibMaster::CLibMaster(QObject *parent)
 	: QObject(parent)
+    , m_Input()
+    , m_Output()
     , m_SubLib(parent)
     , m_pXpkMaster(nullptr)
     , m_pXfdMaster(nullptr)
@@ -126,7 +128,6 @@ CLibMaster::CLibMaster(QObject *parent)
     , m_InputName()
     , m_nInputFileSize(0)
     , m_InputBuffer(1024)
-    , m_Output()
 {
 	// temp, check handling later..
 	// create when selected archive changed?
@@ -240,31 +241,6 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 		
 		bRet = m_pXpkMaster->decrunch(pProgress);
 	}
-	/*
-	else
-	{
-	
-		// determine file type from header, try to load decruncher for it:
-		// throws exception on failure
-		//
-		// TODO: don't read entire file before this,
-		// only after it is known to be supported..
-		//
-		PrepareUnpacker(getCruncherType(&m_InputBuffer));
-	
-		// something else, 
-		// sub-library should know what do with it..
-		// we depend entirely on sub-library to do decrunching
-		// -> pass entire file to sub-library
-		//
-		// whole file decompression only in this case
-		pProgress->xp_chunkIn = pProgress->xp_WholePackedFileSize;
-		pProgress->xp_chunkOut = 0; // we don't know this until library detects this..
-		pProgress->pInputBuffer->SetCurrentPos(0);
-		
-		bRet = m_pSubLibrary->Decrunch(pProgress);
-	}
-	*/
 	
 	if (bRet == false)
 	{
@@ -289,11 +265,20 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	return true;
 }
 
+// buffer for stuff from user of library,
+// can we detect type of compression or do we need user info..?
+bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
+{
+	return false;
+}
+
 // input-file given: check what it is
 // (for information to caller)
 bool CLibMaster::setInputFile(QString &szFile)
 {
 	m_InputName = szFile;
+	m_Input.setName(szFile);
+	//m_Input.Read(
 	
 	CAnsiFile InFile;
 	if (InFile.Open(m_InputName.toStdString()) == false)

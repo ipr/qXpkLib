@@ -51,14 +51,15 @@ class CLibMaster : public QObject
     Q_OBJECT
     
 private:
-	// TODO: change to support user-given buffer..?
-	//CIoContext m_Input;
 	QString m_InputName;
 	CReadBuffer m_InputBuffer;
 	size_t m_nInputFileSize;
 	
 	// for multi-file extraction
 	QString m_outputPath;
+
+	// TODO: change to support user-given buffer..?
+	CIoContext m_Input;
 	
 	// change to use path and determine name automagically?
 	CIoContext m_Output;
@@ -94,6 +95,8 @@ public:
 	}
 
 public slots:
+	bool setInputBuffer(CReadBuffer *buffer);
+
 	bool setInputFile(QString &szFile);
 	
 	// TODO: check what to do with these..
