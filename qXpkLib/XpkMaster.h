@@ -20,7 +20,7 @@
 #include <QLibrary>
 
 // use typedefs from parent
-#include <qxpklib.h>
+#include "qxpklib.h"
 
 #include "AnsiFile.h"
 #include "FileType.h"
@@ -64,9 +64,11 @@ public:
 	virtual ~CXpkMaster(void);
 
     bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
+    
+	// list compressed file information..
+	bool archiveInfo(QXpkLib::CArchiveInfo &info);
+    
 	bool decrunch(XpkProgress *pProgress);
-	
-	bool xpkUnpack(XpkProgress *pProgress);
 
 	
 public slots:

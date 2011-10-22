@@ -40,7 +40,9 @@ HEADERS += qxpklib.h\
     XadMaster.h \
     xadLibraryBase.h \
     xfdLibraryBase.h \
-    LibMaster.h
+    LibMaster.h \
+    XpkCapabilities.h
+
 
 
 

@@ -17,6 +17,31 @@
 
 #include "AnsiFile.h"
 
+// status bits for operations?
+// does this help or is it just simpler to convert immediately..?
+//
+// only 5 of user-bits cared about,
+// 15 system-bit can be ignored..?
+//
+struct statusreg
+{
+	bool n; // negative
+	bool x; // extended
+	bool z; // zero
+	bool v; // overflow
+	bool c; // carry
+	
+	void clear()
+	{
+		n = false;
+		x = false;
+		z = false;
+		v = false;
+		c = false;
+	}
+	
+};
+
 // simplify asm to c conversion,
 // for each register with access methods
 struct datareg
@@ -27,6 +52,144 @@ struct datareg
 		int16_t w;
 		int32_t l;
 	};
+	//} u;
+
+	/*	
+	// check: does these help
+	statusreg s; 
+	
+	int8_t b() const
+	{
+		return u.b;
+	}
+	int16_t w() const
+	{
+		return u.w;
+	}
+	int32_t l() const
+	{
+		return u.l;
+	}
+
+	// operator = : move
+	// or simpler: move?(const int32_t &v), for example D0.movew(D1)
+	
+	explicit datareg& operator = (const int8_t &v)
+	{
+		s.clear();
+		u.b = v;
+		if (v < 0)
+		{
+			s.n = true;
+		}
+		else if (v == 0)
+		{
+			s.z = true;
+		}
+		return *this;
+	}
+	explicit datareg& operator = (const int16_t &v)
+	{
+		s.clear();
+		u.w = v;
+		if (v < 0)
+		{
+			s.n = true;
+		}
+		else if (v == 0)
+		{
+			s.z = true;
+		}
+		return *this;
+	}
+	explicit datareg& operator = (const int32_t &v)
+	{
+		s.clear();
+		u.l = v;
+		if (v < 0)
+		{
+			s.n = true;
+		}
+		else if (v == 0)
+		{
+			s.z = true;
+		}
+		return *this;
+	}
+	
+	// operator += : add
+	explicit datareg& operator += (const int8_t &v)
+	{
+		s.clear();
+		u.l = u.b + v;
+		return *this;
+	}
+	explicit datareg& operator += (const int16_t &v)
+	{
+		s.clear();
+		u.l = u.w + v;
+		return *this;
+	}
+	explicit datareg& operator += (const int32_t &v)
+	{
+		s.clear();
+		u.l = u.l + v;
+		return *this;
+	}
+	
+	// operator -= : sub
+	explicit datareg& operator -= (const int8_t &v)
+	{
+		s.clear();
+		u.l = u.b - v;
+		return *this;
+	}
+	explicit datareg& operator -= (const int16_t &v)
+	{
+		s.clear();
+		u.l = u.w - v;
+		return *this;
+	}
+	explicit datareg& operator -= (const int32_t &v)
+	{
+		s.clear();
+		u.l = u.l - v;
+		return *this;
+	}
+	
+	void lslb(const int32_t &bc)
+	{
+		s.clear();
+		u.b <<= bc;
+	}
+	void lslw(const int32_t &bc)
+	{
+		s.clear();
+		u.w <<= bc;
+	}
+	void lsll(const int32_t &bc)
+	{
+		s.clear();
+		u.l <<= bc;
+	}
+
+	void lsrb(const int32_t &bc)
+	{
+		s.clear();
+		u.b >>= bc;
+	}
+	void lsrw(const int32_t &bc)
+	{
+		s.clear();
+		u.w >>= bc;
+	}
+	void lsrl(const int32_t &bc)
+	{
+		s.clear();
+		u.l >>= bc;
+	}
+	*/
+	
 };
 
 // address registers generally need two modes in operations:
@@ -159,7 +322,7 @@ struct addrreg
 	// this allows "peeking" by offset
 	// without modifying current address.
 	//
-	int8_t b(void)
+	int8_t b(void) // with auto-increment
 	{
 		int8_t *p = src;
 		src += 1;
@@ -170,7 +333,7 @@ struct addrreg
 		return *(src + off);
 	}
 
-	int16_t w(void)
+	int16_t w(void) // with auto-increment
 	{
 		//int16_t *p = (int16_t*)src;
 		//src += 2;
@@ -184,7 +347,7 @@ struct addrreg
 		return getW(src + off);
 	}
 	
-	int32_t l(void)
+	int32_t l(void) // with auto-increment
 	{
 		//int32_t *p = (int32_t*)src;
 		//src += 4;
@@ -196,6 +359,25 @@ struct addrreg
 	int32_t l(const size_t off) const
 	{
 		return getL(src + off);
+	}
+
+	int8_t bM(void) // with auto-decrement
+	{
+		int8_t *p = src;
+		src += 1;
+		return *p;
+	}
+	int16_t wM(void) // with auto-decrement
+	{
+		int8_t *p = src;
+		src += 2;
+		return getW(p);
+	}
+	int32_t lM(void) // with auto-decrement
+	{
+		int8_t *p = src;
+		src -= 4;
+		return getL(p);
 	}
 	
 	// byteordering helpers

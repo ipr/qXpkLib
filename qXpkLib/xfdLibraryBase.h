@@ -16,8 +16,9 @@
 #define XFDLIBRARYBASE_H
 
 #include <QString>
+#include "qxpklib.h"
 
-
+#include "XpkCapabilities.h"
 #include "XpkProgress.h"
 #include "AnsiFile.h"
 
@@ -27,11 +28,25 @@ class xfdLibraryBase
 protected:
 	// only derived can be instantiated
 	xfdLibraryBase(void) 
+		: m_XpkCaps()
 	{}
 	virtual ~xfdLibraryBase(void)
 	{}
+
+	// capabilities of sub-library implementation
+	//
+	XpkCapabilities m_XpkCaps;
 	
 public:
+
+	// access sub-library capabilities from master-library
+	virtual XpkCapabilities *getCaps()
+	{
+		return &m_XpkCaps;
+	}
+
+	// list compressed file information..
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
 
 	//virtual QString GetPackerName()=0;
 	//virtual QString GetPackerLongName()=0;

@@ -24,28 +24,58 @@
 #include <QString>
 #include "qxpklib.h"
 
+#include "XpkCapabilities.h"
 #include "XpkProgress.h"
 #include "AnsiFile.h"
 
+
+// fwd. decl.
+class xadLibraryBase;
 
 class xadLibraryBase
 {
 protected:
 	// only derived can be instantiated
 	xadLibraryBase(void) 
+		: m_XpkCaps()
+		, m_pDest(nullptr)
 	{}
 	virtual ~xadLibraryBase(void)
 	{}
 	
+	// capabilities of sub-library implementation
+	//
+	XpkCapabilities m_XpkCaps;
+	
+	// for chaining of libraries:
+	// output chunks of decompressed data
+	// directly to another library
+	// (given by master-library?)
+	//
+	xadLibraryBase *m_pDest;
+	
 public:
+
+	// access sub-library capabilities from master-library
+	virtual XpkCapabilities *getCaps()
+	{
+		return &m_XpkCaps;
+	}
+
+	// set sub-library destination (optional, if supported)
+	virtual bool setDestLibrary(xadLibraryBase *pDest) 
+	{
+		return false;
+	}
+
+	// should be given in XpkProgress-object?
+	virtual bool setArchive(QString &szArchive)=0;
 
 	// list files in archive, get other metadata also..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
 	
-	// should be given in XpkProgress-object?
-	//void setArchive(QString &szArchive)=0;
-	
 	// set path to uncompress files to
+	// (optionally specific file name if only one output?)
 	virtual bool setExtractPath(QString &szPath)=0;
 	
 	// test archive integrity

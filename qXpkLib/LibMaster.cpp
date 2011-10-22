@@ -172,7 +172,21 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// - unpacked size -> need sub-library to determine
 	// - what else?
 
-	return false;
+	bool bSupported = false;
+	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bSupported = m_pXadMaster->archiveInfo(info);
+	}
+	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bSupported = m_pXfdMaster->archiveInfo(info);
+	}
+	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
+	{
+		bSupported = m_pXpkMaster->archiveInfo(info);
+	}
+
+	return bSupported;
 }
 
 bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
@@ -210,7 +224,7 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 		// and format is "alien" (only library might know..)
 	
 		m_pXadMaster->setExtractPath(m_outputPath);
-		bRet = m_pXadMaster->extractArchive(pProgress);
+		bRet = m_pXadMaster->decrunch(pProgress);
 	}
 	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
 	{
@@ -256,8 +270,8 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	{
 		throw ArcException("Decrunching failed", m_InputName.toStdString());
 	}
-	
-	// write all at once when done..
+
+	// buffer-output? (no out-file given)
 	if (m_Output.getName().length() == 0)
 	{
 		// no output-file -> done
@@ -270,14 +284,14 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	{
 		InFile.Close();
 	}
-	m_Output.WriteFile();
+	m_Output.WriteFile(pProgress);
 		
 	return true;
 }
 
 // input-file given: check what it is
 // (for information to caller)
-void CLibMaster::setInputFile(QString &szFile)
+bool CLibMaster::setInputFile(QString &szFile)
 {
 	m_InputName = szFile;
 	
@@ -316,4 +330,5 @@ void CLibMaster::setInputFile(QString &szFile)
 	{
 		bIsSupported = true;
 	}
+	return bIsSupported;
 }

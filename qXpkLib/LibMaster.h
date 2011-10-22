@@ -51,6 +51,7 @@ class CLibMaster : public QObject
     Q_OBJECT
     
 private:
+	// TODO: change to support user-given buffer..?
 	//CIoContext m_Input;
 	QString m_InputName;
 	CReadBuffer m_InputBuffer;
@@ -93,7 +94,7 @@ public:
 	}
 
 public slots:
-	void setInputFile(QString &szFile);
+	bool setInputFile(QString &szFile);
 	
 	// TODO: check what to do with these..
 	void setOutputFile(QString &szFile) 

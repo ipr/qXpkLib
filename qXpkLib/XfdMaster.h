@@ -15,6 +15,9 @@
 #include <QObject>
 #include <QString>
 
+// use typedefs from parent
+#include "qxpklib.h"
+
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
 
@@ -62,6 +65,9 @@ public:
     virtual ~CXfdMaster(void);
     
     bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
+
+	// list compressed file information..
+	bool archiveInfo(QXpkLib::CArchiveInfo &info);
     
 	bool decrunch(XpkProgress *pProgress);
 

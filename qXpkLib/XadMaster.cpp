@@ -56,6 +56,11 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		szSubType = "xadLZX";
 		return true;
 	}
+	else if (type.m_enFileType == HEADERTYPE_ACE)
+	{
+		szSubType = "xadACE";
+		return true;
+	}
 	else if (type.m_enFileType == HEADERTYPE_ZOO)
 	{
 		szSubType = "xadZOO";
@@ -82,7 +87,7 @@ void CXadMaster::setExtractPath(QString &szPath)
 	m_pSubLibrary->setExtractPath(szPath);
 }
 
-bool CXadMaster::extractArchive(XpkProgress *pProgress)
+bool CXadMaster::decrunch(XpkProgress *pProgress)
 {
 	return m_pSubLibrary->Decrunch(pProgress);
 }

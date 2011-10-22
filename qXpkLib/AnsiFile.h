@@ -221,6 +221,13 @@ public:
 		return m_nReadBufferSize;
 	}
 
+	// amount of space after current position
+	// (note: we can grow automatically..)
+	size_t GetSpaceSize() const
+	{
+		return (GetSize() - GetCurrentPos());
+	}
+
 	// user-defined position in buffer
 	// (read/write position)
 	size_t GetCurrentPos() const
@@ -257,7 +264,7 @@ public:
 		}
 #endif	
 	*/
-		if (nSize > (m_nReadBufferSize - m_nCurrentPos))
+		if (nSize > GetSpaceSize())
 		{
 			// not enough space in buffer
 			// -> grow buffer, reserve some 
@@ -281,6 +288,15 @@ public:
 	}
 	void SetNextByte(const unsigned char ucValue)
 	{
+		/*
+		if (GetSpaceSize() < 1)
+		{
+			// grow&keep existing
+			// TODO: should allocate more at once for better efficiency..
+			GrowBuffer(m_nReadBufferSize + 1, true);
+		}
+		*/
+	
 		unsigned char *pBuf = GetAt(m_nCurrentPos);
 		(*pBuf) = ucValue;
 		m_nCurrentPos++;

@@ -66,6 +66,14 @@ bool QXpkLib::xpkInfo(QXpkLib::CArchiveInfo &info)
 {
 	try
 	{
+		/*
+		if (m_pProgress != nullptr)
+		{
+			delete m_pProgress;
+		}
+		m_pProgress = new XpkProgress();
+		*/
+	
 		// get info to caller from master-instance
 		return m_pMaster->archiveInfo(info);
 	}

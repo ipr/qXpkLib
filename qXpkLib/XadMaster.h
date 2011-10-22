@@ -18,6 +18,9 @@
 #include <QObject>
 #include <QString>
 
+// use typedefs from parent
+#include "qxpklib.h"
+
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
 
@@ -44,9 +47,12 @@ public:
 
 	bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
     
+	// list compressed file information..
+	bool archiveInfo(QXpkLib::CArchiveInfo &info);
+    
 	//void setArchive(QString &szArchive);
 	void setExtractPath(QString &szPath);
-	bool extractArchive(XpkProgress *pProgress);
+	bool decrunch(XpkProgress *pProgress);
 	
 public slots:
 	

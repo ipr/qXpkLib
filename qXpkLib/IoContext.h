@@ -18,11 +18,15 @@
 #include "AnsiFile.h"
 //#include "MemoryMappedFile.h"
 
+#include "XpkCapabilities.h"
+#include "XpkProgress.h"
+
 
 class CIoContext
 {
 protected:
 	QString m_Name;
+	//QString m_Path; // for multi-file output?
 	CReadBuffer m_Buffer;
 	
 	// temp (optional)
@@ -57,12 +61,12 @@ public:
 	}
 
 	/*
-	bool Read()
+	bool Read(XpkProgress *pProgress)
 	{}
     */
 	
 	// write output to file
-	bool WriteFile()
+	bool WriteFile(XpkProgress *pProgress)
 	{
 		CAnsiFile OutFile;
 		if (OutFile.Open(m_Name.toStdString(), true) == false)
