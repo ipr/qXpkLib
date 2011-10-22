@@ -431,33 +431,7 @@ unsigned long   WordReadArch ()
 
 int EntrReadArch (CAnsiFile &archive)
 {
-    unsigned long       l;              /* 'Entry.lnamu+Entry.ldiru'       */
-    //char *              p;              /* loop variable                   */
 
-    /* try to read the magic words                                         */
-    Entry.magic = WordReadArch();
-    if ( Entry.magic != (unsigned long)0xfdc4a7dcL )
-    {
-		throw IOException("unsupported file type, unknown type-ID");
-    }
-
-    /* read the fixed part of the directory entry                          */
-    Entry.type   = ByteReadArch(); // 1 
-    Entry.method = ByteReadArch(); // 1
-    Entry.posnxt = WordReadArch(); // 4
-    Entry.posdat = WordReadArch(); // 4
-    Entry.datdos = HalfReadArch(); // 2
-    Entry.timdos = HalfReadArch(); // 2
-    Entry.crcdat = HalfReadArch(); // 2
-    Entry.sizorg = WordReadArch(); // 4
-    Entry.siznow = WordReadArch(); // 4
-    Entry.majver = ByteReadArch(); // 1
-    Entry.minver = ByteReadArch(); // 1
-    Entry.deleted = ByteReadArch(); // 1
-    Entry.spared = ByteReadArch(); // 1
-    Entry.poscmt = WordReadArch(); // 4
-    Entry.sizcmt = HalfReadArch(); // 2
-    // -> 34 bytes
 
 	// some short name (fucking msdos..)    
     if (archive.Read(Entry.nameshort,13L) == false)
@@ -485,7 +459,10 @@ int EntrReadArch (CAnsiFile &archive)
     }
     Entry.dirName[Entry.ldiru] = '\0';
     
-    l = Entry.lnamu + Entry.ldiru;
+    //unsigned long       l;              /* 'Entry.lnamu+Entry.ldiru'       */
+    //char *              p;              /* loop variable                   */
+    
+    unsigned long l = Entry.lnamu + Entry.ldiru;
     Entry.systemid = (l+2 < Entry.lvar ? HalfReadArch() : 0);
     Entry.permis = (l+4 < Entry.lvar ? TripReadArch() : 0);
     Entry.modgen = (l+7 < Entry.lvar ? ByteReadArch() : 0);
@@ -1092,10 +1069,59 @@ bool CUnZoo::DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFil
     {
         throw IOException("cannot write output file");
     }
-
-    /* indicate success                                                    */
-    //m_crc.m_Crc;
     return true;
+}
+
+// read list of archive contents (entry-list)
+//
+bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
+{
+	size_t nReadCount = m_archiveInfo.header_size;
+	while (nReadCount+34 < m_nFileSize)
+	{
+		if (archive.Read(m_ReadBuffer.GetBegin(), 34) == false)
+		{
+			// corrupted file or bug? should detect end before..
+			throw IOException("Failed to read entry header");
+		}
+		nReadCount += 34;
+		
+		m_ReadBuffer.SetCurrentPos(0); // simplify rest, keep counting offset
+		if (isSupportedEntry(m_ReadBuffer.GetBegin()) == false)
+		{
+			throw IOException("Unsupported entry detected");
+		}
+
+		// should be supported -> allocate entry to list, get rest of values	
+		ZooEntry *pEntry = new ZooEntry();
+		m_EntryList.push_back(pEntry);
+		
+	    pEntry->magicid = getULong(m_ReadBuffer.GetNext(4)); // keep for debugging at least..
+	    pEntry->member_type = m_ReadBuffer.GetNextByte();
+	    pEntry->method = m_ReadBuffer.GetNextByte();
+	    pEntry->next_entry_pos = getULong(m_ReadBuffer.GetNext(4));
+	    pEntry->data_position = getULong(m_ReadBuffer.GetNext(4));
+
+		// convert this timestamp to usable form
+	    uint16_t date = getUWord(m_ReadBuffer.GetNext(2));
+	    uint16_t time = getUWord(m_ReadBuffer.GetNext(2));
+	    pEntry->timestamp = (time_t)CGenericTime(date, time);
+	    
+	    pEntry->data_crc = getUWord(m_ReadBuffer.GetNext(2));
+	    pEntry->original_size = getULong(m_ReadBuffer.GetNext(4));
+	    pEntry->compressed_size = getULong(m_ReadBuffer.GetNext(4));
+	    pEntry->version_major = m_ReadBuffer.GetNextByte();
+	    pEntry->version_minor = m_ReadBuffer.GetNextByte();
+	    pEntry->deleted = m_ReadBuffer.GetNextByte();
+	    pEntry->spared = m_ReadBuffer.GetNextByte(); // padding-byte only?
+	    pEntry->comment_position = getULong(m_ReadBuffer.GetNext(4));
+	    pEntry->comment_size = getUWord(m_ReadBuffer.GetNext(2));
+	    
+	    // TODO: rest of values (variable-entry)
+	}
+
+
+
 }
 
 
@@ -1129,6 +1155,9 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
     m_archiveInfo.version_major = m_ReadBuffer.GetNextByte();
     m_archiveInfo.version_minor = m_ReadBuffer.GetNextByte();
 
+	// set size so far..
+	m_archiveInfo.header_size = 34;
+
 	// extension of header in newer formats
 	// if first entry is not directly after "old" header
 	if (m_archiveInfo.first_entry_pos > 34)
@@ -1142,6 +1171,8 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 		m_archiveInfo.comment_pos = getULong(m_ReadBuffer.GetNext(4));
 		m_archiveInfo.comment_size = getUWord(m_ReadBuffer.GetNext(2));
 		m_archiveInfo.modgen = m_ReadBuffer.GetNextByte();
+		m_archiveInfo.is_new_style = true;
+		m_archiveInfo.header_size += 8; // update (extension included)
 	}
     return true;
 }
@@ -1395,6 +1426,7 @@ bool CUnZoo::ListContents()
     {
         throw ArcException("could not open archive", m_szArchive);
     }
+    m_nFileSize = archive.GetSize();
 
 	// should throw exception on error anyway..
 	if (readArchiveDescription(archive) == false)
