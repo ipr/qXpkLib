@@ -1,4 +1,12 @@
 //////////////////////////////////////////////////////
+//
+// CUnZoo :
+// Ilkka Prusi <ilkka.prusi@gmail.com>
+//
+// Rewrite of unzoo.c by Martin Schoenert
+// 
+// This file in public domain.
+//
 /*
 *  unzoo.c by Martin Schoenert
 *
@@ -406,6 +414,8 @@ unsigned long   TripReadArch ()
     return result;
 }
 
+// for fucks sake.. it's 4 bytes, not 2
+// -> why not say so ? it's supposed to be Dword then..
 unsigned long   WordReadArch ()
 {
     unsigned long       result;
@@ -417,108 +427,7 @@ unsigned long   WordReadArch ()
 }
 
 
-struct 
-{
-    char                text[20];       /* "ZOO 2.10 Archive.<ctr>Z"       */
-    unsigned long       magic;          /* magic word 0xfdc4a7dc           */
-    unsigned long       posent;         /* position of first directory ent.*/
-    unsigned long       klhvmh;         /* two's complement of posent      */
-    unsigned char       majver;         /* major version needed to extract */
-    unsigned char       minver;         /* minor version needed to extract */
-    unsigned char       type;           /* type of current member (0,1)    */
-    unsigned long       poscmt;         /* position of comment, 0 if none  */
-    unsigned short      sizcmt;         /* length   of comment, 0 if none  */
-    unsigned char       modgen;         /* gens. on, gen. limit            */
-    /* the following are not in the archive file and are computed          */
-    unsigned long       sizorg;         /* uncompressed size of members    */
-    unsigned long       siznow;         /*   compressed size of members    */
-    unsigned long       number;         /* number of members               */
 
-}               Descript;
-
-// read archive metadata
-bool CUnZoo::DescReadArch(CAnsiFile &archive)
-{
-    /* read the text at the beginning                                      */
-    
-    // TODO: read all at once instead..
-    if (archive.Read(m_ReadBuffer.GetBegin(), 20) == false)
-    {
-		return false;
-    }
-    
-    ::memcpy(Descript.text, m_ReadBuffer.GetBegin(), 20);
-    Descript.text[20] = '\0';
-
-    /* try to read the magic words                                         */
-    if ( (Descript.magic = WordReadArch()) != (unsigned long)0xfdc4a7dcL )
-    {
-        return false;
-	}
-
-    /* read the old part of the description                                */
-    Descript.posent = WordReadArch();
-    Descript.klhvmh = WordReadArch();
-    Descript.majver = ByteReadArch();
-    Descript.minver = ByteReadArch();
-
-    /* read the new part of the description if present                     */
-    Descript.type   = (34 < Descript.posent ? ByteReadArch() : 0);
-    Descript.poscmt = (34 < Descript.posent ? WordReadArch() : 0);
-    Descript.sizcmt = (34 < Descript.posent ? HalfReadArch() : 0);
-    Descript.modgen = (34 < Descript.posent ? ByteReadArch() : 0);
-
-    /* initialize the fake entries                                         */
-    Descript.sizorg = 0;
-    Descript.siznow = 0;
-    Descript.number = 0;
-
-    /* indicate success                                                    */
-    return true;
-}
-
-struct {
-    unsigned long       magic;          /* magic word 0xfdc4a7dc           */
-    unsigned char       type;           /* type of current member (1)      */
-    unsigned char       method;         /* packing method of member (0..2) */
-    unsigned long       posnxt;         /* position of next member         */
-    unsigned long       posdat;         /* position of data                */
-    unsigned short      datdos;         /* date (in DOS format)            */
-    unsigned short      timdos;         /* time (in DOS format)            */
-    unsigned short      crcdat;         /* crc value of member             */
-    unsigned long       sizorg;         /* uncompressed size of member     */
-    unsigned long       siznow;         /*   compressed size of member     */
-    unsigned char       majver;         /* major version needed to extract */
-    unsigned char       minver;         /* minor version needed to extract */
-    unsigned char       deleted;         /* 1 if member is deleted, 0 else  */
-    unsigned char       spared;         /* spare entry to pad entry        */
-    unsigned long       poscmt;         /* position of comment, 0 if none  */
-    unsigned short      sizcmt;         /* length   of comment, 0 if none  */
-
-	////////////    
-    // remove this, pointless old hack:
-    // only use if proper name is empty, read to temp and determine there..
-    // only msdos ever needed this kind of stuff?
-    char                nameshort [14];      /* short name of member or archive */
-	////////////    
-    
-    unsigned short      lvar;           /* length of variable part         */
-    unsigned char       timzon;         /* time zone                       */
-    unsigned short      crcent;         /* crc value of entry              */
-    unsigned char       lnamu;          /* length of long name             */
-    unsigned char       ldiru;          /* length of directory             */
-    
-    // TODO: replace with QString / std::string
-    char                fileName [256];     /* namu: univ. name of member of archive */
-    char                dirName [256];     /* diru: univ. name of directory         */
-    
-    unsigned short      systemid;         /* system identifier               */
-    unsigned long       permis;         /* file permissions                */
-    unsigned char       modgen;         /* gens. on, last gen., gen. limit */
-    unsigned short      ver;            /* version number of member        */
-    
-    time_t            timestamp; /* timestamp in usable form */
-}               Entry;
 
 int EntrReadArch (CAnsiFile &archive)
 {
@@ -533,21 +442,22 @@ int EntrReadArch (CAnsiFile &archive)
     }
 
     /* read the fixed part of the directory entry                          */
-    Entry.type   = ByteReadArch();
-    Entry.method = ByteReadArch();
-    Entry.posnxt = WordReadArch();
-    Entry.posdat = WordReadArch();
-    Entry.datdos = HalfReadArch();
-    Entry.timdos = HalfReadArch();
-    Entry.crcdat = HalfReadArch();
-    Entry.sizorg = WordReadArch();
-    Entry.siznow = WordReadArch();
-    Entry.majver = ByteReadArch();
-    Entry.minver = ByteReadArch();
-    Entry.deleted = ByteReadArch();
-    Entry.spared = ByteReadArch();
-    Entry.poscmt = WordReadArch();
-    Entry.sizcmt = HalfReadArch();
+    Entry.type   = ByteReadArch(); // 1 
+    Entry.method = ByteReadArch(); // 1
+    Entry.posnxt = WordReadArch(); // 4
+    Entry.posdat = WordReadArch(); // 4
+    Entry.datdos = HalfReadArch(); // 2
+    Entry.timdos = HalfReadArch(); // 2
+    Entry.crcdat = HalfReadArch(); // 2
+    Entry.sizorg = WordReadArch(); // 4
+    Entry.siznow = WordReadArch(); // 4
+    Entry.majver = ByteReadArch(); // 1
+    Entry.minver = ByteReadArch(); // 1
+    Entry.deleted = ByteReadArch(); // 1
+    Entry.spared = ByteReadArch(); // 1
+    Entry.poscmt = WordReadArch(); // 4
+    Entry.sizcmt = HalfReadArch(); // 2
+    // -> 34 bytes
 
 	// some short name (fucking msdos..)    
     if (archive.Read(Entry.nameshort,13L) == false)
@@ -610,10 +520,6 @@ int EntrReadArch (CAnsiFile &archive)
 */
 bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFile)
 {
-    //unsigned long  blockSize;            /* size of current block           */
-    //unsigned long       crc;            /* CRC-16 value                    */
-    //unsigned long       i;              /* loop variable                   */
-
     /* initialize the crc value                                            */
     m_crc.ClearCrc(); // = 0;
     m_ReadBuffer.PrepareBuffer(8192, false); // clear, allocate if not enough
@@ -641,8 +547,6 @@ bool CUnZoo::DecodeCopy(unsigned long size, CAnsiFile &archive, CAnsiFile &outFi
         size -= blockSize;
     }
 
-    /* store the crc and indicate success                                  */
-    //m_crc.m_Crc;
     return true;
 }
 
@@ -1199,21 +1103,53 @@ bool CUnZoo::DecodeLzh(unsigned long size, CAnsiFile &archive, CAnsiFile &outFil
 //
 bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 {
+	// initialize statistical counters
+	// (constructor should already do this..)
+	m_ulTotalUnpacked = 0;
+	m_ulTotalPacked = 0;
+	m_ulTotalFiles = 0;
+
+    if (archive.Read(m_ReadBuffer.GetBegin(), 34) == false)
+    {
+		// file less than header size or just not readable,
+		// nothing to do here anyway -> just get out of here
+		throw IOException("Failed to read header");
+    }
+    if (m_archiveInfo.isSupported(m_ReadBuffer.GetBegin()) == false)
+    {
+		throw IOException("Unsupported file type");
+    }
+    
+    m_archiveInfo.description.assign((char*)m_ReadBuffer.GetBegin(), 20);
+    m_ReadBuffer.SetCurrentPos(20); // simplify rest.. keep counting offset
+    m_archiveInfo.magicid = getULong(m_ReadBuffer.GetNext(4));
+    m_archiveInfo.first_entry_pos = getULong(m_ReadBuffer.GetNext(4));
+    m_archiveInfo.klhvmh = getULong(m_ReadBuffer.GetNext(4));
+    
+    m_archiveInfo.version_major = m_ReadBuffer.GetNextByte();
+    m_archiveInfo.version_minor = m_ReadBuffer.GetNextByte();
+
+	// extension of header in newer formats
+	// if first entry is not directly after "old" header
+	if (m_archiveInfo.first_entry_pos > 34)
+	{
+		// 8 bytes as optional information
+		if (archive.Read(m_ReadBuffer.GetCurrentPos(), 8) == false)
+		{
+			throw IOException("Failed to read header extension");
+		}
+		m_archiveInfo.member_type = m_ReadBuffer.GetNextByte();
+		m_archiveInfo.comment_pos = getULong(m_ReadBuffer.GetNext(4));
+		m_archiveInfo.comment_size = getUWord(m_ReadBuffer.GetNext(2));
+		m_archiveInfo.modgen = m_ReadBuffer.GetNextByte();
+	}
+    return true;
 }
 
 // read list of archive contents into entry-list
 //
-bool CUnZoo::ListArchive(const std::string &archiveName)
+bool CUnZoo::ListArchive(const CAnsiFile &archive)
 {
-    CAnsiFile archive(archiveName);
-    if (archive.IsOk() == false)
-    {
-        throw ArcException("unzoo: could not open archive", archiveName);
-    }
-	if (readArchiveDescription(archive) == false) 
-	{
-		throw ArcException("unzoo: bad description in archive", archiveName);
-	}
 
     /* if present, print the archive comment                               */
     if ( ver && Descript.sizcmt != 0 ) 
@@ -1333,17 +1269,8 @@ bool CUnZoo::ListArchive(const std::string &archiveName)
 **  If <ovr> is 0, members will not overwrite  existing files; otherwise they
 **  will.  <pre> is a prefix that is prepended to all path names.
 */
-bool CUnZoo::ExtrArch(const std::string &archiveName)
+bool CUnZoo::ExtrArch(CAnsiFile &archive)
 {
-    CAnsiFile archive(archiveName);
-    if (archive.IsOk() == false)
-    {
-        throw ArcException("unzoo: could not open archive", archiveName);
-    }
-	if (DescReadArch(archive) == false) 
-	{
-        throw ArcException("unzoo: bad description in archive", archiveName);
-    }
 
 	// Descript.sizcmt has "!TEXT!" or "!MACBINARY!" in some cases,
 	// we should treat all files as being just blobs of binary data:
@@ -1463,6 +1390,18 @@ bool CUnZoo::GetEntryList(tEntryList &lstArchiveInfo)
 // get list of archive entries to entry-list
 bool CUnZoo::ListContents()
 {
+    CAnsiFile archive(m_szArchive);
+    if (archive.IsOk() == false)
+    {
+        throw ArcException("could not open archive", m_szArchive);
+    }
+
+	// should throw exception on error anyway..
+	if (readArchiveDescription(archive) == false)
+	{
+        throw ArcException("failed reading header", m_szArchive);
+	}
+	
 	return ListArchive(m_szArchive);
 }
 
