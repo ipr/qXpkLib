@@ -53,6 +53,18 @@ Credits:
 Licensing:
 GPL v2, see COPYING.txt
 
+Implementation, design:
+* qXpkLib implements master-library levels 2 and 1 of original XPK design
+ - includes XPK, XFD and XAD master libraries
+ - most of file-IO, type detection and sub-library loading is in master-library
+* extension sub-libraries implement only level 0 of original design
+ - decrunch/decompress/extraction only in level 0
+* sub-libraries depend at compile-time on code and definitions in master-library 
+ - these may be considered "derived" from master in places (shared code)
+* master library does not depend on sub-libraries at compile-time
+ - sub-libraries can be replaced with others by same name implementing same base-interface defined in master-library
+ - only naming and interface are defined in master-library, actual decompression only in sub-libraries
+
 Current status:
 * XPK file format chunks read (seems to be correct..)
 * initial support for loading libraries
@@ -72,15 +84,74 @@ Current status:
 * plan includes support for 64-bit builds eventually..
 * ...
 
-Implementation, design:
-* qXpkLib implements master-library levels 2 and 1 of original XPK design
- - includes XPK, XFD and XAD master libraries
- - most of file-IO, type detection and sub-library loading is in master-library
-* extension sub-libraries implement only level 0 of original design
- - decrunch/decompress/extraction only in level 0
-* sub-libraries depend at compile-time on code and definitions in master-library 
- - these may be considered "derived" from master in places (shared code)
-* master library does not depend on sub-libraries at compile-time
- - sub-libraries can be replaced with others by same name implementing same base-interface defined in master-library
- - only naming and interface are defined in master-library, actual decompression only in sub-libraries
+Sub-library status, see respective README for details:
+* LhA/Lzh (xadLha): 
+ - various platforms, multi-file archives
+ - mostly working, not tested with new interface (was separate as qLhaLib with specific interface)
+ - interface may need some fixes as continuing development
+ - extracting files only supported (for now)
+* LZX (xadLZX) :
+ - originally on Amiga only, multi-file archives
+ - mostly working, not tested with new interface (was separate as qLZXLib with specific interface)
+ - interface may need some fixes as continuing development
+ - extracting files only supported (for now)
+* ZOO (xadZOO) :
+ - originally? unknown, various platforms have used it.. multi-file archives
+ - in progress of updating and modifying code for better platform-indenpendency
+ - also fitting code to work in extension library (without console)
+ - extracting files only supported (for now)
+* ACE (xadACE) :
+ - multi-file archives
+ - in progress of modifying code fit in extension library (without console)
+ - extracting files only supported (for now)
+* ISO-9660 (xadISO) :
+ - multi-file CD/DVD images
+ - not actually archive but can be considered collection of files anyway..
+ - extracting files only planned
+ - in progress of coding..
+* BZip2 (xadBzip2) :
+ - in progress.. changes to fit in extension library (without console etc.)
+* Imploder (xfdImploder) :
+ - originally on Amiga
+ - single compressed file only
+ - should be working, not tested
+ - uncompressing/unpacking only supported (for now)
+* PowerPacker (xfdPowerPacker) :
+ - originally on Amiga
+ - single compressed file only
+ - should be working, not tested
+ - uncompressing/unpacking only supported (for now)
+* Z (xfdZCompress) :
+ - originally on Un*x variants
+ - single compressed file only
+ - should be working, not tested
+ - uncompressing/unpacking only supported (for now)
+* SZDD (xfdSZDD) :
+ - originally on Windows
+ - single compressed file only
+ - should be working, not tested
+ - uncompressing/unpacking only supported (for now)
+* FAST (xpkFAST) :
+ - originally on Amiga
+ - single compressed file only
+ - in progress, converting M68k-ASM to C/C++ ..
+* NONE (xpkNONE) :
+ - originally on Amiga
+ - no compression (input same as output)
+ - for testing use only
+* NUKE (xpkNUKE) :
+ - not done, placeholder for now
+* DUKE (xpkDUKE) :
+ - not done, placeholder for now
+* RLEN (xpkRLEN) :
+ - originally on Amiga
+ - simple runlength-compression of files
+ - uncompressing/unpacking only supported (for now)
+ - should be working, not tested
+* SQSH (xpkSQSH) :
+ - originally on Amiga
+ - single compressed file only
+ - uncompressing/unpacking only supported (for now)
+ - not tested, should be working..?
 
+* various other libraries are planned, some have placeholders already
