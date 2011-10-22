@@ -15,6 +15,11 @@ xadZOO::xadZOO()
  : xadLibraryBase()
  , m_pArchive(nullptr)
 {
+	// only to/from file(s) supported here
+	m_XpkCaps.input.file = true;
+	m_XpkCaps.output.file = true;
+	m_XpkCaps.m_LibIdentifier = "ZOO";
+	m_XpkCaps.m_LibDescription = "ZOO uncompressing implementation";
 }
 
 xadZOO::~xadZOO()
@@ -25,7 +30,6 @@ xadZOO::~xadZOO()
 		m_pArchive = nullptr;
 	}
 }
-
 
 // TODO:
 bool xadZOO::setArchive(QString &file)

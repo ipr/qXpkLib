@@ -17,6 +17,11 @@ xpkLibraryBase *GetXpkInstance(void)
 xpkNONE::xpkNONE()
  : xpkLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "NONE";
+	m_XpkCaps.m_LibDescription = "XPK (NONE) no-compression implementation";
 }
 
 xpkNONE::~xpkNONE()
@@ -25,38 +30,28 @@ xpkNONE::~xpkNONE()
 
 bool xpkNONE::Crunch(XpkProgress *pProgress)
 {
-	return false;
-}
-
-// this is dummy: output is same as input
-bool xpkNONE::Decrunch(XpkProgress *pProgress)
-{
-	// get size of chunk in read-buffer
-	size_t nChunkSize = pProgress->pInputBuffer->GetCurrentPos();
-	
 	// copy input to output and set status
 	unsigned char *pSource = pProgress->pInputBuffer->GetBegin();
 	
 	// append after existing data, keep old,
 	// grow buffer if necessary
 	//
-	pProgress->pOutputBuffer->Append(pSource, nChunkSize);
-
-	// update status and statistics etc.
-	// for master-library
-	//
-	pProgress->xp_PackedProcessed += nChunkSize;
-	pProgress->xp_UnpackedProcessed += nChunkSize;
-	if (pProgress->xp_UnpackedProcessed < pProgress->xp_UnpackedSize)
-	{
-		pProgress->xp_Type = XPKPROG_MID;
-	}
-	else
-	{
-		pProgress->xp_Type = XPKPROG_END;
-		pProgress->xp_PercentageDone = 100;
-	}
+	pProgress->pOutputBuffer->Append(pSource, pProgress->xp_chunkIn);
 	
+	return true;
+}
+
+// this is dummy: output is same as input
+bool xpkNONE::Decrunch(XpkProgress *pProgress)
+{
+	// copy input to output and set status
+	unsigned char *pSource = pProgress->pInputBuffer->GetBegin();
+	
+	// append after existing data, keep old,
+	// grow buffer if necessary
+	//
+	pProgress->pOutputBuffer->Append(pSource, pProgress->xp_chunkIn);
+
 	return true;
 }
 

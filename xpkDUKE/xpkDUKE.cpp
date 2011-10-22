@@ -75,6 +75,11 @@ void UndoDelta(uchar *dst, uchar *src, int32_t len)
 xpkDUKE::xpkDUKE()
     : xpkLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "DUKE";
+	m_XpkCaps.m_LibDescription = "XPK (DUKE) implementation";
 }
 
 xpkDUKE::~xpkDUKE()

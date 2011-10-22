@@ -201,18 +201,16 @@ l6c6:
 		d5 = 4;
 		d2 += 8;
 	}
+	else if (d2 < 20) 
+	{
+		d5 = 0;
+	}
 	else
 	{
-		if (d2 < 20) 
-		{
-			d5 = 0;
-		}
-		else
-		{
-			d5 = 1;
-			d2 += 8;
-		}
+		d5 = 1;
+		d2 += 8;
 	}
+	
 	goto l734; // <- now below..
 
 l734:
@@ -357,6 +355,11 @@ l7a8:
 xpkSQSH::xpkSQSH()
     : xpkLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "SQSH";
+	m_XpkCaps.m_LibDescription = "XPK (SQSH) implementation";
 }
 
 xpkSQSH::~xpkSQSH()
@@ -374,7 +377,11 @@ bool xpkSQSH::Decrunch(XpkProgress *pProgress)
 	// TODO: we should pass size of chunk to unpacking,
 	// then update amount of data actually processed..
 	
-	size_t nOut = pProgress->pOutputBuffer->GetCurrentPos();
+	//size_t nOut = pProgress->pOutputBuffer->GetCurrentPos();
+	
+	// TODO: use sizes for input & output..
+	//pProgress->xp_chunkIn;
+	//pProgress->xp_chunkOut;
 
 	unsqsh(pProgress->pInputBuffer->GetAtCurrent(), pProgress->pOutputBuffer->GetAtCurrent());
 	

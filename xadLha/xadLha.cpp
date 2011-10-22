@@ -16,6 +16,15 @@ xadLha::xadLha()
  : xadLibraryBase()
  , m_pArchive(nullptr)
 {
+	// only from file supported here
+	m_XpkCaps.input.file = true;
+	
+	// output (optionally) to buffer
+	m_XpkCaps.output.file = true;
+	m_XpkCaps.output.buffer = true;
+	
+	m_XpkCaps.m_LibIdentifier = "LhA";
+	m_XpkCaps.m_LibDescription = "LhA unpacking implementation";
 }
 
 xadLha::~xadLha()

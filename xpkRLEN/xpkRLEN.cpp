@@ -1,3 +1,12 @@
+///////////////////////////////////////
+//
+// XPK RLEN sub-library implementation for qXpkLib
+//
+// Original Written by Dirk Stöcker <stoecker@amigaworld.com>
+// UNIX version by Vesa Halttunen <vesuri@jormas.com>
+// C++ library version by Ilkka Prusi <ilkka.prusi@gmail.com>
+//
+
 #include "xpkRLEN.h"
 
 // from master-project for buffer-class
@@ -22,6 +31,11 @@ xpkLibraryBase *GetXpkInstance(void)
 xpkRLEN::xpkRLEN()
  : xpkLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "RLEN";
+	m_XpkCaps.m_LibDescription = "XPK (RLEN) implementation";
 }
 
 xpkRLEN::~xpkRLEN()
@@ -36,36 +50,24 @@ bool xpkRLEN::Crunch(XpkProgress *pProgress)
 
 bool xpkRLEN::Decrunch(XpkProgress *pProgress)
 {
-	//unsigned char *pIn = pProgress->pInputBuffer->GetBegin();
-	//unsigned char *pOut = pProgress->pOutputBuffer->GetBegin();
-	
 	// keep input size and set to start
 	const size_t nInputSize = pProgress->xp_chunkIn;
-	//pProgress->pInputBuffer->SetCurrentPos(0); // should be set by master-library..
 	
 	while (pProgress->pInputBuffer->IsEnd() == false)
 	{
 		int iVal = *(pProgress->pInputBuffer->GetAtCurrent());
 		if (iVal > 0)
 		{
+			// copy next N bytes as-is to output
 			pProgress->pOutputBuffer->Append(pProgress->pInputBuffer->GetAtCurrent(), iVal-1);
-			/*
-			for(; iVal > 0; iVal--)
-			{
-				int iCpy = *(pProgress->pInputBuffer->GetAtCurrent());
-				*put++ = iCpy;
-			}
-			*/
 		}
 		else
 		{
-			// repeat to output
+			// repeat BYTE to output
 			int iCpy = *(pProgress->pInputBuffer->GetAtCurrent());
 			for (iVal = -iVal; iVal > 0; iVal--)
 			{
-				unsigned char *pOut = pProgress->pOutputBuffer->GetAtCurrent();
-				*pOut++ = (unsigned char)iCpy;
-				pProgress->pOutputBuffer->SetCurrentPos(pProgress->pOutputBuffer->GetCurrentPos()+1);
+				pProgress->pOutputBuffer->SetNextByte((uint8_t)iCpy);
 			}
 		}
 	}

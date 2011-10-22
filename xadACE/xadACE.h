@@ -10,6 +10,8 @@
 
 #include "qxpklib.h"
 
+// fwd. decl.
+class CUnACE;
 
 class XADACESHARED_EXPORT xadACE : public xadLibraryBase
 {
@@ -31,7 +33,9 @@ public:
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
-	
+
+private:
+	CUnACE *m_pArchive;
 };
 
 

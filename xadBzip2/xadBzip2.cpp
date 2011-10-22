@@ -14,6 +14,11 @@ xadBzip2::xadBzip2()
  : xadLibraryBase()
  , m_pArchive(nullptr)
 {
+	// only to/from buffer supported here
+	//m_XpkCaps.input.buffer = true;
+	//m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "BZip2";
+	m_XpkCaps.m_LibDescription = "BZip2 uncompressing implementation";
 }
 
 xadBzip2::~xadBzip2()

@@ -21,6 +21,11 @@ xfdLibraryBase *GetXpkInstance(void)
 xfdSZDD::xfdSZDD()
     : xfdLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "SZDD";
+	m_XpkCaps.m_LibDescription = "SZDD uncompressing implementation";
 }
 
 xfdSZDD::~xfdSZDD()
@@ -67,8 +72,6 @@ bool xfdSZDD::Decrunch(XpkProgress *pProgress)
 		
 		pProgress->xp_UnpackedSize = szdd.GetUnpackedSize(); // size of whole file as unpacked
 		pProgress->xp_chunkOut = szdd.GetUnpackedSize(); // whole file as single chunk
-		pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
-		pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		
 		// no exception -> success
 		return true;

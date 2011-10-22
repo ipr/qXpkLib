@@ -14,8 +14,6 @@ public:
     xpkHUFF();
     virtual ~xpkHUFF();
 
-	virtual bool Crunch(XpkProgress *pProgress);
-	
 	virtual bool Decrunch(XpkProgress *pProgress);
 	
 };

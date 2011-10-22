@@ -23,6 +23,11 @@ xfdLibraryBase *GetXpkInstance(void)
 xfdImploder::xfdImploder()
 	: xfdLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "IMPL";
+	m_XpkCaps.m_LibDescription = "Amiga Imploder uncompressing implementation";
 }
 
 xfdImploder::~xfdImploder()
@@ -74,8 +79,6 @@ bool xfdImploder::Decrunch(XpkProgress *pProgress)
 
 		pProgress->xp_UnpackedSize = Impl.GetUnpackedSize(); // size of whole file as unpacked
 		pProgress->xp_chunkOut = Impl.GetUnpackedSize(); // whole file as single chunk
-		pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
-		pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		
 		// no exception -> success
 		return true;

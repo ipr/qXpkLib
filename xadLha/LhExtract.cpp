@@ -354,12 +354,11 @@ void CLhExtract::SetExtractPath(QString &szExtractPath)
 	// fix path name if MSDOS-style..
 	// check ending too
 	//
-	QString szTempPath = szExtractPath;
-	szTempPath.replace('\\', "/");
-	if (szTempPath.at(szTempPath.length() -1) != '/')
+	szExtractPath.replace('\\', "/");
+	if (szExtractPath.at(szExtractPath.length() -1) != '/')
 	{
-		szTempPath += "/";
+		szExtractPath += "/";
 	}
 	
-	m_szExtractPath = szTempPath;
+	m_szExtractPath = szExtractPath;
 }

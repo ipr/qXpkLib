@@ -26,6 +26,11 @@ xpkLibraryBase *GetXpkInstance(void)
 xpkNUKE::xpkNUKE()
     : xpkLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "NUKE";
+	m_XpkCaps.m_LibDescription = "XPK (NUKE) implementation";
 }
 
 xpkNUKE::~xpkNUKE()

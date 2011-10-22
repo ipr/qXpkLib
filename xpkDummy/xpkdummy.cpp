@@ -23,67 +23,15 @@ xpkDummy::~xpkDummy()
 {
 }
 
-// this is dummy: output is same as input
+// this is dummy: no change in buffers
 bool xpkDummy::Crunch(XpkProgress *pProgress)
 {
-	// get size of chunk in read-buffer
-	size_t nChunkSize = pProgress->pInputBuffer->GetCurrentPos();
-	
-	// copy input to output and set status
-	unsigned char *pSource = pProgress->pInputBuffer->GetBegin();
-	
-	// append after existing data, keep old,
-	// grow buffer if necessary
-	//
-	pProgress->pOutputBuffer->Append(pSource, nChunkSize);
-
-	// update status and statistics etc.
-	// for master-library
-	//
-	pProgress->xp_PackedProcessed += nChunkSize;
-	pProgress->xp_UnpackedProcessed += nChunkSize;
-	if (pProgress->xp_UnpackedProcessed < pProgress->xp_UnpackedSize)
-	{
-		pProgress->xp_Type = XPKPROG_MID;
-	}
-	else
-	{
-		pProgress->xp_Type = XPKPROG_END;
-		pProgress->xp_PercentageDone = 100;
-	}
-	
 	return true;
 }
 
-// this is dummy: output is same as input
+// this is dummy: no change in buffers
 bool xpkDummy::Decrunch(XpkProgress *pProgress)
 {
-	// get size of chunk in read-buffer
-	size_t nChunkSize = pProgress->pInputBuffer->GetCurrentPos();
-	
-	// copy input to output and set status
-	unsigned char *pSource = pProgress->pInputBuffer->GetBegin();
-	
-	// append after existing data, keep old,
-	// grow buffer if necessary
-	//
-	pProgress->pOutputBuffer->Append(pSource, nChunkSize);
-
-	// update status and statistics etc.
-	// for master-library
-	//
-	pProgress->xp_PackedProcessed += nChunkSize;
-	pProgress->xp_UnpackedProcessed += nChunkSize;
-	if (pProgress->xp_UnpackedProcessed < pProgress->xp_UnpackedSize)
-	{
-		pProgress->xp_Type = XPKPROG_MID;
-	}
-	else
-	{
-		pProgress->xp_Type = XPKPROG_END;
-		pProgress->xp_PercentageDone = 100;
-	}
-	
 	return true;
 }
 

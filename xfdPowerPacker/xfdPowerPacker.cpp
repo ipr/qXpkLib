@@ -24,6 +24,11 @@ xfdLibraryBase *GetXpkInstance(void)
 xfdPowerPacker::xfdPowerPacker()
  : xfdLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "PP20";
+	m_XpkCaps.m_LibDescription = "Amiga PowerPacker uncompressing implementation";
 }
 
 xfdPowerPacker::~xfdPowerPacker()
@@ -75,8 +80,6 @@ bool xfdPowerPacker::Decrunch(XpkProgress *pProgress)
 		
 		pProgress->xp_UnpackedSize = PP.GetUnpackedSize(); // size of whole file as unpacked
 		pProgress->xp_chunkOut = PP.GetUnpackedSize(); // whole file as single chunk
-		pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
-		pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
 		
 		// no exception -> success
 		return true;

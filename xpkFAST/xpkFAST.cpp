@@ -44,6 +44,11 @@ xpkFAST::xpkFAST()
     : xpkLibraryBase()
     , m_pFast(nullptr)
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "FAST";
+	m_XpkCaps.m_LibDescription = "XPK (FAST) implementation";
 }
 
 xpkFAST::~xpkFAST()

@@ -21,6 +21,11 @@ xfdLibraryBase *GetXpkInstance(void)
 xfdZCompress::xfdZCompress()
     : xfdLibraryBase()
 {
+	// only to/from buffer supported here
+	m_XpkCaps.input.buffer = true;
+	m_XpkCaps.output.buffer = true;
+	m_XpkCaps.m_LibIdentifier = "Z";
+	m_XpkCaps.m_LibDescription = "Z-compress unpacking library";
 }
 
 xfdZCompress::~xfdZCompress()
@@ -54,9 +59,6 @@ bool xfdZCompress::Decrunch(XpkProgress *pProgress)
 			
 			pProgress->xp_UnpackedSize = nResultSize; // size of whole file as unpacked
 			pProgress->xp_chunkOut = nResultSize; // whole file as single chunk
-			pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
-			pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
-			
 			return true;
 		}
 		return false; // not needed (fallthrough)

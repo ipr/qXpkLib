@@ -14,6 +14,11 @@ xadLZX::xadLZX()
  : xadLibraryBase()
  , m_pArchive(nullptr)
 {
+	// only to/from file(s) supported here
+	m_XpkCaps.input.file = true;
+	m_XpkCaps.output.file = true;
+	m_XpkCaps.m_LibIdentifier = "LZX";
+	m_XpkCaps.m_LibDescription = "Amiga LZX unpacking implementation";
 }
 
 xadLZX::~xadLZX()

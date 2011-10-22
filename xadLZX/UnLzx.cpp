@@ -974,19 +974,6 @@ bool CUnLzx::SetExtractPath(const std::string &szOutPath)
 	m_szExtractionPath = szOutPath;
 	if (m_szExtractionPath.length() > 0)
 	{
-		// replace "\\" by "/"..
-		//m_szExtractionPath.replace('\\', "/");
-		auto it = m_szExtractionPath.begin();
-		auto itEnd = m_szExtractionPath.end();
-		while (it != itEnd)
-		{
-			if ((*it) == '\\')
-			{
-				(*it) = '/';
-			}
-			++it;
-		}
-
 		// check proper ending..
 		if (m_szExtractionPath.at(m_szExtractionPath.length() -1) != '/')
 		{

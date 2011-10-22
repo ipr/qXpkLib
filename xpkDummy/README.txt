@@ -1,15 +1,14 @@
 
 xpkDummy
 
-
 Author: Ilkka Prusi
 Contact ilkka.prusi@gmail.com
-
 
 Summary:
 "Dummy" decoder for qXpkLib to load.
 
-This is just for interface&library load testing, output is same as input.
+This is just for interface&library load testing, no change in input/output.
 
-Similar to "xpkNONE" library in original in that nothing is done to data in pack/unpack.
+Similar to "xpkNONE" library in original except NONE 
+gives input as output without modification.
 
