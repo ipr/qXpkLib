@@ -190,6 +190,12 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return bSupported;
 }
 
+// Note: will need additional handling 
+// in case of multi-volume archives (archive spanning/split into multiple files),
+// at least need some pattern matching of which files belong to same volume..?
+//
+// At least RAR and ACE support multi-volume archives?
+//
 bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 {
 	CAnsiFile InFile;
