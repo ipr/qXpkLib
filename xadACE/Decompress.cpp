@@ -121,6 +121,7 @@ void readdat(void)
 }
 
 
+
 //---------------------- COMMENT DECOMPRESSION -----------------------------//
 
 void dcpr_comm_init(void)
@@ -399,11 +400,13 @@ bool  read_wd(UINT maxwd, USHORT * code, UCHAR * wd, INT max_el)
 
 }
 
-bool calc_dectabs(void)
+bool CDecompress::calc_dectabs(void)
 {
    if (read_wd(maxwd_mn, dcpr_code_mn, dcpr_wd_mn, max_cd_mn) == false
        || read_wd(maxwd_lg, dcpr_code_lg, dcpr_wd_lg, max_cd_lg) == false)
+   {
       return false;
+   }
 
    blocksize = code_rd >> (32 - 15);
    addbits(15);
@@ -412,14 +415,15 @@ bool calc_dectabs(void)
 }
 
 //---------------------------- BLOCK ROUTINES ------------------------------//
-INT  decompress_blk(CHAR * buf, UINT len)
+int16_t CDecompress::decompress_blk(CHAR * buf, UINT len)
 {
-   LONG old_pos = dcpr_dpos;
-   INT  i;
+   int32_t old_pos = dcpr_dpos;
 
    dcpr_do = 0;
    if ((dcpr_do_max = len - maxlength) > dcpr_size)
+   {
       dcpr_do_max = dcpr_size;
+   }
    if ((LONG) dcpr_size > 0 && dcpr_do_max)
    {
       decompress();
@@ -427,7 +431,7 @@ INT  decompress_blk(CHAR * buf, UINT len)
       {
          if (old_pos + dcpr_do > dcpr_dicsiz)
          {
-            i = dcpr_dicsiz - old_pos;
+            int16_t i = dcpr_dicsiz - old_pos;
             memcpy(buf, &dcpr_text[old_pos], i);
             memcpy(&buf[i], dcpr_text, dcpr_do - i);
          }
@@ -439,9 +443,9 @@ INT  decompress_blk(CHAR * buf, UINT len)
    return (dcpr_do);
 }
 
-int16_t unstore(int8_t * buf, const size_t len)
+int16_t CDecompress::unstore(int8_t * buf, const size_t len)
 {
-   UINT rd = 0,
+   uint16_t rd = 0,
         i,
         pos = 0;
         
@@ -456,16 +460,17 @@ int16_t unstore(int8_t * buf, const size_t len)
       memcpy(&buf[pos], buf_rd, i);
       pos += i;
    }
-   for (i = 0; i < rd; i++)
+   
+   for (uint16_t i = 0; i < rd; i++)
    {
       dcpr_text[dcpr_dpos] = buf[i];
       dcpr_dpos++;
       dcpr_dpos &= dcpr_dican;
    }
-   return (INT)rd;
+   return rd;
 }
 
-int16_t dcpr_adds_blk(int8_t *buf, const size_t len)
+int16_t CDecompress::dcpr_adds_blk(int8_t *buf, const size_t len)
 {
    int16_t r = 0;
 
@@ -487,7 +492,7 @@ int16_t dcpr_adds_blk(int8_t *buf, const size_t len)
 
 //----------------------------- INIT ROUTINES ------------------------------//
 
-void dcpr_init_file(void)
+void CDecompress::dcpr_init_file(void)
 {
    //rd_crc = CRC_MASK;
 	m_Crc.ClearCrc();
@@ -497,12 +502,11 @@ void dcpr_init_file(void)
    {
       if ((fhead.TECH.PARM & 15) + 10 > dcpr_dic)
       {
-         printf("\nNot enough memory or dictionary of archive too large.\n");
-         f_err = ERR_MEM;
-         return;
+         //printf("\nNot enough memory or dictionary of archive too large.\n");
+         throw IOException("archive too large");
       }
 
-      UINT i = size_rdb * sizeof(LONG);
+      UINT i = size_rdb * sizeof(int32_t);
       read_adds_blk((CHAR *) buf_rd, i);
 #ifdef HI_LO_BYTE_ORDER
       {
@@ -556,8 +560,9 @@ void CDecompress::dcpr_init(void)
 
 ///////// public methods
 
-CDecompress::CDecompress(CReadBuffer *pDecrunchBuffer)
-	: m_pDecrunchBuffer(pDecrunchBuffer)
+CDecompress::CDecompress(CReadBuffer *pReadBuffer, CReadBuffer *pDecrunchBuffer)
+	: m_pReadBuffer(pReadBuffer)
+	, m_pDecrunchBuffer(pDecrunchBuffer)
 	, m_Crc()
 	, dcpr_text(nullptr)
 	, rpos(0)
@@ -576,6 +581,9 @@ CDecompress::CDecompress(CReadBuffer *pDecrunchBuffer)
 	, code_rd(0)
 {
 	::memset(dcpr_olddist, 0, 4*sizeof(uint32_t));
+	
+	size_rdb = pReadBuffer->GetSize();
+	buf_rd = (uint32_t*)pReadBuffer->GetBegin();
 	
 	dcpr_init();
 }

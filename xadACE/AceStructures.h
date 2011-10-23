@@ -40,7 +40,7 @@ enum FileHeaderFlags // also uint16_t
 };
 
 //block types
-enum BlockTypes
+enum BlockTypes // uint8_t
 {
 	MAIN_BLK = 0,
 	FILE_BLK = 1,
@@ -58,74 +58,116 @@ const int32_t acesign_len           = 7;
 const int32_t bytes_before_acesign  = 7;
 const int32_t acever                = 10;
 
+const int32_t aceheader_common_len  = 7;
 
 // force 1-byte align, no padding
-#pragma pack(push, 1)
+// on second though, don't cast to structures..
+//#pragma pack(push, 1)
 
+// what are these values?
 struct tech
 {
-   uint8_t TYPE;
-   uint8_t QUAL;
-   uint16_t PARM;
+	tech()
+	{
+		TYPE = 0;
+		QUAL = 0;
+		PARM = 0;
+	}
+	
+	uint8_t		TYPE;
+	uint8_t		QUAL;
+	uint16_t	PARM;
 };
 
-// ?
+// shared start of header for 
+// archive-header and entry-header
+//
 struct tacehead
 {
-   uint16_t HEAD_CRC;
-   uint16_t HEAD_SIZE;
-   uint8_t  HEAD_TYPE;
-   uint16_t HEAD_FLAGS;
-   uint32_t  ADDSIZE;
-   uint8_t  other[2048]; // ? variable-sized? -> remove from here..
+	// constructor
+	tacehead()
+	{
+		HEAD_CRC = 0;
+		HEAD_SIZE = 0;
+		HEAD_BLOCK_TYPE = 0;
+		HEAD_FLAGS = 0;
+	}
+
+	uint16_t	HEAD_CRC;
+	uint16_t	HEAD_SIZE; // size of header data
+	uint8_t		HEAD_BLOCK_TYPE; // see BlockTypes
+	uint16_t	HEAD_FLAGS;
 };
 
 // archive header contents
-struct tacemhead
+//
+struct acearchiveheader
 {
-   uint16_t HEAD_CRC;
-   uint16_t HEAD_SIZE;
-   uint8_t  HEAD_TYPE;
-   uint16_t HEAD_FLAGS;
+	acearchiveheader()
+	 : header()
+	{
+		VER_MOD = 0;
+		VER_CR = 0;
+		HOST_CR = 0;
+		VOL_NUM = 0;
+		TIME_CR = 0;
+		RES1 = 0;
+		RES2 = 0;
+		RES = 0;
+	}
 
-   uint8_t  ACESIGN[acesign_len];
-   uint8_t  VER_MOD;
-   uint8_t  VER_CR;
-   uint8_t  HOST_CR;
-   uint8_t  VOL_NUM;
-   uint32_t  TIME_CR;
-   uint16_t RES1;
-   uint16_t RES2;
-   uint32_t  RES;
-   uint8_t  AV_SIZE;
-   uint8_t  AV[256]; // is this really fixed-length? if not, remove from here..
-   uint16_t COMM_SIZE;
-   uint8_t  COMM[2048]; // is this really fixed-length? if not, remove from here..
+	tacehead	header;
+
+	// no need to keep this..
+	//uint8_t		ACESIGN[acesign_len]; // 7 characters
+	uint8_t		VER_MOD;
+	uint8_t		VER_CR;
+	uint8_t		HOST_CR;
+	uint8_t		VOL_NUM;
+	uint32_t	TIME_CR; // replace with time_t ..?
+	uint16_t	RES1;
+	uint16_t	RES2;
+	uint32_t	RES;
+	
+	//uint8_t  AV_SIZE; // authentication-verification information?
+	//uint8_t  AV[256]; // is this really fixed-length? if not, remove from here..
+	//uint16_t COMM_SIZE;
+	//uint8_t  COMM[2048]; // is this really fixed-length? if not, remove from here..
 };
 
-// file-entry header?
-struct tacefhead
+// file-entry header contents
+//
+struct acefileheader
 {
-   uint16_t HEAD_CRC;
-   uint16_t HEAD_SIZE;
-   uint8_t  HEAD_TYPE;
-   uint16_t HEAD_FLAGS;
+	acefileheader()
+	 : header()
+	 , TECH()
+	{
+		PSIZE = 0;
+		SIZE = 0;
+		FTIME = 0;
+		ATTR = 0;
+		CRC32 = 0;
+	}
+	
+	tacehead	header;
 
-   uint32_t  PSIZE;
-   uint32_t  SIZE;
-   uint32_t  FTIME;
-   uint32_t  ATTR;
-   uint32_t  CRC32;
-   struct tech TECH;
-   uint16_t RESERVED;
-   uint16_t FNAME_SIZE;
-   uint8_t  FNAME[512]; // check: can we replace with std::string
-   uint16_t COMM_SIZE;
-   uint8_t  COMM[2048]; // check: can we replace with std::string
+	uint32_t	PSIZE;
+	uint32_t	SIZE;
+	uint32_t	FTIME; // timestamp? replace with time_t ..?
+	uint32_t	ATTR; // attributes? which format?
+	uint32_t	CRC32;
+	struct tech	TECH;
+	uint16_t	RESERVED;
+	
+	//uint16_t FNAME_SIZE;
+	//uint8_t  FNAME[512]; // check: can we replace with std::string
+	//uint16_t COMM_SIZE;
+	//uint8_t  COMM[2048]; // check: can we replace with std::string
 };
 
 // restore normal align
-#pragma pack(pop)
+//#pragma pack(pop)
 
 
 #endif // ACESTRUCTURES_H

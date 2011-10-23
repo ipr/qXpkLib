@@ -30,7 +30,7 @@
 
 #include "AceStructures.h"
 
-
+// file-entry in archive
 class AceEntry
 {
 public:
@@ -38,7 +38,11 @@ public:
 	{}
 	
 	std::string fileName;
+	std::string comment;
+	
+	acefileheader m_header;
 };
+
 
 typedef std::vector<AceEntry*> tArchiveEntryList;
 
@@ -47,6 +51,9 @@ class CUnACE
 private:
 	std::string m_szArchive; // path and name of archive-file
 	size_t m_nFileSize; // filesize of archive in bytes
+
+	// archive header
+	acearchiveheader m_archiveHeader;
 
 	// list of items in archive (files)
 	tArchiveEntryList m_EntryList;
@@ -60,12 +67,33 @@ private:
 	// extracted to from current archive
 	// (may change on each extract() call..)
 	std::string m_szExtractionPath;
-	
+
 	// internal buffer for read information
 	CReadBuffer m_ReadBuffer;
 	CReadBuffer m_DecrunchBuffer;
 	
+	// could inherit from this..
 	CDecompress m_Decompress;
+
+protected:
+	// ace stores in little-endian order:
+	// "last" byte from buffer is shifted most
+
+	uint16_t getUWord(const uint8_t *pBuf) const
+	{
+		uint16_t res = pBuf[0];
+		res += (pBuf[1] << 8);
+		return res;
+	}
+
+	uint32_t getULong(const uint8_t *pBuf) const
+	{
+		uint32_t res = pBuf[0];
+		res += (pBuf[1] << 8);
+		res += (pBuf[2] << 16);
+		res += (pBuf[3] << 24);
+		return res;
+	}
 
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);

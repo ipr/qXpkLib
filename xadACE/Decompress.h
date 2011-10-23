@@ -97,22 +97,42 @@ protected:
 	{
 		return (a+b);
 	}
+	
+	void addbits(const int16_t bits)
+	{
+		bits_rd += bits;
+		rpos += (bits_rd) >> 5;
+		bits_rd &= 31;
+		if (rpos == (size_rdb-2)) 
+		{
+			readdat();
+		}
+		code_rd = (buf_rd[rpos] << bits_rd)+((buf_rd[rpos+1] >> (32-bits_rd))&(!bits_rd-1));
+	}
+	
 
-	int32_t calc_dectabs(void);
+	//int32_t calc_dectabs(void);
+	bool calc_dectabs(void);
 	void dcpr_comm(int32_t comm_size);
 	int32_t read_wd(uint32_t maxwd, uint16_t *code, uint8_t *wd, int32_t max_el);
+	int16_t unstore(int8_t * buf, const size_t len);
 	int32_t dcpr_adds_blk(int8_t *buf, uint32_t len);
 	void dcpr_init_file(void);
 
 	void dcpr_init(void);
+	
+	// replace later..
+	uint32_t *buf_rd;
+	size_t size_rdb;
 
 	// given by parent (shared for IO)
+	CReadBuffer *m_pReadBuffer;
 	CReadBuffer *m_pDecrunchBuffer;
 
 	CRCsum m_Crc;
 	
 public:
-    CDecompress(CReadBuffer *pDecrunchBuffer);
+    CDecompress(CReadBuffer *pReadBuffer, CReadBuffer *pDecrunchBuffer);
 };
 
 #endif // DECOMPRESS_H

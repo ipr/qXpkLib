@@ -20,10 +20,9 @@
 bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 {
 	m_ReadBuffer.PrepareBuffer(1024, false);
-	
-	// TODO: check how much necessary to read for file metadata,
-	// assuming this type..
-	if (archive.Read(m_ReadBuffer.GetBegin(), sizeof(tacemhead)) == false)
+
+	// at least 14 bytes is needed to identify file as ACE-archive
+	if (archive.Read(m_ReadBuffer.GetBegin(), bytes_before_acesign + acesign_len) == false)
 	{
 		throw IOException("Failed reading archive header");
 	}
@@ -32,15 +31,38 @@ bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 		// something else or wrong identifier -> not supported here
 		throw IOException("Unsupported file type");
 	}
+	m_ReadBuffer.SetCurrentPos(0); // should be already..
 	
-	tacemhead *aceHead = (tacemhead*)m_ReadBuffer.GetBegin();
+	/* on second though, better not this way after all..
+	tacearchead *aceHead = (tacearchead*)m_ReadBuffer.GetBegin();
 	if (aceHead->HEAD_FLAGS & ACE_PASSW)
 	{
 		throw ArcException("Passworded file: decryption not supported", m_szArchive);
 	}
+	*/
 	
-	// what to do with this?
-	//if (head.HEAD_FLAGS & ACE_AV)
+	m_archiveHeader.header.HEAD_CRC = getUWord(m_ReadBuffer.GetNext(2));
+	m_archiveHeader.header.HEAD_SIZE = getUWord(m_ReadBuffer.GetNext(2));
+	m_archiveHeader.header.HEAD_BLOCK_TYPE = m_ReadBuffer.GetNextByte();
+	m_archiveHeader.header.HEAD_FLAGS = getUWord(m_ReadBuffer.GetNext(2));
+	m_ReadBuffer.SetCurrentPos(m_ReadBuffer.GetCurrentPos()); // skip acesign, checked already
+	
+	// what to do with this flag if set?
+	if (m_archiveHeader.header.HEAD_FLAGS & ACE_AV)
+	{
+		// some kind of authentication verification information??
+	}
+	if (m_archiveHeader.header.HEAD_FLAGS & ACE_ADDSIZE)
+	{
+		// when part of multi-volume archive, has additional 4-byte field??
+	}
+	
+	// read rest of archive header according to size
+	//m_ReadBuffer.Reserve(m_archiveHeader.header.HEAD_SIZE); // prepare more at beginning, no need..
+	if (archive.Read(m_ReadBuffer.GetCurrentPos(), m_archiveHeader.header.HEAD_SIZE) == false)
+	{
+		throw IOException("Failed reading rest of archive header");
+	}
 	
 	// what else is needed here..?
 	
