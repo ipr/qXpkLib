@@ -339,6 +339,8 @@ protected:
 
 	bool DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
 	bool DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
+	
+	bool MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table);
 	bool DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
 
 	// read contents of archive
@@ -346,9 +348,7 @@ protected:
 	bool readArchiveEntryList(CAnsiFile &archive);
 	bool readArchiveDescription(CAnsiFile &archive);
 
-
-	bool ListArchive(const std::string &archiveName);
-	bool ExtrArch(const std::string &archiveName);
+	bool ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive);
 	
 	void Clear()
 	{

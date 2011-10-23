@@ -270,53 +270,6 @@
 
 
 
-
-
-unsigned long   ByteReadArch ()
-{
-    return ((PtrArch < EndArch) ? *PtrArch++ : FillReadArch());
-}
-
-
-unsigned long   HalfReadArch ()
-{
-    unsigned long       result;
-    result  = ((unsigned long)ByteReadArch());
-    result += ((unsigned long)ByteReadArch()) << 8;
-    return result;
-}
-
-unsigned long   FlahReadArch ()
-{
-    unsigned long       result;
-    result  = ((unsigned long)ByteReadArch()) << 8;
-    result += ((unsigned long)ByteReadArch());
-    return result;
-}
-
-unsigned long   TripReadArch ()
-{
-    unsigned long       result;
-    result  = ((unsigned long)ByteReadArch());
-    result += ((unsigned long)ByteReadArch()) << 8;
-    result += ((unsigned long)ByteReadArch()) << 16;
-    return result;
-}
-
-// for fucks sake.. it's 4 bytes, not 2
-// -> why not say so ? it's supposed to be Dword then..
-unsigned long   WordReadArch ()
-{
-    unsigned long       result;
-    result  = ((unsigned long)ByteReadArch());
-    result += ((unsigned long)ByteReadArch()) << 8;
-    result += ((unsigned long)ByteReadArch()) << 16;
-    result += ((unsigned long)ByteReadArch()) << 24;
-    return result;
-}
-
-
-
 /****************************************************************************
 **
 *F  DecodeCopy(<size>). . . . . . . . . . . .  extract an uncompressed member
@@ -329,8 +282,6 @@ unsigned long   WordReadArch ()
 //
 bool CUnZoo::DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 {
-    /* initialize the crc value                                            */
-    m_crc.ClearCrc(); // = 0;
     m_ReadBuffer.PrepareBuffer(8192, false); // clear, allocate if not enough
     
     size_t size = pEntry->compressed_size;
@@ -356,12 +307,6 @@ bool CUnZoo::DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile
 
         /* on to the next block                                            */
         size -= blockSize;
-    }
-
-	// actually check the computed CRC-value also..
-    if (m_crc.m_Crc != pEntry->data_crc)
-    {
-		throw ArcException("CRC error on DecodeCopy()", pEntry->fileName);
     }
     return true;
 }
@@ -458,7 +403,7 @@ bool CUnZoo::DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 **  Haruhiko Okumura  wrote the  LZH code (originally for his 'ar' archiver).
 */
 
-int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table )
+bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table)
 {
     uint16_t      count[17], weight[17], start[18];
     unsigned int        i, k;
@@ -554,7 +499,7 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
     }
 
     /* indicate success                                                    */
-    return 1;
+    return true;
 }
 
 #define MAX_LIT                 255     /* maximal literal code            */
@@ -606,7 +551,6 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     FLSH_BITS(0, bits, bitc);
     char *cur = BufFile;  
     char *end = BufFile + MAX_OFF;
-	m_crc.ClearCrc();
 
     /* loop until all blocks have been read                                */
     cnt = PEEK_BITS( 16, bits, bitc );  
@@ -656,7 +600,7 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
             {
 				LenPre[i++] = 0;
 			}
-            if ( ! MakeTablLzh( MAX_PRE+1, LenPre, 8, TabPre ) ) 
+            if (MakeTablLzh( MAX_PRE+1, LenPre, 8, TabPre ) == false) 
             {
                 throw IOException("pre code description corrupted");
             }
@@ -730,7 +674,7 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
             {
 				LenCode[i++] = 0;
 			}
-            if ( ! MakeTablLzh( MAX_CODE+1, LenCode, 12, TabCode ) ) 
+            if (MakeTablLzh(MAX_CODE+1, LenCode, 12, TabCode) == false) 
             {
                 throw IOException("literal/length code description corrupted");
             }
@@ -769,7 +713,7 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
             {
 				LenLog[i++] = 0;
 			}
-            if ( ! MakeTablLzh( MAX_LOG+1, LenLog, 8, TabLog ) ) 
+            if (MakeTablLzh( MAX_LOG+1, LenLog, 8, TabLog) == false) 
             {
                 throw IOException("log code description corrupted");
             }
@@ -919,30 +863,20 @@ void CUnZoo::readString(CAnsiFile &archive, const size_t offset, const size_t le
 //
 bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 {
-	// TODO: check, can we just assume we are at correct offset now
-	// or do we really need these below..
-	
-	long lPos = 0;
-	if (archive.Tell(lPos) == false)
-	{
-		throw IOException("Failed to determine position");
-	}
-	// should be at end of archive header now
-	if (lPos != m_archiveInfo.header_size)
-	{
-		// if not, seek first entry
-		if (archive.Seek(m_archiveInfo.first_entry_pos, SEEK_SET) == false)
-		{
-			throw IOException("Failed to seek first entry");
-		}
-	}
-	
 	// size of fixed-length part for entry-information
 	const size_t entryFixedSize = 34 + 13; // values + short name len
 
 	size_t nReadCount = m_archiveInfo.header_size;
-	while ((nReadCount+entryFixedSize) < m_nFileSize)
+	//while ((nReadCount+entryFixedSize) < m_nFileSize)
+
+	size_t nNextOffset = m_archiveInfo.first_entry_pos;
+	while (nNextOffset > 0 && nNextOffset < m_nFileSize)
 	{
+		if (archive.Seek(nNextOffset, SEEK_SET) == false)
+		{
+			throw IOException("Failed to seek entry");
+		}
+	
 		if (archive.Read(m_ReadBuffer.GetBegin(), entryFixedSize) == false)
 		{
 			// corrupted file or bug? should detect end before..
@@ -1074,18 +1008,8 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 				}
 			}
 		}
-	}
-	
-	// read comments..
-	// no idea where they should be, hope offsets are ok..
-	// does offset break if they are read in actual entry information reading?
-	//
-	auto it = m_EntryList.begin();
-	auto itEnd = m_EntryList.end();
-	while (it != itEnd)
-	{
-		ZooEntry *pEntry = (*it);
 		
+		// read entry-related comment if any
 		if (pEntry->comment_position > 0 && pEntry->comment_size > 0)
 		{
 			readString(archive,
@@ -1093,10 +1017,15 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 						pEntry->comment_size,
 						pEntry->comment);
 		}
-		
-		++it;
-	}
 
+		// update count for archive statistics now
+		m_ulTotalPacked += pEntry->compressed_size;		
+		m_ulTotalUnpacked += pEntry->original_size;
+		m_ulTotalFiles += 1;
+		
+		nNextOffset = pEntry->next_entry_pos;
+	} // while..
+	
 	return true;
 }
 
@@ -1155,243 +1084,72 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
     return true;
 }
 
-// read list of archive contents into entry-list
-//
-bool CUnZoo::ListArchive(const CAnsiFile &archive)
+bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 {
+	if (pEntry->method == PackLzd)  
+	{
+		// "directory-only" entry ??
+		//bRes = DecodeLzd(pEntry);
+		return true; // skip it
+	}
 
-    /* if present, print the archive comment                               */
-    if ( ver && Descript.sizcmt != 0 ) 
-    {
-        if ( ! GotoReadArch( Descript.poscmt ) ) 
-        {
-			throw ArcException("unzoo: cannot find comment in archive", archiveName);
-        }
-        
-		// agh.. just read it and get it done
-		m_ReadBuffer.PrepareBuffer(Entry.sizcmt, false);
-		archive.Read(m_ReadBuffer.GetBegin(), Entry.sizcmt);
-        
-        // ? why not read already?
-        /*
-        for ( i = 0; i < Descript.sizcmt; i++ ) {
-            chr = ByteReadArch();
-        }
-        */
-    }
-
-    /* print the header                                                    */
-    //printf("Length    CF  Size Now  Date      Time    \n");
-
-    /* loop over the members of the archive                                */
-    Entry.posnxt = Descript.posent;
-    while ( 1 ) {
-
-        /* read the directory entry for the next member                    */
-        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) 
-        {
-			throw ArcException("unzoo: bad directory entry in archive", Entry.fileName);
-        }
-        if ( ! Entry.posnxt )  
-        {
-			break;
-		}
-
-        /* skip members we don't care about                                */
-        if ( Entry.deleted == 1 )
-        {
-			// what is this really?
-            continue;
-        }
-        if ( filec == 0 && userSelection.contains(Entry.fileName) == false)
-        {
-			// if user-given selection -> check list,
-			// don't try regex..
-            continue;
-        }
-
-        /* print the information about the member                          */
-        /*
-        printf("%8lu %3lu%% %8lu  %2lu %3s %02lu %02lu:%02lu:%02lu   %s\n",
-               Entry.sizorg,
-               (100*(Entry.sizorg-Entry.siznow)+Entry.sizorg/2)
-               / (Entry.sizorg != 0 ? Entry.sizorg : 1),
-               Entry.siznow,
-               Entry.day, NameMonth[Entry.month], Entry.year % 100,
-               Entry.hour, Entry.min, Entry.sec,
-               (ver ? Entry.patv : Entry.patw) );
-               */
-
-        /* update the counts for the whole archive                         */
-        Descript.sizorg += Entry.sizorg;
-        Descript.siznow += Entry.siznow;
-        Descript.number += 1;
-
-        /* if present print the file comment                               */
-        if ( ver && Entry.sizcmt != 0 ) 
-        {
-            if ( ! GotoReadArch( Entry.poscmt ) ) 
-            {
-				throw ArcException("unzoo: cannot find comment in archive", Entry.fileName);
-            }
-            
-            // agh.. just read it and get it done
-            m_ReadBuffer.PrepareBuffer(Entry.sizcmt, false);
-            archive.Read(m_ReadBuffer.GetBegin(), Entry.sizcmt);
-            
-            /*
-            for (int i = 0; i < Entry.sizcmt; i++ ) 
-            {
-                chr = ByteReadArch();
-            }
-            */
-        }
-
-    }
-
-    /* print the footer                                                    */
-    /*
-    printf("%8lu %3lu%% %8lu  %4lu files\n",
-           Descript.sizorg,
-           (100*(Descript.sizorg-Descript.siznow)+Descript.sizorg/2)
-           / (Descript.sizorg != 0 ? Descript.sizorg : 1),
-           Descript.siznow,
-           Descript.number );
-           */
-
-    return true;
-}
-
-
-/****************************************************************************
-**
-*F  ExtrArch(<bim>,<out>,<ovr>,<pre>,<arc>,<filec>,<files>) . extract members
-**
-**  'ExtrArch' extracts the members  of the archive with  the name <arc> that
-**  match one  of the file name  patterns '<files>[0] .. <files>[<filec>-1]'.
-**  If <bim> is 0, members with comments starting with '!TEXT!' are extracted
-**  as text files and the other members are extracted as  binary files; if it
-**  is 1,  all members are extracted  as text files; if  it is 2, all members
-**  are  extracted as binary  files. If <out>  is 0, no members are extracted
-**  and only tested  for integrity; if it  is 1, the  members are printed  to
-**  stdout, i.e., to the screen.  and if it  is 2, the members are extracted.
-**  If <ovr> is 0, members will not overwrite  existing files; otherwise they
-**  will.  <pre> is a prefix that is prepended to all path names.
-*/
-bool CUnZoo::ExtrArch(CAnsiFile &archive)
-{
-
-	// Descript.sizcmt has "!TEXT!" or "!MACBINARY!" in some cases,
-	// we should treat all files as being just blobs of binary data:
-	// just extract and if it is some obscure file let user decide what to do.
-	// (if text-encoding codepage needs changing -> any word processor can do that)
-	// (if it is different byteorder -> program using will want original order anyway)
-	// etc.
-	// -> keep it simple and generic to extract files
+	// locate data in archive
+	if (archive.Seek(pEntry->data_position, SEEK_SET) == false)
+	{
+		throw ArcException("Failed to seek entry", pEntry->fileName);
+	}
 	
-    /* loop over the members of the archive                                */
-    Entry.posnxt = Descript.posent;
-    while ( 1 ) {
+	std::string outFilename;
+	if (pEntry->pathName.length() > 0)
+	{
+		// we fixed paths on reading -> just concatenate
+		outFilename = pEntry->pathName;
+	}
+	outFilename += pEntry->fileName;
 
-        /* read the directory entry for the next member                    */
-        if ( ! GotoReadArch( Entry.posnxt ) || ! EntrReadArch() ) 
-        {
-	        throw ArcException("unzoo: bad entry in archive", archiveName);
-        }
-        
-        if ( ! Entry.posnxt )  
-        {
-	        break;
-	    }
-
-        /* skip members we don't care about                                */
-        if ( Entry.deleted == 1 )
-        {
-			// what is this really?
-            continue;
-        }
-        if ( filec == 0 && userSelection.contains(Entry.fileName) == false)
-        {
-			// if user-given selection -> check list,
-			// don't try regex..
-            continue;
-        }
-
-        /* check that we can decode this file                              */
-        if ( (2 < Entry.method) || (2 < Entry.majver)
-          || (2 == Entry.majver && 1 < Entry.minver) ) 
-        {
-            //printf("unzoo: unknown method, you need a later version\n");
-            continue;
-        }
-        
-        // TODO: fix path separator also if msdos-style..
-        std::string outFilename = Entry.dirName;
-        if (outFilename.at(outFilename.length() -1) != '/')
-        {
-			outFilename += "/";
-        }
-        outFilename += Entry.fileName;
-        
-		// file creation fails if this fails
-		// -> we can detect error then
-        CPathHelper::MakePathToFile(outFilename);
-        
-        CAnsiFile outFile(outFilename, true);
-        if (outFile.IsOk() == false)
-        {
-			throw ArcException("Failed to open file for writing", outFilename);
-        }
-
-        /* decode the file                                                 */
-        /*
-        if ( ! GotoReadArch( Entry.posdat ) ) 
-        {
-			throw ArcException("cannot find data in archive", outFilename);
-        }
-        */
-        //ZooEntry *pEntry;
-		if (archive.Seek(pEntry->data_position, SEEK_SET) == false)
+	// file creation fails if this fails
+	// -> we can detect error then
+	CPathHelper::MakePathToFile(outFilename);
+	
+	CAnsiFile outFile(outFilename, true);
+	if (outFile.IsOk() == false)
+	{
+		throw ArcException("Failed to open file for writing", outFilename);
+	}
+	
+	m_crc.ClearCrc(); // = 0;
+	bool bRes = false;
+	if (pEntry->method == PackCopyOnly)
+	{
+		bRes = DecodeCopy(pEntry, archive, outFile);
+	}
+	else if (pEntry->method == PackLzh)
+	{
+		// simplify, read LZH-compressed entry at once..
+		m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
+		m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
+		if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
 		{
-			throw ArcException("Failed to seek entry", pEntry->fileName);
+			throw ArcException("Failed reading compressed data for file", pEntry->fileName);
 		}
-        
-        bool bRes = false;
-        
-        if (pEntry->method == PackCopyOnly)
-        {
-			bRes = DecodeCopy(pEntry, archive, outFile);
-		}
-        else if ( Entry.method == PackLzd )  
-        {
-			// "directory-only" entry ??
-			//bRes = DecodeLzd(pEntry);
-			bRes = true;
-		}
-        else if ( Entry.method == PackLzh )  
-        {
-			bRes = DecodeLzh(pEntry, archive, outFile);
-		}
+		bRes = DecodeLzh(pEntry, archive, outFile);
+	}
+	else
+	{
+		// warning only or error?
+		// (unsupported packing method)
+		throw ArcException("unknown packing method", pEntry->fileName);
+	}
 
-        /* check that everything went ok                                   */
-        if      ( bRes == false)  
-        {
-	        throw ArcException("Failed to extract file", outFilename);
-	    }
-        else if ( m_crc.m_Crc != Entry.crcdat  )  
-        {
-	        throw ArcException("CRC error", outFilename);
-        }
-
-        /* close the file after extraction                                 */
-        outFile.Close();
-    }
-
-
-    /* indicate success                                                    */
-    return true;
+	if (m_crc.m_Crc != pEntry->data_crc)
+	{
+		throw ArcException("CRC error", pEntry->fileName);
+	}
+	
+	return bRes;
 }
 
+/////////// public methods
 
 // get list of archive entries to entry-list
 bool CUnZoo::ListContents()
@@ -1417,19 +1175,80 @@ bool CUnZoo::ListContents()
         throw ArcException("failed reading entry list", m_szArchive);
 	}
 	
-	return ListArchive(m_szArchive);
+	return true;
 }
 
 // test integrity, try extracting without output
 bool CUnZoo::TestArchive()
 {
 	//return ExtractNoOutput(m_szArchive);
+	return false;
 }
 
 // extract all files to path given before,
 // just extract "as-is": users have other tools to convert text-encoding etc.
 bool CUnZoo::Extract()
 {
+	// TODO: better way of handling multiple reads of same file?
+	Clear();
+	
+    CAnsiFile archive(m_szArchive);
+    if (archive.IsOk() == false)
+    {
+        throw ArcException("could not open archive", m_szArchive);
+    }
+    m_nFileSize = archive.GetSize();
+
+	// should throw exception on error anyway..
+	if (readArchiveDescription(archive) == false)
+	{
+        throw ArcException("failed reading header", m_szArchive);
+	}
+	
+	if (readArchiveEntryList(archive) == false)
+	{
+        throw ArcException("failed reading entry list", m_szArchive);
+	}
+	
+	auto it = m_EntryList.begin();
+	auto itend = m_EntryList.end();
+	while (it != itend)
+	{
+		ZooEntry *pEntry = (*it);
+        if (pEntry->deleted == 1)
+        {
+			// what is this really? skip it anyway..
+			++it;
+            continue;
+        }
+        
+        if ((pEntry->method > 2) 
+			|| (pEntry->version_major > 2)
+			|| (pEntry->version_major == 2 && pEntry->version_minor > 1))
+		{
+			// packed with newer version than supported?
+			// -> try it anyway?
+		}
+		
+		if (pEntry->data_position == 0 || pEntry->data_position > m_nFileSize)
+		{
+			// invalid position?
+			// skip it or abort? (can we extract others even..?)
+			++it;
+            continue;
+		}
+		
+		bool bRes = ExtractEntry(pEntry, archive);
+        if (bRes == false)  
+        {
+			// or just warning and skip to next?
+	        throw ArcException("Failed to extract file", outFilename);
+	    }
+		
+		++it;
+	}
+	
+
 	return ExtrArch(m_szArchive);
 }
 

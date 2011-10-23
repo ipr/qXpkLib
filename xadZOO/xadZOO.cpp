@@ -38,8 +38,17 @@ bool xadZOO::setArchive(QString &file)
 	{
 		delete m_pArchive;
 	}
-	m_pArchive = new CUnZoo(file.toStdString());
-	return m_pArchive->ListContents();
+	
+	try
+	{
+		m_pArchive = new CUnZoo(file.toStdString());
+		return m_pArchive->ListContents();
+	}
+	catch (std::exception &exp) // catch by base-type
+	{
+		//emit fatal_error(exp.what());
+	}
+	return false;
 }
 
 // list files in archive, get other metadata also..
@@ -135,7 +144,15 @@ bool xadZOO::testArchive()
 		return false;
 	}
 
-	return m_pArchive->TestArchive();
+	try
+	{
+		return m_pArchive->TestArchive();
+	}
+	catch (std::exception &exp) // catch by base-type
+	{
+		//emit fatal_error(exp.what());
+	}
+	return false;
 }
 
 // unpack/decompress
