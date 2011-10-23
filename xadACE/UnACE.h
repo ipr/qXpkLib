@@ -18,8 +18,17 @@
 #include <string>
 #include <vector>
 
-// use wrapper from parent-library
+// use wrapper(s) from parent-library
 #include "AnsiFile.h"
+
+// CRC checksumming now in own class
+#include "CRCsum.h"
+
+// decompression now in own class
+#include "Decompress.h"
+
+#include "AceStructures.h"
+
 
 class CArchiveEntry
 {
@@ -52,6 +61,9 @@ private:
 	// internal buffer for read information
 	CReadBuffer m_ReadBuffer;
 	CReadBuffer m_DecrunchBuffer;
+	
+	CRCsum m_Crc;
+	CDecompress m_Decompress;
 
 	bool readHeader(CAnsiFile &archive);
 
@@ -66,9 +78,14 @@ public:
 		, m_szExtractionPath()
 		, m_ReadBuffer(1024) // size_rdb
 		, m_DecrunchBuffer(2048) // size_wrb
+		, m_Crc()
+		, m_Decompress()
     {
-		make_crctable();   // initialize CRC table
-		dcpr_init();       // initialize decompression
+		// TODO: need something like this maybe..
+		//m_Decompress(&m_Crc); // .. or move it to decompression?
+    
+		//make_crctable();   // initialize CRC table
+		//dcpr_init();       // initialize decompression
     }
     
 	// view a single archive:

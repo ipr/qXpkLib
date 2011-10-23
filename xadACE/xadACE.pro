@@ -16,12 +16,18 @@ INCLUDEPATH += ../qXpkLib
 
 SOURCES += xadACE.cpp \
     UnACE.cpp \
-    CRCsum.cpp
+    CRCsum.cpp \
+    Decompress.cpp
 
 HEADERS += xadACE.h\
         xadACE_global.h \
     UnACE.h \
-    CRCsum.h
+    CRCsum.h \
+    Decompress.h \
+    AceStructures.h
+
+
+
 
 
 
