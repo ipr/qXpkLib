@@ -33,7 +33,7 @@ typedef enum tHeaderType
 	//HEADERTYPE_TAR, // "tape-archive" (POSIX) (multi-file)
 	HEADERTYPE_ZOO, // 0xfdc4a7dc ?
 	//HEADERTYPE_AR, // Un*x AR, LSAR?
-	//HEADERTYPE_CPIO, // Un*x CPIO
+	HEADERTYPE_CPIO, // Un*x CPIO
 	//HEADERTYPE_SHAR, // Un*x shell-archive..
 	//HEADERTYPE_STUFFIT, // MacOS Stuffit (SIT)
 	//HEADERTYPE_PACKIT, // MacOS Packit (PIT)

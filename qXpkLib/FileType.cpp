@@ -416,7 +416,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		*/
 		return enFileType;
 	}
-
+	
 	if (pBuffer[0] == 'B'
 		&& pBuffer[1] == 'Z'
 		&& pBuffer[2] == '0')
@@ -580,6 +580,18 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		return HEADERTYPE_IMPLODER;
 	}
 	
+	// note: big-endian and little-endian variants
+	// -> should check both ways..
+	// identifier is defined as octal value 070707
+	// -> that is crap, change to proper hex for less mistakes
+	// (who the hell uses octal values any more ?)
+	uint16_t *pId = (uint16_t*)pBuffer;
+	if (*pId == 0x71C7
+		|| *pId == 0xC771)
+	{
+		// Un*x CPIO
+		return HEADERTYPE_CPIO;
+	}
 	
 	/*
 	// TAR (POSIX)	.tar	75 73 74 61 72	ustar (offset by 257 bytes)
