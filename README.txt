@@ -153,5 +153,30 @@ Sub-library status, see respective README for details:
  - single compressed file only
  - uncompressing/unpacking only supported (for now)
  - not tested, should be working..?
+* ZAP (xadZAP) :
+ - originally on Amiga
+ - trackdisk-cruncher (disk image)
+ - placeholder only yet..
+* DMS (xadDMS) :
+ - originally on Amiga
+ - trackdisk-cruncher (disk image)
+ - placeholder only yet..
+* Tar (xadTar) :
+ - originally on Un*x variants, standardized later
+ - multi-file collection only, separate compression
+ - placeholder only yet..
+* RPM (xadRPM) :
+ - originally on Linux by RedHat
+ - multi-file archive
+ - placeholder only yet..
 
 * various other libraries are planned, some have placeholders already
+* there are several problems in implementing support for various formats
+ - many formats have only very little documentation or none at all
+ - some formats have all sources or only some code fragments (in M68k assembler usually)
+ - some formats exist only as executable binaries (Amiga OS usually)
+* there more than 20 packers for XPK alone
+* there are literally much over 40 crunchers for XFD (including variants)
+* many trackdisk-crunchers (disk image)
+* and many archive formats on various platforms (Amiga, Atari, Un*x variants, Mac, Windows etc.)
+
