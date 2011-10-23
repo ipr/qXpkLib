@@ -27,6 +27,16 @@ void CRCsum::make_crctable(void)   // initializes CRC table
 	}
 }
 
+// Updates crc from addr till addr+len-1
+//
+void CRCsum::getcrc(uint32_t &crc, uint8_t *addr, const size_t length)
+{
+	size_t len = length;
+	while (len--)
+	{
+		crc = crctable[(uint8_t) crc ^ (*addr++)] ^ (crc >> 8);
+	}
+}
 
 ///////// public methods
 
@@ -36,14 +46,3 @@ CRCsum::CRCsum()
 	make_crctable();
 }
 
-// Updates crc from addr till addr+len-1
-//
-uint32_t CRCsum::getcrc(uint32_t crc, uint8_t *addr, const size_t length)
-{
-	size_t len = length;
-	while (len--)
-	{
-		crc = crctable[(uint8_t) crc ^ (*addr++)] ^ (crc >> 8);
-	}
-	return (crc);
-}

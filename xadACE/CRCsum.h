@@ -22,6 +22,8 @@ protected:
 	uint32_t rd_crc;
 
 	void make_crctable(void);
+	
+	inline void getcrc(uint32_t &crc, uint8_t *addr, const size_t length);
 
 public:
     CRCsum();
@@ -32,7 +34,16 @@ public:
 		rd_crc = CRC_MASK;
     }
     
-	uint32_t getcrc(uint32_t crc, uint8_t *addr, const size_t length);
+    uint32_t crc() const
+    {
+		return rd_crc;
+    }
+
+	void updatecrc(uint8_t *addr, const size_t length)
+	{
+		// update in-place
+		getcrc(rd_crc, addr, length);
+	}
 
 };
 

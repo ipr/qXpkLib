@@ -439,12 +439,15 @@ INT  decompress_blk(CHAR * buf, UINT len)
    return (dcpr_do);
 }
 
-INT unstore(CHAR * buf, UINT len)
+int16_t unstore(int8_t * buf, const size_t len)
 {
    UINT rd = 0,
         i,
         pos = 0;
-
+        
+	// just memcpy() buffer to buffer instead of following stuff?
+	//m_pDecrunchBuffer->Append(m_ReadBuffer.GetAtCurrent(), m_ReadBuffer.GetCurrentPos());
+	
    while ((i = read_adds_blk((CHAR *) buf_rd, (INT) ((i = ((len > dcpr_size) ? dcpr_size : len)) > size_rdb ? size_rdb : i))) != 0)
    {
       rd += i;
@@ -462,24 +465,22 @@ INT unstore(CHAR * buf, UINT len)
    return (INT)rd;
 }
 
-INT  dcpr_adds_blk(CHAR * buf, UINT len)
+int16_t dcpr_adds_blk(int8_t *buf, const size_t len)
 {
-   INT  r;
+   int16_t r = 0;
 
    switch (fhead.TECH.TYPE)
    {
-      case TYPE_STORE:
+      case TYPE_STORE: // no compresion? (store-only)
          r = unstore(buf, len);
          break;
       case TYPE_LZ1:
          r = decompress_blk(buf, len);
          break;
       default:
-         printf("\nFile compressed with unknown method. Decompression not possible.\n");
-         f_err = ERR_OTHER;
-         r = 0;
+		throw IOException("Unknown compression method");
    }
-   rd_crc = getcrc(rd_crc, buf, r);
+   m_Crc.updatecrc(buf, r);
    return r;
 }
 
@@ -533,7 +534,7 @@ void dcpr_init_file(void)
 
 void CDecompress::dcpr_init(void)
 {
-	dcpr_frst_file = 1; // multi-volume archives?
+	dcpr_frst_file = 1; // multi-volume archives? just bool ?
 
 	dcpr_dic = 20;
 	dcpr_dicsiz = (int32_t)(1 << dcpr_dic);
@@ -556,9 +557,26 @@ void CDecompress::dcpr_init(void)
 ///////// public methods
 
 CDecompress::CDecompress(CReadBuffer *pDecrunchBuffer)
-	 : m_pDecrunchBuffer(pDecrunchBuffer)
-	 , m_Crc()
+	: m_pDecrunchBuffer(pDecrunchBuffer)
+	, m_Crc()
+	, dcpr_text(nullptr)
+	, rpos(0)
+	, dcpr_do(0)
+	, dcpr_do_max(0)
+	, blocksize(0)
+	, dcpr_dic(0)
+	, dcpr_oldnum(0)
+	, bits_rd(0)
+	, dcpr_frst_file(0)
+	, dcpr_dpos(0)
+	, cpr_dpos2(0)
+	, dcpr_dicsiz(0)
+	, dcpr_dican(0)
+	, dcpr_size(0)
+	, code_rd(0)
 {
+	::memset(dcpr_olddist, 0, 4*sizeof(uint32_t));
+	
 	dcpr_init();
 }
 
