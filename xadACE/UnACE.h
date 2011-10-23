@@ -22,7 +22,8 @@
 #include "AnsiFile.h"
 
 // CRC checksumming now in own class
-#include "CRCsum.h"
+// -> moved to decompress..
+//#include "CRCsum.h"
 
 // decompression now in own class
 #include "Decompress.h"
@@ -30,14 +31,16 @@
 #include "AceStructures.h"
 
 
-class CArchiveEntry
+class AceEntry
 {
 public:
-	CArchiveEntry()
+	AceEntry()
 	{}
+	
+	std::string fileName;
 };
 
-typedef std::vector<CArchiveEntry*> tArchiveEntryList;
+typedef std::vector<AceEntry*> tArchiveEntryList;
 
 class CUnACE
 {
@@ -62,10 +65,10 @@ private:
 	CReadBuffer m_ReadBuffer;
 	CReadBuffer m_DecrunchBuffer;
 	
-	CRCsum m_Crc;
 	CDecompress m_Decompress;
 
-	bool readHeader(CAnsiFile &archive);
+	bool readArchiveHeader(CAnsiFile &archive);
+	bool readEntryList(CAnsiFile &archive);
 
 public:
     CUnACE(const std::string &szArchive)
@@ -78,15 +81,8 @@ public:
 		, m_szExtractionPath()
 		, m_ReadBuffer(1024) // size_rdb
 		, m_DecrunchBuffer(2048) // size_wrb
-		, m_Crc()
 		, m_Decompress()
-    {
-		// TODO: need something like this maybe..
-		//m_Decompress(&m_Crc); // .. or move it to decompression?
-    
-		//make_crctable();   // initialize CRC table
-		//dcpr_init();       // initialize decompression
-    }
+    {}
     
     // expecting at least 14 bytes..
     bool isSupported(const uint8_t *pBuf) const

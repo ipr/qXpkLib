@@ -17,6 +17,48 @@
 //
 #include <string>
 
+
+//archive-header-flags
+enum ArchiveHeaderFlags // in C++0x : uint16_t
+{
+	ACE_LIM256   = 1024,
+	ACE_MULT_VOL = 2048,
+	ACE_AV       = 4096,
+	ACE_RECOV    = 8192,
+	ACE_LOCK     = 16384,
+	ACE_SOLID    = 32768
+};
+
+//file-header-flags
+enum FileHeaderFlags // also uint16_t
+{
+	ACE_ADDSIZE  = 1,
+	ACE_PASSW    = 16384,
+	ACE_SP_BEF   = 4096,
+	ACE_SP_AFTER = 8192,
+	ACE_COMM     = 2
+};
+
+//block types
+enum BlockTypes
+{
+	MAIN_BLK = 0,
+	FILE_BLK = 1,
+	REC_BLK  = 2
+};
+
+//known compression types
+enum CompressionTypes
+{
+	TYPE_STORE = 0,
+	TYPE_LZ1   = 1
+};
+
+const int32_t acesign_len           = 7;
+const int32_t bytes_before_acesign  = 7;
+const int32_t acever                = 10;
+
+
 // force 1-byte align, no padding
 #pragma pack(push, 1)
 
@@ -27,18 +69,19 @@ struct tech
    uint16_t PARM;
 };
 
-typedef struct tacehead
+// ?
+struct tacehead
 {
    uint16_t HEAD_CRC;
    uint16_t HEAD_SIZE;
    uint8_t  HEAD_TYPE;
    uint16_t HEAD_FLAGS;
    uint32_t  ADDSIZE;
-   uint8_t  other[2048];
+   uint8_t  other[2048]; // ? variable-sized? -> remove from here..
+};
 
-}  thead;
-
-typedef struct tacemhead
+// archive header contents
+struct tacemhead
 {
    uint16_t HEAD_CRC;
    uint16_t HEAD_SIZE;
@@ -55,14 +98,13 @@ typedef struct tacemhead
    uint16_t RES2;
    uint32_t  RES;
    uint8_t  AV_SIZE;
-   uint8_t  AV[256];
+   uint8_t  AV[256]; // is this really fixed-length? if not, remove from here..
    uint16_t COMM_SIZE;
-   uint8_t  COMM[2048];
+   uint8_t  COMM[2048]; // is this really fixed-length? if not, remove from here..
+};
 
-}  tmhead;
-
-
-typedef struct tacefhead
+// file-entry header?
+struct tacefhead
 {
    uint16_t HEAD_CRC;
    uint16_t HEAD_SIZE;
@@ -77,12 +119,10 @@ typedef struct tacefhead
    struct tech TECH;
    uint16_t RESERVED;
    uint16_t FNAME_SIZE;
-   uint8_t  FNAME[PATH_MAX]; // check: can we replace with std::string
+   uint8_t  FNAME[512]; // check: can we replace with std::string
    uint16_t COMM_SIZE;
    uint8_t  COMM[2048]; // check: can we replace with std::string
-
-}  tfhead;
-
+};
 
 // restore normal align
 #pragma pack(pop)

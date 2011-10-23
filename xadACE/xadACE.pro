@@ -24,7 +24,9 @@ HEADERS += xadACE.h\
     UnACE.h \
     CRCsum.h \
     Decompress.h \
-    AceStructures.h
+    AceStructures.h \
+    GenericTime.h
+
 
 
 

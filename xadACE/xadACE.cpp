@@ -41,6 +41,41 @@ bool xadACE::setArchive(QString &file)
 	return m_pArchive->List();
 }
 
+bool xadACE::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+	if (m_pArchive == nullptr)
+	{
+		return false;
+	}
+	
+	info.m_bIsMultifile = true;
+	info.m_archiveInfo.m_fileName = QString::fromStdString(m_pArchive->GetArchiveFileName());
+	info.m_archiveInfo.m_ulFileSize = m_pArchive->GetArchiveFileSize();
+	info.m_archiveInfo.m_ulPackedSize = m_pArchive->GetTotalSizePacked();
+	info.m_archiveInfo.m_ulUnpackedSize = m_pArchive->GetTotalSizeUnpacked();
+	info.m_archiveInfo.m_packing = "ACE";
+	
+	tArchiveEntryList entryList;
+	m_pArchive->GetEntryList(entryList);
+	
+	auto it = entryList.begin();
+	auto itEnd = entryList.end();
+	while (it != itEnd)
+	{
+		AceEntry *pEntry = (*it);
+
+		info.m_fileList.push_back(QXpkLib::CEntryInfo());
+		QXpkLib::CEntryInfo &entry = info.m_fileList.back();
+		
+		// TODO: contents to caller info..
+		// 
+		//entry.m_fileName = pEntry->fileName;
+	
+		++it;
+	}
+	return true;
+}
+
 // set path to uncompress files to
 bool xadACE::setExtractPath(QString &szPath)
 {

@@ -14,6 +14,9 @@
 // use wrapper(s) from parent-library
 #include "AnsiFile.h"
 
+// CRC checksumming now in own class
+#include "CRCsum.h"
+
 
 class CDecompress
 {
@@ -105,6 +108,8 @@ protected:
 
 	// given by parent (shared for IO)
 	CReadBuffer *m_pDecrunchBuffer;
+
+	CRCsum m_Crc;
 	
 public:
     CDecompress(CReadBuffer *pDecrunchBuffer);

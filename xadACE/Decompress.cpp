@@ -488,10 +488,9 @@ INT  dcpr_adds_blk(CHAR * buf, UINT len)
 
 void dcpr_init_file(void)
 {
-   UINT i;
-
-
-   rd_crc = CRC_MASK;
+   //rd_crc = CRC_MASK;
+	m_Crc.ClearCrc();
+	
    dcpr_size = fhead.SIZE;
    if (fhead.TECH.TYPE == TYPE_LZ1)
    {
@@ -502,7 +501,7 @@ void dcpr_init_file(void)
          return;
       }
 
-      i = size_rdb * sizeof(LONG);
+      UINT i = size_rdb * sizeof(LONG);
       read_adds_blk((CHAR *) buf_rd, i);
 #ifdef HI_LO_BYTE_ORDER
       {
@@ -522,7 +521,9 @@ void dcpr_init_file(void)
       blocksize = 0;
    }
    if (!adat.sol || dcpr_frst_file)
+   {
       dcpr_dpos = 0;
+   }
 
    dcpr_oldnum = 0;
    memset(&dcpr_olddist, 0, sizeof(dcpr_olddist));
@@ -532,7 +533,7 @@ void dcpr_init_file(void)
 
 void CDecompress::dcpr_init(void)
 {
-	dcpr_frst_file = 1;
+	dcpr_frst_file = 1; // multi-volume archives?
 
 	dcpr_dic = 20;
 	dcpr_dicsiz = (int32_t)(1 << dcpr_dic);
@@ -555,7 +556,8 @@ void CDecompress::dcpr_init(void)
 ///////// public methods
 
 CDecompress::CDecompress(CReadBuffer *pDecrunchBuffer)
- : m_pDecrunchBuffer(pDecrunchBuffer)
+	 : m_pDecrunchBuffer(pDecrunchBuffer)
+	 , m_Crc()
 {
 	dcpr_init();
 }

@@ -25,7 +25,13 @@ protected:
 
 public:
     CRCsum();
-
+    
+    // just to detect uses..
+    void ClearCrc()
+    {
+		rd_crc = CRC_MASK;
+    }
+    
 	uint32_t getcrc(uint32_t crc, uint8_t *addr, const size_t length);
 
 };
