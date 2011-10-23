@@ -40,30 +40,31 @@ enum ZooPackMethod // : in C++0x uint8_t
 	PackLzh = 2
 };
 
-// metadata from archive
-// note: we parse this member-by-member from file,
-// don't cast buffer to this since it's not byte-packed 
-// (may have padding)
+// metadata from archive,
+// we parse this member-by-member from file..
+// changed to class for better choices in handling..
 //
-struct ZooDescription
+class ZooDescription
 {
+public:
 	// constructor
 	ZooDescription()
+		: description()
+		, magicid(0)
+		, first_entry_pos(0)
+		, klhvmh(0)
+		, version_major(0)
+		, version_minor(0)
+		, member_type(0)
+		, comment_pos(0)
+		, comment_size(0)
+		, modgen(0)
+		, header_size(0)
+		, is_new_style(false)
 	{
 		// make sure to initialize some optional values,
 		// initalize rest also..
 		description.clear();
-		magicid = 0;
-		first_entry_pos = 0;
-		klhvmh = 0;
-		version_major = 0;
-		version_minor = 0;
-		member_type = 0;
-		comment_pos = 0;
-		comment_size = 0;
-		modgen = 0;
-		header_size = 0;
-		is_new_style = false;
 	}
 
     std::string description;         // 20 bytes: "ZOO 2.10 Archive.<ctr>Z"
@@ -103,11 +104,21 @@ struct ZooDescription
 // variable (optional) details of entry (if any?)
 // rewriting handling in progress..
 //
-struct ZooVariableEntry
+class ZooVariableEntry
 {
+public:
 	// constructor
 	ZooVariableEntry()
-	{}
+	{
+		variable_size = 0;
+		timezone = 127; 
+		entry_crc = 0;
+		
+		systemid = 0;
+		permissions = 0;
+		modgen = 0;
+		version = 0;
+	}
 
     uint16_t      variable_size;           /* length of variable part         */
     uint8_t       timezone;         /* time zone                       */
@@ -130,14 +141,46 @@ struct ZooVariableEntry
 
 // single entry in archive
 //
-struct ZooEntry
+class ZooEntry
 {
+public:
 	// constructor
 	ZooEntry()
-	{}
+	{
+		magicid = 0;
+		member_type = 0;
+		method = 0;
+		next_entry_pos = 0;
+		data_position = 0;
+		timestamp = 0;
+		data_crc = 0;
+		original_size = 0;
+		compressed_size = 0;
+		version_major = 0;
+		version_minor = 0;
+		deleted = 0;
+		spared = 0;
+		comment_position = 0;
+		comment_size = 0;
+		
+		comment.clear();
+		fileName.clear();
+		pathName.clear();
+		
+		m_pVarDetails = nullptr;
+	}
+	// destructor
+	~ZooEntry()
+	{
+		if (m_pVarDetails != nullptr)
+		{
+			delete m_pVarDetails;
+			m_pVarDetails = nullptr;
+		}
+	}
 	
     uint32_t    magicid;           // magic-id dword 0xfdc4a7dc       
-    uint8_t     member_type;       // type of current member (1)      
+    uint8_t     member_type;       // type of current member (1, 2?), what are the types??    
     uint8_t     method;            // packing method of member (0..2) 
     uint32_t    next_entry_pos;    // position of next member         
     uint32_t    data_position;     // position of data                
@@ -218,6 +261,29 @@ protected:
 		}
 		return false;
     }
+    
+    bool fixPathname(std::string &name) const
+    {
+		// should be better ways, this is simple enough..
+		for (size_t n = 0; n < name.length(); n++)
+		{
+			if (name[n] == '\\')
+			{
+				name[n] = '/';
+			}
+		}
+		return true;
+    }
+    
+	// simplify code, reusable method
+	void bufferSet(const uint16_t code, uint16_t *pBuf, const int count) const
+	{
+		// note: 16-bit int buffer, expecting element count..
+		for (int n = 0; n < count; n++)
+		{
+			pBuf[n] = code;
+		}
+	}
 
 
 	// inline: compiler can avoid function call by replacing call with function body
@@ -226,12 +292,13 @@ protected:
 		return ((bits >> (bitc - N)) & ((1L << N)-1));
 	}
 
-	// inline: compiler can avoid function call by replacing call with function body
-	inline void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc) const
+	// inlining won't give any benefit since function call(s) are made anyway
+	// (old called at least two functions, we call at least one or two depending on inlining..)
+	void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc) const
 	{
 		if ( (bitc -= N) < 16 ) 
 		{ 
-			bits  = (bits << 16) + FlahReadArch(); 
+			bits  = (bits << 16) + getUWordReversed(m_ReadBuffer.GetAtCurrent()); 
 			bitc += 16; 
 		}
 	}
@@ -275,8 +342,9 @@ protected:
 	bool DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
 
 	// read contents of archive
-	bool readArchiveDescription(CAnsiFile &archive);
+	void readString(CAnsiFile &archive, const size_t offset, const size_t length, std::string &value);
 	bool readArchiveEntryList(CAnsiFile &archive);
+	bool readArchiveDescription(CAnsiFile &archive);
 
 
 	bool ListArchive(const std::string &archiveName);

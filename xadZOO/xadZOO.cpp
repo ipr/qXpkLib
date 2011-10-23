@@ -78,12 +78,19 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 		info.m_fileList.push_back(QXpkLib::CEntryInfo());
 		QXpkLib::CEntryInfo &entry = info.m_fileList.back();
 		
-		entry.m_fileName = QString::fromStdString(pEntry->pathName);
-		if (entry.m_fileName.at(entry.m_fileName.length() -1) != '/')
+		if (pEntry->pathName.length() > 0)
 		{
-			entry.m_fileName += "/";
+			entry.m_fileName = QString::fromStdString(pEntry->pathName);
+			if (entry.m_fileName.at(entry.m_fileName.length() -1) != '/')
+			{
+				entry.m_fileName += "/";
+			}
+			entry.m_fileName += QString::fromStdString(pEntry->fileName);
 		}
-		entry.m_fileName += QString::fromStdString(pEntry->fileName);
+		else
+		{
+			entry.m_fileName = QString::fromStdString(pEntry->fileName);
+		}
 		
 		entry.m_Stamp = pEntry->timestamp;
 		entry.m_ulUnpackedSize = pEntry->original_size;

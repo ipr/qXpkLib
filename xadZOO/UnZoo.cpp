@@ -270,117 +270,6 @@
 
 
 
-// input: pathname
-//
-// returns: pathname in common notation ('/),
-// even Windows supports correct way since Windows 2000..
-//
-std::string ConvName ( const std::string &name)
-{
-	std::string tmp = name;
-	for (size_t n = 0; n < tmp.length(); n++)
-	{
-		if (tmp[n] == '\\')
-		{
-			tmp[n] = '/';
-		}
-	}
-	return tmp;
-}
-
-
-/****************************************************************************
-**
-**  'GotoReadArch'  positions the  archive  at the  position <pos>, i.e., the
-**  next call to 'ByteReadArch' will return the byte at position <pos>.  Note
-**  that 'GotoReadArch' does not use 'fseek', because 'fseek' is unreliable.
-**
-**  'ByteReadArch' returns the next   byte  unsigned  8 bit from the archive.
-**  'HalfReadArch' returns the next 2 bytes unsigned 16 bit from the archive.
-**  'TripReadArch' returns the next 3 bytes unsigned 24 bit from the archive.
-**  'WordReadArch' returns the next 4 bytes unsigned 32 bit from the archive.
-**
-**  'Descript' is the description of the archive.
-**
-**  'DescReadArch' reads the description  of the archive  that starts at  the
-**  current position into the structure 'Descript'.  It should of course only
-**  be called at the start of the archive file.
-**
-**  'Entry' is the directory entry of the current member from the archive.
-**
-**  'EntrReadArch'  reads the directory entry of  a member that starts at the
-**  current position into the structure 'Entry'.
-*/
-struct zooArchBuf
-{
-	unsigned char   BufArch [64+4096];      /* buffer for the archive          */
-	
-	unsigned char * PtrArch;                /* pointer to the next byte        */
-	
-	unsigned char * EndArch;                /* pointer to the last byte        */
-	
-	unsigned long   PosArch;                /* position of 'BufArch[0]'        */
-	
-	// before opening file
-	void setOnOpen()
-	{
-		PtrArch = EndArch = (BufArch+64);
-		PosArch = 0;
-	}
-};
-
-
-int FillReadArch (zooArchBuf *ArchBuf, CAnsiFile &archive)
-{
-    unsigned char *     s;              /* loop variable                   */
-    unsigned char *     d;              /* loop variable                   */
-
-    /* copy the last characters to the beginning (for short backward seeks)*/
-    //d = ArchBuf->BufArch;
-    ::memcpy(ArchBuf->BufArch, ArchBuf->EndArch - 64, 64);
-    /*
-    for ( s = ArchBuf->EndArch-64; s < ArchBuf->EndArch; s++ )
-    {
-        *d++ = *s;
-    }
-    */
-    ArchBuf->PosArch += ArchBuf->EndArch - (ArchBuf->BufArch+64);
-
-    /* read a block                                                        */
-    ArchBuf->PtrArch = ArchBuf->BufArch+64;
-    ArchBuf->EndArch = ArchBuf->PtrArch + 4096;
-    if (archive.Read(ArchBuf->PtrArch, 4096) == false)
-    {
-		throw IOException("Failure reading block");
-    }
-
-    /* return the first character                                          */
-    return (ArchBuf->PtrArch < ArchBuf->EndArch ? *ArchBuf->PtrArch++ : EOF);
-}
-
-int GotoReadArch ( zooArchBuf *ArchBuf, size_t pos, CAnsiFile &archive )
-{
-	if (ArchiveFile.Seek(pos, SEEK_SET) == false)
-	{
-		throw IOException("Failure seeking entry data");
-	}
- 
- 
-    /* jump forward bufferwise                                             */
-    while ( ArchBuf->PosArch + (ArchBuf->EndArch - (ArchBuf->BufArch+64)) <= pos ) 
-    {
-        if ( FillReadArch() == EOF )
-        {
-            return false;
-        }
-    }
-
-    /* and goto the position (which is now in the buffer)                  */
-    ArchBuf->PtrArch = (ArchBuf->BufArch+64) + (pos - ArchBuf->PosArch);
-
-    /* indicate success                                                    */
-    return true;
-}
 
 
 unsigned long   ByteReadArch ()
@@ -428,66 +317,6 @@ unsigned long   WordReadArch ()
 
 
 
-
-int EntrReadArch (CAnsiFile &archive)
-{
-
-
-	// some short name (fucking msdos..)    
-    if (archive.Read(Entry.nameshort,13L) == false)
-    {
-		throw IOException("failed reading enough");
-    }
-    Entry.nameshort[13] = '\0';
-
-    /* handle the long name and the directory in the variable part         */
-    Entry.lvar   = (Entry.type == 2  ? HalfReadArch() : 0);
-    Entry.timzon = (Entry.type == 2  ? ByteReadArch() : 127);
-    Entry.crcent = (Entry.type == 2  ? HalfReadArch() : 0);
-    Entry.lnamu  = (0 < Entry.lvar   ? ByteReadArch() : 0);
-    Entry.ldiru  = (1 < Entry.lvar   ? ByteReadArch() : 0);
-    
-    if (archive.Read(Entry.fileName,Entry.lnamu) == false)
-    {
-		throw IOException("failed reading enough");
-    }
-    Entry.fileName[Entry.lnamu] = '\0';
-    
-    if (archive.Read(Entry.dirName,Entry.ldiru) == false)
-    {
-		throw IOException("failed reading enough");
-    }
-    Entry.dirName[Entry.ldiru] = '\0';
-    
-    //unsigned long       l;              /* 'Entry.lnamu+Entry.ldiru'       */
-    //char *              p;              /* loop variable                   */
-    
-    unsigned long l = Entry.lnamu + Entry.ldiru;
-    Entry.systemid = (l+2 < Entry.lvar ? HalfReadArch() : 0);
-    Entry.permis = (l+4 < Entry.lvar ? TripReadArch() : 0);
-    Entry.modgen = (l+7 < Entry.lvar ? ByteReadArch() : 0);
-    Entry.ver    = (l+7 < Entry.lvar ? HalfReadArch() : 0);
-
-    /* create the name with the version appended                           */
-    //strcpy( Entry.patv, Entry.patl );
-    /*
-    for ( l = 10000; 0 < l; l /= 10 )
-        if ( l == 1 || l <= Entry.ver )
-            *p++ = (Entry.ver / l) % 10 + '0';
-    *p = '\0';
-    Entry.patw = ((Entry.modgen&0xc0)!=0x80 ? Entry.patl : Entry.patv);
-    */
-
-    /* convert the time to something usable */
-    Entry.timestamp = (time_t)CGenericTime(Entry.datdos, Entry.timdos);
-
-
-    /* indicate success                                                    */
-    return 1;
-}
-
-
-
 /****************************************************************************
 **
 *F  DecodeCopy(<size>). . . . . . . . . . . .  extract an uncompressed member
@@ -529,6 +358,11 @@ bool CUnZoo::DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile
         size -= blockSize;
     }
 
+	// actually check the computed CRC-value also..
+    if (m_crc.m_Crc != pEntry->data_crc)
+    {
+		throw ArcException("CRC error on DecodeCopy()", pEntry->fileName);
+    }
     return true;
 }
 
@@ -623,32 +457,13 @@ bool CUnZoo::DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 **
 **  Haruhiko Okumura  wrote the  LZH code (originally for his 'ar' archiver).
 */
-#define MAX_LIT                 255     /* maximal literal code            */
-#define MIN_LEN                 3       /* minimal length of match         */
-#define MAX_LEN                 256     /* maximal length of match         */
-#define MAX_CODE                (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN)
-#define BITS_CODE               9       /* 2^BITS_CODE > MAX_CODE (+1?)    */
-#define MAX_OFF                 8192    /* 13 bit sliding directory        */
-#define MAX_LOG                 13      /* maximal log_2 of offset         */
-#define BITS_LOG                4       /* 2^BITS_LOG > MAX_LOG (+1?)      */
-#define MAX_PRE                 18      /* maximal pre code                */
-#define BITS_PRE                5       /* 2^BITS_PRE > MAX_PRE (+1?)      */
 
-unsigned short  TreeLeft [2*MAX_CODE+1];/* tree for codes   (upper half)   */
-unsigned short  TreeRight[2*MAX_CODE+1];/* and  for offsets (lower half)   */
-unsigned short  TabCode  [4096];        /* table for fast lookup of codes  */
-unsigned char   LenCode  [MAX_CODE+1];  /* number of bits used for code    */
-unsigned short  TabLog   [256];         /* table for fast lookup of logs   */
-unsigned char   LenLog   [MAX_LOG+1];   /* number of bits used for logs    */
-unsigned short  TabPre   [256];         /* table for fast lookup of pres   */
-unsigned char   LenPre   [MAX_PRE+1];   /* number of bits used for pres    */
-
-int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tablebits, unsigned short *table )
+int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table )
 {
-    unsigned short      count[17], weight[17], start[18];
-    unsigned int        i, k, len;
+    uint16_t      count[17], weight[17], start[18];
+    unsigned int        i, k;
 
-    for (i = 1; i <= 16; i++) 
+    for (i = 1; i <= 16; i++) // why first remains random value..?
     {
 		count[i] = 0;
 	}
@@ -663,7 +478,7 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
         start[i + 1] = start[i] + (count[i] << (16 - i));
     }
     
-    if (start[17] != (unsigned short)((unsigned) 1 << 16))
+    if (start[17] != (uint16_t)((unsigned) 1 << 16))
     {
 		// corrupted file,
 		// wrong offset used
@@ -684,7 +499,7 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
     }
 
     i = start[tablebits + 1] >> jutbits;
-    if (i != (unsigned short)((unsigned) 1 << 16)) 
+    if (i != (uint16_t)((unsigned) 1 << 16)) 
     {
         k = 1 << tablebits;
         while (i != k) 
@@ -693,28 +508,28 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
 	    }
     }
 
-	unsigned short *p;
     unsigned int avail = nchar;
     unsigned int mask = (unsigned) 1 << (15 - tablebits);
     for (unsigned int ch = 0; ch < nchar; ch++) 
     {
-		len = bitlen[ch];
+		uint32_t len = bitlen[ch];
         if (len == 0) 
         {
 			continue;
 		}
+		
         if (len <= tablebits) 
         {
-            for ( i = 0; i < weight[len]; i++ )  
+            for (uint32_t i = 0; i < weight[len]; i++ )  
             {
 				table[i+start[len]] = ch;
 			}
         }
         else 
         {
-            k = start[len];
-            p = &table[k >> jutbits];
-            i = len - tablebits;
+            uint32_t k = start[len];
+            uint16_t *p = &table[k >> jutbits];
+            uint32_t i = len - tablebits;
             while (i != 0) 
             {
                 if (*p == 0) 
@@ -730,7 +545,8 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
                 {
 					p = &TreeLeft[*p];
 				}
-                k <<= 1;  i--;
+                k <<= 1;  
+                i--;
             }
             *p = ch;
         }
@@ -741,23 +557,46 @@ int MakeTablLzh ( const int nchar, const unsigned char *bitlen, const int tableb
     return 1;
 }
 
+#define MAX_LIT                 255     /* maximal literal code            */
+#define MIN_LEN                 3       /* minimal length of match         */
+#define MAX_LEN                 256     /* maximal length of match         */
+#define MAX_CODE                (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN)
+#define BITS_CODE               9       /* 2^BITS_CODE > MAX_CODE (+1?)    */
+#define MAX_OFF                 8192    /* 13 bit sliding directory        */
+#define MAX_LOG                 13      /* maximal log_2 of offset         */
+#define BITS_LOG                4       /* 2^BITS_LOG > MAX_LOG (+1?)      */
+#define MAX_PRE                 18      /* maximal pre code                */
+#define BITS_PRE                5       /* 2^BITS_PRE > MAX_PRE (+1?)      */
+
+uint16_t  TreeLeft [2*MAX_CODE+1];/* tree for codes   (upper half)   */
+uint16_t  TreeRight[2*MAX_CODE+1];/* and  for offsets (lower half)   */
+uint16_t TabCode  [4096];        /* table for fast lookup of codes  */
+uint8_t   LenCode  [MAX_CODE+1];  /* number of bits used for code    */
+uint16_t  TabLog   [256];         /* table for fast lookup of logs   */
+uint8_t   LenLog   [MAX_LOG+1];   /* number of bits used for logs    */
+uint16_t  TabPre   [256];         /* table for fast lookup of pres   */
+uint8_t   LenPre   [MAX_PRE+1];   /* number of bits used for pres    */
+
+// same stuff as in actual LhA/Lzh library,
+// are there differences to worry about?
+//
 bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
 {
 	size_t size = pEntry->compressed_size;
 	
     unsigned long       cnt;            /* number of codes in block        */
-    unsigned long       cnt2;           /* number of stuff in pre code     */
-    unsigned long       code;           /* code from the Archive           */
-    unsigned long       len;            /* length of match                 */
-    unsigned long       log;            /* log_2 of offset of match        */
-    unsigned long       off;            /* offset of match                 */
-    unsigned long       pre;            /* pre code                        */
-    char *              cur;            /* current position in BufFile     */
+    //unsigned long       cnt2;           /* number of stuff in pre code     */
+    //unsigned long       code;           /* code from the Archive           */
+    //unsigned long       len;            /* length of match                 */
+    //unsigned long       log;            /* log_2 of offset of match        */
+    //unsigned long       off;            /* offset of match                 */
+    //unsigned long       pre;            /* pre code                        */
+    //char *              cur;            /* current position in BufFile     */
     char *              pos;            /* position of match               */
-    char *              end;            /* pointer to the end of BufFile   */
+    //char *              end;            /* pointer to the end of BufFile   */
     char *              stp;            /* stop pointer during copy        */
     //unsigned long       crc;            /* cyclic redundancy check value   */
-    unsigned long       i;              /* loop variable                   */
+    //unsigned long       i;              /* loop variable                   */
     //unsigned long       bits;           /* the bits we are looking at      */
     //unsigned long       bitc;           /* number of bits that are valid   */
 
@@ -765,8 +604,8 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     unsigned long bits = 0;  /* the bits we are looking at      */
     unsigned long bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
-    cur = BufFile;  
-    end = BufFile + MAX_OFF;
+    char *cur = BufFile;  
+    char *end = BufFile + MAX_OFF;
 	m_crc.ClearCrc();
 
     /* loop until all blocks have been read                                */
@@ -775,29 +614,24 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     while ( cnt != 0 ) 
     {
         /* read the pre code                                               */
-        cnt2 = PEEK_BITS( BITS_PRE, bits, bitc );  
+        uint32_t pc_count = PEEK_BITS( BITS_PRE, bits, bitc );  
         FLSH_BITS( BITS_PRE, bits, bitc );
-        if ( cnt2 == 0 ) 
+        if ( pc_count == 0 ) 
         {
-            pre = PEEK_BITS( BITS_PRE, bits, bitc );  
+            uint32_t pre = PEEK_BITS( BITS_PRE, bits, bitc );  
             FLSH_BITS( BITS_PRE, bits, bitc );
-            for ( i = 0; i < 256; i++ )  
-            {
-				TabPre[i] = pre;
-			}
+            
+            bufferSet(pre, TabPre, 256);
 			
 			// just memset() it to zero..
-            for ( i = 0; i <= MAX_PRE; i++ )  
-            {
-				LenPre[i] = 0;
-			}
+			::memset(LenPre, 0, MAX_PRE +1);
         }
         else 
         {
-            i = 0;
-            while ( i < cnt2 ) 
+            uint32_t i = 0;
+            while ( i < pc_count ) 
             {
-                len = PEEK_BITS( 3, bits, bitc );  
+                uint32_t len = PEEK_BITS( 3, bits, bitc );  
                 FLSH_BITS( 3, bits, bitc );
                 if ( len == 7 ) {
                     while ( PEEK_BITS( 1, bits, bitc ) ) 
@@ -829,27 +663,22 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
         }
 
         /* read the code (using the pre code)                              */
-        cnt2 = PEEK_BITS( BITS_CODE, bits, bitc );  
+        pc_count = PEEK_BITS( BITS_CODE, bits, bitc );  
         FLSH_BITS( BITS_CODE, bits, bitc );
-        if ( cnt2 == 0 ) 
+        if ( pc_count == 0 ) 
         {
-            code = PEEK_BITS( BITS_CODE, bits, bitc );  
+            uint32_t code = PEEK_BITS( BITS_CODE, bits, bitc );  
             FLSH_BITS( BITS_CODE, bits, bitc );
-            for ( i = 0; i <      4096; i++ )  
-            {
-				TabCode[i] = code;
-			}
-            for ( i = 0; i <= MAX_CODE; i++ )  
-            {
-				LenCode[i] = 0;
-			}
+            
+            bufferSet(code, TabCode, 4096);
+            ::memset(LenCode, 0, MAX_CODE +1);
         }
         else 
         {
-            i = 0;
-            while ( i < cnt2 ) 
+            uint32_t i = 0;
+            while ( i < pc_count ) 
             {
-                len = TabPre[ PEEK_BITS( 8, bits, bitc ) ];
+                uint32_t len = TabPre[ PEEK_BITS( 8, bits, bitc ) ];
                 if ( len <= MAX_PRE ) 
                 {
                     FLSH_BITS( LenPre[len], bits, bitc );
@@ -908,27 +737,22 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
         }
 
         /* read the log_2 of offsets                                       */
-        cnt2 = PEEK_BITS( BITS_LOG, bits, bitc );  
+        pc_count = PEEK_BITS( BITS_LOG, bits, bitc );  
         FLSH_BITS( BITS_LOG, bits, bitc );
-        if ( cnt2 == 0 ) 
+        if ( pc_count == 0 ) 
         {
-            log = PEEK_BITS( BITS_LOG, bits, bitc );  
+            uint32_t log = PEEK_BITS( BITS_LOG, bits, bitc );  
             FLSH_BITS( BITS_LOG, bits, bitc );
-            for ( i = 0; i <      256; i++ )  
-            {
-				TabLog[i] = log;
-			}
-            for ( i = 0; i <= MAX_LOG; i++ )  
-            {
-				LenLog[i] = 0;
-			}
+            
+            bufferSet(log, TabLog, 256);
+            ::memset(LenLog, 0, MAX_LOG +1);
         }
         else 
         {
-            i = 0;
-            while ( i < cnt2 ) 
+            uint32_t i = 0;
+            while ( i < pc_count ) 
             {
-                len = PEEK_BITS( 3, bits, bitc );  
+                uint32_t len = PEEK_BITS( 3, bits, bitc );  
                 FLSH_BITS( 3, bits, bitc );
                 if ( len == 7 ) 
                 {
@@ -955,7 +779,7 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
         while ( 0 < cnt-- ) 
         {
             /* try to decode the code the fast way                         */
-            code = TabCode[ PEEK_BITS( 12, bits, bitc ) ];
+            uint32_t code = TabCode[ PEEK_BITS( 12, bits, bitc ) ];
 
             /* if this code needs more than 12 bits look it up in the tree */
             if ( code <= MAX_CODE ) 
@@ -996,16 +820,17 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
             else 
             {
 	            /* otherwise compute match length and offset and copy          */
-                len = code - (MAX_LIT+1) + MIN_LEN;
+                uint32_t len = code - (MAX_LIT+1) + MIN_LEN;
 
                 /* try to decodes the log_2 of the offset the fast way     */
-                log = TabLog[ PEEK_BITS( 8, bits, bitc ) ];
+                uint32_t log = TabLog[ PEEK_BITS( 8, bits, bitc ) ];
                 /* if this log_2 needs more than 8 bits look in the tree   */
                 if ( log <= MAX_LOG ) 
                 {
                     FLSH_BITS( LenLog[log], bits, bitc );
                 }
-                else {
+                else 
+                {
                     FLSH_BITS( 8, bits, bitc );
                     do {
                         if ( PEEK_BITS( 1, bits, bitc ) )  
@@ -1021,11 +846,8 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
                 }
 
                 /* compute the offset                                      */
-                if ( log == 0 ) 
-                {
-                    off = 0;
-                }
-                else 
+                uint32_t off = 0;
+                if ( log != 0 ) 
                 {
                     off = ((unsigned)1 << (log-1)) + PEEK_BITS( log-1, bits, bitc );
                     FLSH_BITS( log-1, bits, bitc );
@@ -1079,6 +901,20 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     return true;
 }
 
+void CUnZoo::readString(CAnsiFile &archive, const size_t offset, const size_t length, std::string &value)
+{
+	if (archive.Seek(offset, SEEK_SET) == false)
+	{
+		throw IOException("Failed to seek string entry");
+	}
+	
+	if (archive.Read(m_ReadBuffer.GetBegin(), length) == false)
+	{
+		throw IOException("Failed to read string");
+	}
+	value.assign((char*)m_ReadBuffer.GetBegin(), length);
+}
+
 // read list of archive contents (entry-list)
 //
 bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
@@ -1100,22 +936,25 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 			throw IOException("Failed to seek first entry");
 		}
 	}
+	
+	// size of fixed-length part for entry-information
+	const size_t entryFixedSize = 34 + 13; // values + short name len
 
 	size_t nReadCount = m_archiveInfo.header_size;
-	while (nReadCount+34 < m_nFileSize)
+	while ((nReadCount+entryFixedSize) < m_nFileSize)
 	{
-		if (archive.Read(m_ReadBuffer.GetBegin(), 34) == false)
+		if (archive.Read(m_ReadBuffer.GetBegin(), entryFixedSize) == false)
 		{
 			// corrupted file or bug? should detect end before..
 			throw IOException("Failed to read entry header");
 		}
-		nReadCount += 34;
+		nReadCount += entryFixedSize;
 		
-		m_ReadBuffer.SetCurrentPos(0); // simplify rest, keep counting offset
 		if (isSupportedEntry(m_ReadBuffer.GetBegin()) == false)
 		{
 			throw IOException("Unsupported entry detected");
 		}
+		m_ReadBuffer.SetCurrentPos(0); // simplify rest, keep counting offset
 
 		// should be supported -> allocate entry to list, get rest of values	
 		ZooEntry *pEntry = new ZooEntry();
@@ -1142,11 +981,123 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 	    pEntry->comment_position = getULong(m_ReadBuffer.GetNext(4));
 	    pEntry->comment_size = getUWord(m_ReadBuffer.GetNext(2));
 	    
-	    // TODO: rest of values (variable-entry)
+		// some short name (fucking msdos..):
+		// overwrite this with proper name when it is found in file
+		//
+		pEntry->fileName.assign((char*)m_ReadBuffer.GetNext(13), 13);
+		fixPathname(pEntry->fileName); // fix path-separator
+
+		// handle extension of entry-information..
+		// part of it has fixed size and 
+		// 
+		if (pEntry->member_type == 2) // (what are these types anyway?)
+		{
+			pEntry->m_pVarDetails = new ZooVariableEntry();
+			
+			size_t extendedRead = 2+1+2; // next fields needed..
+			if (archive.Read(m_ReadBuffer.GetBegin(), extendedRead) == false)
+			{
+				throw IOException("Failed to read extended header start");
+			}
+			m_ReadBuffer.SetCurrentPos(0); // simplify rest, keep counting offset
+			nReadCount += extendedRead;
+			
+			// does this include size of length-field or just the rest?
+			// just the rest after these three fields?
+			pEntry->m_pVarDetails->variable_size = getUWord(m_ReadBuffer->GetNext(2));
+			pEntry->m_pVarDetails->timezone = m_ReadBuffer.GetNextByte();
+			pEntry->m_pVarDetails->entry_crc = getUWord(m_ReadBuffer->GetNext(2));
+			
+			extendedRead = pEntry->m_pVarDetails->variable_size;
+			if (extendedRead > 0)
+			{
+				if (archive.Read(m_ReadBuffer.GetBegin(), extendedRead) == false)
+				{
+					throw IOException("Failed to read extended header variable-sized part");
+				}
+				m_ReadBuffer.SetCurrentPos(0); // simplify rest, keep counting offset
+				nReadCount += extendedRead;
+	
+				// no point in this if there is no name also.. check anyway (broken archives?)
+				uint8_t fileNameLen = m_ReadBuffer.GetNextByte();
+				extendedRead -= 1;
+				
+				uint8_t dirNameLen = 0;
+				if (extendedRead > 0)
+				{
+					dirNameLen = m_ReadBuffer.GetNextByte();
+					extendedRead -= 1;
+				}
+				
+				if (fileNameLen > 0 && extendedRead > 0)
+				{
+					// overwrite msdos-shit from before when we have proper name for file
+					pEntry->fileName.assign((char*)m_ReadBuffer.GetNext(fileNameLen), fileNameLen);
+					fixPathname(pEntry->fileName); // fix path-separator for later
+					extendedRead -= fileNameLen;
+				}
+				if (dirNameLen > 0 && extendedRead > 0)
+				{
+					pEntry->pathName.assign((char*)m_ReadBuffer.GetNext(dirNameLen), dirNameLen);
+					fixPathname(pEntry->pathName); // fix path-separator for later
+					
+					// append path-separator to directory name if missing
+					if (pEntry->pathName.at(pEntry->pathName.length() -1) != '/')
+					{
+						pEntry->pathName += "/";
+					}
+					
+					extendedRead -= dirNameLen;
+				}
+				if (extendedRead > 0)
+				{
+					pEntry->m_pVarDetails->systemid = getUWord(m_ReadBuffer.GetNext(2));
+					extendedRead -= 2;
+				}
+				if (extendedRead > 0)
+				{
+					// some weird three-byte value..
+					pEntry->m_pVarDetails->permissions = getTriple(m_ReadBuffer.GetNext(3));
+					extendedRead -= 3;
+				}
+				if (extendedRead > 0)
+				{
+					// some weird three-byte value..
+					pEntry->m_pVarDetails->modgen = m_ReadBuffer.GetNextByte();
+					extendedRead -= 1;
+				}
+				if (extendedRead > 0)
+				{
+					// some weird three-byte value..
+					pEntry->m_pVarDetails->version = getUWord(m_ReadBuffer.GetNext(2));
+					extendedRead -= 2;
+				}
+			}
+		}
+	}
+	
+	// read comments..
+	// no idea where they should be, hope offsets are ok..
+	// does offset break if they are read in actual entry information reading?
+	//
+	auto it = m_EntryList.begin();
+	auto itEnd = m_EntryList.end();
+	while (it != itEnd)
+	{
+		ZooEntry *pEntry = (*it);
+		
+		if (pEntry->comment_position > 0 && pEntry->comment_size > 0)
+		{
+			readString(archive,
+						pEntry->comment_position,
+						pEntry->comment_size,
+						pEntry->comment);
+		}
+		
+		++it;
 	}
 
-
-
+	return true;
 }
 
 
@@ -1195,9 +1146,10 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 		
 		if (m_archiveInfo.comment_size > 0 && m_archiveInfo.comment_pos > 0)
 		{
-			archive.Seek(m_archiveInfo.comment_pos, SEEK_SET);
-			archive.Read(m_ReadBuffer.GetBegin(), m_archiveInfo.comment_size);
-			m_archiveInfo.comment.assign(m_ReadBuffer.GetBegin(), m_archiveInfo.comment_size);
+			readString(archive, 
+						m_archiveInfo.comment_pos, 
+						m_archiveInfo.comment_size, 
+						m_archiveInfo.comment);
 		}
 	}
     return true;
