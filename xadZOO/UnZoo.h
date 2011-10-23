@@ -387,6 +387,10 @@ public:
 	bool SetExtractPath(const std::string &szOutPath)
 	{
 		m_szExtractionPath = szOutPath;
+		if (m_szExtractionPath.at(m_szExtractionPath.length() -1) != '/')
+		{
+			m_szExtractionPath += "/";
+		}
 		return true;
 	}
 	

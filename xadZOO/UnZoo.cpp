@@ -1067,7 +1067,7 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 		throw ArcException("Failed to seek entry", pEntry->fileName);
 	}
 	
-	std::string outFilename;
+	std::string outFilename = m_szExtractionPath;
 	if (pEntry->pathName.length() > 0)
 	{
 		// we fixed paths on reading -> just concatenate
