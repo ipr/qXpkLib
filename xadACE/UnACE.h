@@ -88,6 +88,18 @@ public:
 		//dcpr_init();       // initialize decompression
     }
     
+    // expecting at least 14 bytes..
+    bool isSupported(const uint8_t *pBuf) const
+    {
+        char *pData = (char*)(pBuf + 7);
+        if (::memcmp(pData, "**ACE**", 7) == 0)
+        {
+			// ACE archiver
+			return true;
+        }
+        return false
+    }
+    
 	// view a single archive:
 	// get archive metadata
 	// and list of each entry in the archive

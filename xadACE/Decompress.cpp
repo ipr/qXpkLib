@@ -490,12 +490,6 @@ void dcpr_init_file(void)
 {
    UINT i;
 
-   if (head.HEAD_FLAGS & ACE_PASSW)
-   {
-      printf("\nFound passworded file. Decryption not supported.\n");
-      f_err = ERR_OTHER;
-      return;
-   }
 
    rd_crc = CRC_MASK;
    dcpr_size = fhead.SIZE;

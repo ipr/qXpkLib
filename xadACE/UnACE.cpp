@@ -17,6 +17,20 @@
 
 bool CUnACE::readHeader(CAnsiFile &archive)
 {
+	m_ReadBuffer.PrepareBuffer(1024, false);
+	
+	// TODO: check how much necessary to read for file metadata,
+	// assuming this type..
+	if (archive.Read(m_ReadBuffer.GetBegin(), sizeof(tacemhead)) == false)
+	{
+		throw IOException("Failed reading archive header");
+	}
+	tacemhead *aceHead = (tacemhead*)m_ReadBuffer.GetBegin();	
+
+	if (aceHead->HEAD_FLAGS & ACE_PASSW)
+	{
+		throw ArcException("Passworded file: decryption not supported", m_szArchive);
+	}
 }
 
 ////////////// public methods
