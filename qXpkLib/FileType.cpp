@@ -87,10 +87,10 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// 20..23 = 0xfdc4a7dc
 		//
         if (::memcmp(pBuffer, "ZOO ", 4) == 0
-			&& pBuffer[20] == 0xfd
-			&& pBuffer[21] == 0xc4
-			&& pBuffer[22] == 0xa7
-			&& pBuffer[23] == 0xdc
+			&& pBuffer[23] == 0xfd
+			&& pBuffer[22] == 0xc4
+			&& pBuffer[21] == 0xa7
+			&& pBuffer[20] == 0xdc
 			)
         {
             return HEADERTYPE_ZOO;

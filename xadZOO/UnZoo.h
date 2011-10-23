@@ -89,10 +89,10 @@ public:
     bool isSupported(const uint8_t *pBuffer) const
     {
 		if (::memcmp(pBuffer, "ZOO ", 4) == 0
-			&& pBuffer[20] == 0xfd
-			&& pBuffer[21] == 0xc4
-			&& pBuffer[22] == 0xa7
-			&& pBuffer[23] == 0xdc
+			&& pBuffer[23] == 0xfd
+			&& pBuffer[22] == 0xc4
+			&& pBuffer[21] == 0xa7
+			&& pBuffer[20] == 0xdc
 			)
 		{
 			return true;
@@ -252,10 +252,10 @@ protected:
 	// expecting 4 bytes from entry start
     bool isSupportedEntry(const uint8_t *pBuffer) const
     {
-		if (pBuffer[0] == 0xfd
-			&& pBuffer[1] == 0xc4
-			&& pBuffer[2] == 0xa7
-			&& pBuffer[3] == 0xdc)
+		if (pBuffer[3] == 0xfd
+			&& pBuffer[2] == 0xc4
+			&& pBuffer[1] == 0xa7
+			&& pBuffer[0] == 0xdc)
 		{
 			return true;
 		}

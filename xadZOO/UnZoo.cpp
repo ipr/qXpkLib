@@ -1000,7 +1000,15 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 		// nothing to do here anyway -> just get out of here
 		throw IOException("Failed to read header");
     }
+    
+    // check text at start
     if (m_archiveInfo.isSupported(m_ReadBuffer.GetBegin()) == false)
+    {
+		throw IOException("Unsupported file type");
+    }
+    
+    // check id-value
+    if (isSupported(m_ReadBuffer.GetAt(20)) == false)
     {
 		throw IOException("Unsupported file type");
     }

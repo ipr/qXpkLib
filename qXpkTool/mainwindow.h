@@ -47,6 +47,10 @@ private:
 	
 	QXpkLib *m_pXpkLib;
 	
+	// keep some archive-info here
+	bool m_bIsMultiFileArc;
+	bool m_bIsMultiVolArc;
+	
 	// key: path (without filename)
 	// value: top-level item
 	//

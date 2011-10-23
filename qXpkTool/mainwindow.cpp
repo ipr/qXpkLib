@@ -17,7 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_lastPath(),
-    m_pXpkLib(nullptr)
+    m_pXpkLib(nullptr),
+    m_bIsMultiFileArc(false),
+    m_bIsMultiVolArc(false)
 {
     ui->setupUi(this);
 	m_szBaseTitle = windowTitle();
@@ -85,6 +87,10 @@ void MainWindow::onFileSelected(QString szFile)
 		//ui->statusBar->showMessage("Error retrieving information");
 		return;
 	}
+	
+	// keep some info for later user actions (may show something also..)
+    m_bIsMultiFileArc = info.m_bIsMultifile;
+    m_bIsMultiVolArc = info.m_bIsMultiVolume;
 
 	QString szMessage;
 	szMessage.append(" Total files in archive: ").append(QString::number(info.m_fileList.count()))
@@ -156,7 +162,6 @@ void MainWindow::onFileSelected(QString szFile)
 	ui->treeWidget->sortByColumn(0);
 }
 
-
 void MainWindow::on_actionFile_triggered()
 {
 	QString szFile = QFileDialog::getOpenFileName(this, tr("Open file"), m_lastPath);
@@ -173,24 +178,26 @@ void MainWindow::on_actionFile_triggered()
 	}
 }
 
-
 void MainWindow::on_actionDecrunch_triggered()
 {
-	// if is multi-file archive
-	// -> select dest folder dialog
-	/*
-    QString szDestPath = QFileDialog::getExistingDirectory(this, tr("Select path to extract to.."), szCurrentFilePath);
-    if (szDestPath == NULL)
-    {
-		return;
-    }
-    */
+	if (m_bIsMultiFileArc == true)
+	{
+		// if is multi-file archive
+		// -> select dest folder dialog
+		QString szDestPath = QFileDialog::getExistingDirectory(this, tr("Select path to extract to.."), m_lastPath);
+		if (szDestPath == NULL)
+		{
+			return;
+		}
+		m_pXpkLib->setOutputPath(szDestPath);
+	}
+	else
+	{
+		// TODO ?
+		// if is single file
+		// -> select dest file dialog
+	}
 	
-	// if is single file
-	// -> select dest file dialog
-	
-	
-
 	if (m_pXpkLib->xpkUnpack() == true)
 	{
 		ui->statusBar->showMessage("Extract completed", 10000);
