@@ -29,8 +29,20 @@ so that it can be used by qXpkLib to unpack ACE-archives.
 Modifications:
 * removed console input/output
  - it's library and can be used GUI-app also
+* remove "extern" and "static" globals 
+ - these don't work well in C++ libraries
 * platform-related stuff wrapped in classes
+ - use ISO-standard typedefs whenever available
+ - in general, use fixed-size typedef where value must be fixed-size
+  -- such as reading 16-bit int from file -> use int16_t/uint16_t
+ - if value size is allowed to change in build use size_t
+  -- for example, file length can be 32-bit/64-bit int depending on build
+ - you can easily define these if not included with compiler yet
+ - this simplifies different builds of same sources
+ - for example, Mac OS X and Linux uses LLP64 and Windows uses LP64,
+   where (sizeof(long) is 8 or 4 bytes, pointer 8 in both)
 * some preparations for 64-bit build support
+ - see typedef related notes above
 
 Status:
 In progress..

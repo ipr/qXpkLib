@@ -15,11 +15,15 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 INCLUDEPATH += ../qXpkLib
 
 SOURCES += xadACE.cpp \
-    UnACE.cpp
+    UnACE.cpp \
+    CRCsum.cpp
 
 HEADERS += xadACE.h\
         xadACE_global.h \
-    UnACE.h
+    UnACE.h \
+    CRCsum.h
+
+
 
 
 

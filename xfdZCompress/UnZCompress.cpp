@@ -118,8 +118,9 @@ int32_t CUnZCompress::decomp(CompressData &cd)
 		//
 		do
 		{
-			//--stackp; // can we separate or does this screw up order..?
 			m_pOutput->SetNextByte(*(--stackp));
+			//m_pOutput->SetNextByte(*(stackp));
+			//--stackp; // can we separate or does this screw up order..?
 		} while(stackp > stack);
 
 		/* Generate the new entry. */
