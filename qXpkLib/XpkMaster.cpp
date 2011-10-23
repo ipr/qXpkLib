@@ -211,6 +211,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 				throw ArcException("Decrunching failed", m_InputName.toStdString());
 				//return false;
 			}
+			
+			// TODO: need checksum somewhere around here..
 
 			// keep accounting in master,
 			// no need to bother sub-libraries with it			

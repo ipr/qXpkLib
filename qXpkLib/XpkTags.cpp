@@ -159,6 +159,9 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrWord);
 		}
 		
+		// TODO: need header checksum verification somewhere around here..
+		
+		
 		// move to actual data of chunk (according to chunk header size)
 		Buffer.SetCurrentPos(pCurrent->m_nDataOffset);
 
