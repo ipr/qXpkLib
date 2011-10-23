@@ -127,6 +127,13 @@ public:
 		// when multi-file and information available
 		//
 		QList<CEntryInfo> m_fileList;
+		
+		// TODO: something like this for linking
+		// multi-volume archive files ?
+		// (need to access each part in sequence..)
+		//
+		//CArchiveInfo *m_prev;
+		//CArchiveInfo *m_next;
 	};
 	
 	
