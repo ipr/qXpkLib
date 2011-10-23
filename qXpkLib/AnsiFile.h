@@ -161,19 +161,19 @@ public:
 	// note: don't make it const:
 	// allow modify to read into it..
 	//
-	unsigned char *GetBegin()
+	unsigned char *GetBegin() const
 	{
 		return m_pReadBuffer;
 	}
 	
 	// reduce repeated code -> count end ptr
-	unsigned char *GetEnd()
+	unsigned char *GetEnd() const
 	{
 		return m_pReadBuffer + m_nReadBufferSize;
 	}
 
 	// reduce repeated code -> count to given offset from start
-	unsigned char *GetAt(const size_t nOffset)
+	unsigned char *GetAt(const size_t nOffset) const
 	{
 #ifdef _DEBUG
 		// debug-case, access beyond buffer
@@ -186,7 +186,7 @@ public:
 	}
 	
 	// inlinable helper
-	unsigned char *GetAtCurrent()
+	unsigned char *GetAtCurrent() const
 	{
 		return GetAt(m_nCurrentPos);
 	}

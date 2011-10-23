@@ -36,8 +36,17 @@ virtual bool xadLZX::setArchive(QString &file)
 	{
 		delete m_pArchive;
 	}
-	m_pArchive = new CUnLzx(file.toStdString());
-	return m_pArchive->View(); // get list of contents for later
+	
+	try
+	{
+		m_pArchive = new CUnLzx(file.toStdString());
+		return m_pArchive->View(); // get list of contents for later
+	}
+	catch (std::exception &exp)
+	{
+		//emit fatal_error(exp.what());
+	}
+	return false;
 }
 
 bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)

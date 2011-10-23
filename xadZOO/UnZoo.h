@@ -293,7 +293,7 @@ protected:
 	}
 
 	// inlining won't give any benefit since function call(s) are made anyway
-	// (old called at least two functions, we call at least one or two depending on inlining..)
+	// (old called at least two functions, we call one or two depending on inlining..)
 	void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc) const
 	{
 		if ( (bitc -= N) < 16 ) 

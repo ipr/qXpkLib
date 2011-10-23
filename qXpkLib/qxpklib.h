@@ -58,7 +58,15 @@ public:
 	class CEntryInfo
 	{
 	public:
-		CEntryInfo() {}
+		CEntryInfo() 
+			: m_fileName()
+			, m_Stamp()
+			, m_ulFileSize(0)
+			, m_ulPackedSize(0)
+			, m_ulUnpackedSize(0)
+			, m_packing()
+			, m_szComment()
+		{}
 		
 		QString m_fileName; // name&path of file
 
@@ -91,15 +99,25 @@ public:
 	class CArchiveInfo
 	{
 	public:
-		CArchiveInfo() {}
+		CArchiveInfo() 
+			: m_bIsMultifile(false)
+			, m_bIsMultiVolume(false)
+			, m_archiveInfo()
+			, m_fileList()
+		{}
 		
 		// for archive-files, may be larger than 1
 		// for single-file packers, at most 1
 		//unsigned long m_ulFileCount; // files in archive
 		
-		// if is multifile-archive:
-		// may or may not have information on contained file
+		// if is multifile-archive (collection of files):
+		// may or may not have information on contained file(s)
 		bool m_bIsMultifile;
+		
+		// file is part of multi-volume archive
+		// (collection of archive-files, each with collection of files):
+		// not many archivers that have this ??
+		bool m_bIsMultiVolume;
 		
 		// for convenience of single-file crunching only?
 		// (obscure XFD-cruncher might not have any metadata..)

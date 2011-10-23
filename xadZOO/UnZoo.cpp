@@ -344,11 +344,14 @@
 **
 **  Haruhiko Okumura  wrote the  LZH code (originally for his 'ar' archiver).
 */
-
+//
+// I think this should be replaced with code from Unix Lha instead
+// since it handles better different compilers etc.
+//
 bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table)
 {
     uint16_t      count[17], weight[17], start[18];
-    unsigned int        i, k;
+    unsigned int  i = 0;
 
     for (i = 1; i <= 16; i++) // why first remains random value..?
     {
@@ -365,7 +368,8 @@ bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int
         start[i + 1] = start[i] + (count[i] << (16 - i));
     }
     
-    if (start[17] != (uint16_t)((unsigned) 1 << 16))
+    //if (start[17] != (uint16_t)((unsigned) 1 << 16)) // <- not this way..
+    if ((start[17] & 0xffff) != 0)
     {
 		// corrupted file,
 		// wrong offset used
@@ -377,26 +381,30 @@ bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int
     for (i = 1; i <= tablebits; i++) 
     {
         start[i] >>= jutbits;
-        weight[i] = (unsigned) 1 << (tablebits - i);
+        weight[i] = (1 << (tablebits - i));
     }
     while (i <= 16) 
     {
-        weight[i] = (unsigned) 1 << (16 - i);
+        weight[i] = (1 << (16 - i));
         i++;
     }
 
-    i = start[tablebits + 1] >> jutbits;
-    if (i != (uint16_t)((unsigned) 1 << 16)) 
+    //i = start[tablebits + 1] >> jutbits;
+    //if (i != (uint16_t)((unsigned) 1 << 16)) // <- 16-bit shift and cast to 16-bit value?
+    int32_t start_m = start[tablebits + 1] >> jutbits;
+    if (start_m != 0) // 0xffff ?
     {
-        k = 1 << tablebits;
-        while (i != k) 
+        //while (i != k) 
+        int32_t kEnd = 1 << tablebits;
+        for (int i = start_m; i < kEnd; i++)
         {
-	        table[i++] = 0;
+	        //table[i++] = 0;
+            table[i] = 0;
 	    }
     }
 
     unsigned int avail = nchar;
-    unsigned int mask = (unsigned) 1 << (15 - tablebits);
+    unsigned int mask = (1 << (15 - tablebits));
     for (unsigned int ch = 0; ch < nchar; ch++) 
     {
 		uint32_t len = bitlen[ch];
@@ -417,6 +425,8 @@ bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int
             uint32_t k = start[len];
             uint16_t *p = &table[k >> jutbits];
             uint32_t i = len - tablebits;
+            
+            // make_table_tree() ?
             while (i != 0) 
             {
                 if (*p == 0) 
@@ -440,7 +450,6 @@ bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int
         start[len] += weight[len];
     }
 
-    /* indicate success                                                    */
     return true;
 }
 
@@ -497,7 +506,9 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     unsigned long bits = 0;  /* the bits we are looking at      */
     unsigned long bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
-    char *cur = m_ReadBuffer->GetBegin();
+    
+    const char *BufFile = (char*)m_DecrunchBuffer->GetBegin();
+    char *cur = BufFile;
     char *end = cur + MAX_OFF;
 
     /* loop until all blocks have been read                                */
@@ -681,7 +692,8 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
             else 
             {
                 FLSH_BITS( 12, bits, bitc );
-                do {
+                do 
+                {
                     if ( PEEK_BITS( 1, bits, bitc ) )  
                     {
 						code = TreeRight[code];
@@ -706,7 +718,7 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
                     {
 		                throw IOException("cannot write output file");
                     }
-                    cur = BufFile;
+                    cur = m_ReadBuffer->GetBegin();
                 }
             }
             else 
@@ -1041,20 +1053,18 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 		return true; // skip it
 	}
 
+	if (pEntry->method != PackCopyOnly
+		&& pEntry->method != PackLzh)
+	{
+		// warning only or error?
+		// (unsupported packing method)
+		throw ArcException("unknown packing method", pEntry->fileName);
+	}
+
 	// locate data in archive
 	if (archive.Seek(pEntry->data_position, SEEK_SET) == false)
 	{
 		throw ArcException("Failed to seek entry", pEntry->fileName);
-	}
-	
-	// meh.. we can just read entry directly to buffer for writing/decoding
-	// and crc from buffer.. it's not like those are particularly large files anyway..
-	//
-	m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
-	m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
-	if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
-	{
-		throw ArcException("Failed reading compressed data for file", pEntry->fileName);
 	}
 	
 	std::string outFilename;
@@ -1077,27 +1087,37 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 	
 	m_crc.ClearCrc(); // = 0;
 	bool bRes = false;
-	if (pEntry->method == PackCopyOnly)
+
+	const size_t chunkSize = 8192;
+	m_ReadBuffer.PrepareBuffer(chunkSize, false);
+	m_DecrunchBuffer.PrepareBuffer(chunkSize, false);
+	
+	size_t size = pEntry->compressed_size;
+	while (size > 0)
 	{
-		m_crc.UpdateCrc(m_ReadBuffer.GetBegin(), pEntry->compressed_size);
-		
-		// uncompressed data: just write it directly to output
-		if (outFile.Write(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
+		size_t nToRead = (chunkSize < pEntry->compressed_size) ? chunkSize : pEntry->compressed_size;
+		if (archive.Read(m_ReadBuffer.GetBegin(), nToRead) == false)
 		{
-			throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
+			throw ArcException("Failed reading compressed data for file", pEntry->fileName);
 		}
-		bRes = true;
-	}
-	else if (pEntry->method == PackLzh)
-	{
-		// this expects buffer to be ready for decoding now
-		bRes = DecodeLzh(pEntry, archive, outFile);
-	}
-	else
-	{
-		// warning only or error?
-		// (unsupported packing method)
-		throw ArcException("unknown packing method", pEntry->fileName);
+	
+		if (pEntry->method == PackCopyOnly)
+		{
+			m_crc.UpdateCrc(m_ReadBuffer.GetBegin(), nToRead);
+			
+			// uncompressed data: just write it directly to output
+			if (outFile.Write(m_ReadBuffer.GetBegin(), nToRead) == false)
+			{
+				throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
+			}
+			bRes = true;
+		}
+		else if (pEntry->method == PackLzh)
+		{
+			// this expects buffer to be ready for decoding now
+			bRes = DecodeLzh(pEntry, archive, outFile);
+		}
+		size -= nToRead;
 	}
 
 	if (m_crc.m_Crc != pEntry->data_crc)

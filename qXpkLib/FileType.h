@@ -48,10 +48,7 @@ typedef enum tHeaderType
 	HEADERTYPE_POWERPACKER, // Powerpacker, Amiga
 	HEADERTYPE_IMPLODER, // Imploder-packed file (multiple ID variations..), Amiga
 	HEADERTYPE_XPK_GENERIC, // XPK, multi-algorithm (SQSH etc.), Amiga
-	//HEADERTYPE_XPK_SQSH, // XPK SQSH
-	//HEADERTYPE_XPK_NUKE, // XPK NUKE
-	//HEADERTYPE_XPK_RLEN, // XPK RLEN
-	HEADERTYPE_XFD_GENERIC, // XFD, multi-algorithm (SQSH etc.), Amiga
+	HEADERTYPE_XFD_GENERIC, // XFD, multi-algorithm, Amiga
 	HEADERTYPE_BZIP, // older BZip packer 
 	HEADERTYPE_BZIP2, // BZip2 packer (bz2)
 	HEADERTYPE_GZIP, // GNU-zip packer (gz)
