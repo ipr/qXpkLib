@@ -336,10 +336,6 @@ protected:
 		return res;
 	}
 
-
-	bool DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
-	bool DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
-	
 	bool MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table);
 	bool DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile);
 

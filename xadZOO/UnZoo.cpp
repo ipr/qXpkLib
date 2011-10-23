@@ -269,64 +269,6 @@
 */
 
 
-
-/****************************************************************************
-**
-*F  DecodeCopy(<size>). . . . . . . . . . . .  extract an uncompressed member
-**
-**  'DecodeCopy' simply  copies <size> bytes  from the  archive to the output
-**  file.
-*/
-//
-// note: caller should seek data position already
-//
-bool CUnZoo::DecodeCopy(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
-{
-    m_ReadBuffer.PrepareBuffer(8192, false); // clear, allocate if not enough
-    
-    size_t size = pEntry->compressed_size;
-
-    /* loop until everything has been copied                               */
-    while ( 0 < size ) 
-    {
-        /* read as many bytes as possible in one go                        */
-        const size_t bufSize = m_ReadBuffer.GetSize();
-        unsigned long blockSize = (bufSize < size ? bufSize : size); // choose largest possible
-        
-	    if (archive.Read(m_ReadBuffer.GetBegin(), blockSize) == false)
-        {
-            throw IOException("unexpected <eof> in the archive");
-        }
-        if (outFile.Write(m_ReadBuffer.GetBegin(), blockSize) == false)
-        {
-            throw IOException("cannot write output file");
-        }
-
-        /* compute the crc                                                 */
-        m_crc.UpdateCrc(BufFile, blockSize);
-
-        /* on to the next block                                            */
-        size -= blockSize;
-    }
-    return true;
-}
-
-
-/****************************************************************************
-**
-*F  DecodeLzd() . . . . . . . . . . . . . . .  extract a LZ compressed member
-**
-*N  1993/10/21 martin add LZD.
-*/
-/**/
-bool CUnZoo::DecodeLzd(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
-{
-	// just ignore this for now
-	//throw IOException("LZD not implemented");
-    return false;
-}
-/**/
-
 /****************************************************************************
 **
 *F  DecodeLzh() . . . . . . . . . . . . . . . extract a LZH compressed member
@@ -502,25 +444,31 @@ bool CUnZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int
     return true;
 }
 
-#define MAX_LIT                 255     /* maximal literal code            */
-#define MIN_LEN                 3       /* minimal length of match         */
-#define MAX_LEN                 256     /* maximal length of match         */
-#define MAX_CODE                (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN)
-#define BITS_CODE               9       /* 2^BITS_CODE > MAX_CODE (+1?)    */
-#define MAX_OFF                 8192    /* 13 bit sliding directory        */
-#define MAX_LOG                 13      /* maximal log_2 of offset         */
-#define BITS_LOG                4       /* 2^BITS_LOG > MAX_LOG (+1?)      */
-#define MAX_PRE                 18      /* maximal pre code                */
-#define BITS_PRE                5       /* 2^BITS_PRE > MAX_PRE (+1?)      */
+// prefer constexpr over preprocessor macros
+//
+const int32_t MAX_LIT         = 255;     /* maximal literal code            */
+const int32_t MIN_LEN         = 3;       /* minimal length of match         */
+const int32_t MAX_LEN         = 256;     /* maximal length of match         */
+const int32_t MAX_CODE        = (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN);
+const int32_t BITS_CODE       = 9;       /* 2^BITS_CODE > MAX_CODE (+1?)    */
+const int32_t MAX_OFF         = 8192;    /* 13 bit sliding directory        */
+const int32_t MAX_LOG         = 13;      /* maximal log_2 of offset         */
+const int32_t BITS_LOG        = 4;       /* 2^BITS_LOG > MAX_LOG (+1?)      */
+const int32_t MAX_PRE         = 18;      /* maximal pre code                */
+const int32_t BITS_PRE        = 5;       /* 2^BITS_PRE > MAX_PRE (+1?)      */
 
-uint16_t  TreeLeft [2*MAX_CODE+1];/* tree for codes   (upper half)   */
-uint16_t  TreeRight[2*MAX_CODE+1];/* and  for offsets (lower half)   */
-uint16_t TabCode  [4096];        /* table for fast lookup of codes  */
-uint8_t   LenCode  [MAX_CODE+1];  /* number of bits used for code    */
-uint16_t  TabLog   [256];         /* table for fast lookup of logs   */
-uint8_t   LenLog   [MAX_LOG+1];   /* number of bits used for logs    */
-uint16_t  TabPre   [256];         /* table for fast lookup of pres   */
-uint8_t   LenPre   [MAX_PRE+1];   /* number of bits used for pres    */
+// use constants for buffer-sizes also where fixed-length
+const int32_t c_TREE_SIZE = 2*MAX_CODE+1;
+const int32_t c_TAB_CODE_SIZE = 4096;
+
+uint16_t  TreeLeft [c_TREE_SIZE];        /* tree for codes   (upper half)   */
+uint16_t  TreeRight[c_TREE_SIZE];        /* and  for offsets (lower half)   */
+uint16_t TabCode  [c_TAB_CODE_SIZE];     /* table for fast lookup of codes  */
+uint8_t   LenCode  [MAX_CODE+1];         /* number of bits used for code    */
+uint16_t  TabLog   [256];                /* table for fast lookup of logs   */
+uint8_t   LenLog   [MAX_LOG+1];          /* number of bits used for logs    */
+uint16_t  TabPre   [256];                /* table for fast lookup of pres   */
+uint8_t   LenPre   [MAX_PRE+1];          /* number of bits used for pres    */
 
 // same stuff as in actual LhA/Lzh library,
 // are there differences to worry about?
@@ -549,8 +497,8 @@ bool CUnZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
     unsigned long bits = 0;  /* the bits we are looking at      */
     unsigned long bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
-    char *cur = BufFile;  
-    char *end = BufFile + MAX_OFF;
+    char *cur = m_ReadBuffer->GetBegin();
+    char *end = cur + MAX_OFF;
 
     /* loop until all blocks have been read                                */
     cnt = PEEK_BITS( 16, bits, bitc );  
@@ -1099,6 +1047,16 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 		throw ArcException("Failed to seek entry", pEntry->fileName);
 	}
 	
+	// meh.. we can just read entry directly to buffer for writing/decoding
+	// and crc from buffer.. it's not like those are particularly large files anyway..
+	//
+	m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
+	m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
+	if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
+	{
+		throw ArcException("Failed reading compressed data for file", pEntry->fileName);
+	}
+	
 	std::string outFilename;
 	if (pEntry->pathName.length() > 0)
 	{
@@ -1121,17 +1079,18 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 	bool bRes = false;
 	if (pEntry->method == PackCopyOnly)
 	{
-		bRes = DecodeCopy(pEntry, archive, outFile);
+		m_crc.UpdateCrc(m_ReadBuffer.GetBegin(), pEntry->compressed_size);
+		
+		// uncompressed data: just write it directly to output
+		if (outFile.Write(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
+		{
+			throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
+		}
+		bRes = true;
 	}
 	else if (pEntry->method == PackLzh)
 	{
-		// simplify, read LZH-compressed entry at once..
-		m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
-		m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
-		if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
-		{
-			throw ArcException("Failed reading compressed data for file", pEntry->fileName);
-		}
+		// this expects buffer to be ready for decoding now
 		bRes = DecodeLzh(pEntry, archive, outFile);
 	}
 	else
