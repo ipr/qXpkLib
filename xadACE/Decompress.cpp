@@ -561,8 +561,8 @@ void CDecompress::dcpr_init(void)
 ///////// public methods
 
 CDecompress::CDecompress(CReadBuffer *pReadBuffer, CReadBuffer *pDecrunchBuffer)
-	: m_pReadBuffer(pReadBuffer)
-	, m_pDecrunchBuffer(pDecrunchBuffer)
+	: m_pRead(pReadBuffer)
+	, m_pDecrunch(pDecrunchBuffer)
 	, m_Crc()
 	, dcpr_text(nullptr)
 	, rpos(0)
@@ -582,8 +582,8 @@ CDecompress::CDecompress(CReadBuffer *pReadBuffer, CReadBuffer *pDecrunchBuffer)
 {
 	::memset(dcpr_olddist, 0, 4*sizeof(uint32_t));
 	
-	size_rdb = pReadBuffer->GetSize();
-	buf_rd = (uint32_t*)pReadBuffer->GetBegin();
+	size_rdb = m_pRead->GetSize();
+	buf_rd = (uint32_t*)m_pRead->GetBegin();
 	
 	dcpr_init();
 }

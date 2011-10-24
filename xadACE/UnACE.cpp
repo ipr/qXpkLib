@@ -19,13 +19,18 @@
 //
 bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 {
+	m_Crc.ClearCrc();
 	m_ReadBuffer.PrepareBuffer(1024, false);
 
-	// at least 14 bytes is needed to identify file as ACE-archive
+	// at least 14 bytes is needed to identify file as ACE-archive,
+	// may need 4 more if "ADDSIZE" field exists in archive-header?
 	if (archive.Read(m_ReadBuffer.GetBegin(), bytes_before_acesign + acesign_len) == false)
 	{
 		throw IOException("Failed reading archive header");
 	}
+	
+	// TODO: if "ADDSIZE" may exist in archive-header,
+	// this needs to adjust accordingly.. (offset +4)
 	if (isSupported(m_ReadBuffer.GetBegin()) == false)
 	{
 		// something else or wrong identifier -> not supported here
@@ -45,6 +50,13 @@ bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 	m_archiveHeader.header.HEAD_SIZE = getUWord(m_ReadBuffer.GetNext(2));
 	m_archiveHeader.header.HEAD_BLOCK_TYPE = m_ReadBuffer.GetNextByte();
 	m_archiveHeader.header.HEAD_FLAGS = getUWord(m_ReadBuffer.GetNext(2));
+	
+	if (m_archiveHeader.header.HEAD_FLAGS & ACE_ADDSIZE)
+	{
+		// when part of multi-volume archive, has additional 4-byte field??
+		// does this field exist with archive-header or only on entry-header?
+		//m_archiveHeader.ADDSIZE = getULong(m_ReadBuffer.GetNext(4));
+	}
 	m_ReadBuffer.SetCurrentPos(m_ReadBuffer.GetCurrentPos()); // skip acesign, checked already
 	
 	// what to do with this flag if set?
@@ -52,17 +64,19 @@ bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 	{
 		// some kind of authentication verification information??
 	}
-	if (m_archiveHeader.header.HEAD_FLAGS & ACE_ADDSIZE)
-	{
-		// when part of multi-volume archive, has additional 4-byte field??
-	}
+	
+	// count header CRC upto current position
+	m_Crc.updatecrc(m_ReadBuffer.GetBegin(), m_ReadBuffer.GetCurrentPos();
 	
 	// read rest of archive header according to size
 	//m_ReadBuffer.Reserve(m_archiveHeader.header.HEAD_SIZE); // prepare more at beginning, no need..
-	if (archive.Read(m_ReadBuffer.GetCurrentPos(), m_archiveHeader.header.HEAD_SIZE) == false)
+	if (archive.Read(m_ReadBuffer.GetAtCurrent(), m_archiveHeader.header.HEAD_SIZE) == false)
 	{
 		throw IOException("Failed reading rest of archive header");
 	}
+
+	// count header CRC upto current position
+	//m_Crc.updatecrc(m_ReadBuffer.GetAtCurrent(), m_ReadBuffer.GetCurrentPos();
 	
 	// what else is needed here..?
 	

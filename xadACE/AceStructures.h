@@ -106,6 +106,7 @@ struct acearchiveheader
 	acearchiveheader()
 	 : header()
 	{
+		ADDSIZE = 0;
 		VER_MOD = 0;
 		VER_CR = 0;
 		HOST_CR = 0;
@@ -117,6 +118,8 @@ struct acearchiveheader
 	}
 
 	tacehead	header;
+	
+	uint32_t	ADDSIZE; // (optional) additional field, bytes to skip in entry headers?
 
 	// no need to keep this..
 	//uint8_t		ACESIGN[acesign_len]; // 7 characters

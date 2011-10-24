@@ -142,6 +142,11 @@ void QXpkLib::getToBuffer(QByteArray &Array)
 	::memcpy(Array.data(), pOut->GetBegin(), pOut->GetCurrentPos());
 }
 
+	// if so, selection needed for multi-file support..
+void QXpkLib::getToBuffer(QString &entry, QByteArray &Array)
+{
+}
+
 //////////////// public slots
 
 // file to process

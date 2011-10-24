@@ -14,98 +14,30 @@
 #include "xpkmaster_checksum.h"
 
 
-/////////////
-// these may be tricky to convert..
-//
-// old stuff uses tag ID to decide type of struct there is
-// and they won't compile correctly on 32/64 bit cpus..
-// get rid of them entirely instead of hacking something together
-// and replace with something more easily portable.
-//
-/*
-XpkTag *XpkTags::NextTag(CReadBuffer &Buffer, XpkTag *pPrevious)
-{
-	if (pPrevious != nullptr)
-	{
-		// amount to change offset:
-		// don't cast directly to struct
-		// since ptr size may vary (4/8 bytes)
-		size_t nToOffset = 0;
-		
-		switch (pPrevious->m_Item.ti_Tag) 
-		{
-		case TAG_SKIP: 
-			// just tag ID ?
-			nToOffset += sizeof(uint32_t);
-			//*tagItemPtr+=(unsigned int)(current->ti_Data)+1;
-			break;
-		case TAG_IGNORE:
-			// ignore tag
-			//*tagItemPtr+=1;
-			nToOffset += sizeof(uint32_t)*2;
-			break;
-		case TAG_MORE:
-			// tag data is another tag..?
-			//*tagItemPtr=(struct TagItem *)current->ti_Data;
-			nToOffset += sizeof(uint32_t);
-			break;
-		case TAG_DONE:
-			// no more tags
-			return nullptr;
-		default:
-			// unknown tag (user-tag?)
-			//*tagItemPtr+=1;
-			nToOffset += sizeof(uint32_t)*2;
-			break;
-		}
-		
-		Buffer.SetCurrentPos(Buffer.GetCurrentPos()+nToOffset);
-	}
-	
-	XpkTag *pCurrent = new XpkTag();
-	if (pPrevious != nullptr)
-	{
-		pPrevious->m_pNext = pCurrent;
-	}
-	
-	pCurrent->m_Item.ti_Tag = (uint32_t)GetULong(Buffer.GetNext(4)); // tag ID
-	pCurrent->m_Item.ti_Data = (void*)Buffer.GetAtCurrent(); // data of tag in buffer
-	
-	return pCurrent;
-}
-*/
 
-/*
-bool XpkTags::ReadTagData(CReadBuffer &Buffer, XpkTag *pTag)
+// verify chunk header according to size of it
+bool XpkTags::verifyHeaderLong(XpkChunkHdrLong *pChunkHeader)
 {
-	// temp!
-	//size_t nSize = getChunkSize(pTag->m_Item.ti_Tag);
-	
+	// is this correct?
+    // should verify against: pChunkHeader->xchl_HChk ?
+    if (hchecksum((uint8_t*)pChunkHeader, sizeof(XpkChunkHdrLong)) == 0)
+    {
+		return true;
+    }
 	return false;
 }
-*/
 
-/*
-void XpkTags::ParseTags(CReadBuffer &Buffer)
+// verify chunk header according to size of it
+bool XpkTags::verifyHeaderWord(XpkChunkHdrWord *pChunkHeader)
 {
-	XpkTag *pCurrent = nullptr;
-	while (Buffer.IsEnd() == false)
-	{
-		XpkTag *pNext = NextTag(Buffer, pCurrent);
-		if (pNext == nullptr)
-		{
-			break;
-		}
-		
-		ReadTagData(Buffer, pNext);
-		if (pCurrent == nullptr)
-		{
-			m_pFirstTag = pNext;
-		}
-		pCurrent = pNext;
-	}
+	// is this correct?
+    // should verify against: pChunkHeader->xchw_HChk ?
+    if (hchecksum((uint8_t*)pChunkHeader, sizeof(XpkChunkHdrWord)) == 0)
+    {
+		return true;
+    }
+	return false;
 }
-*/
 
 //////////////////
 //
@@ -134,6 +66,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 	XpkChunk *pCurrent = m_pFirst;
 	while (Buffer.IsEnd() == false)
 	{
+		bool isValidHeader = false;
 		if (m_streamHeader.xsh_Flags & XPKSTREAMF_LONGHEADERS)
 		{
 			XpkChunkHdrLong *pHdr = (XpkChunkHdrLong*)Buffer.GetAtCurrent();
@@ -145,6 +78,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_UnLen = Swap4(pHdr->xchl_ULen);
 			
 			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrLong);
+			isValidHeader = verifyHeaderLong(pHdr);
 		}
 		else
 		{
@@ -157,10 +91,21 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 			pCurrent->m_UnLen = Swap2(pHdr->xchw_ULen);
 
 			pCurrent->m_nDataOffset += sizeof(XpkChunkHdrWord);
+			isValidHeader = verifyHeaderWord(pHdr);
 		}
 		
 		// TODO: need header checksum verification somewhere around here..
+		if (isValidHeader == false)
+		{
+			// TODO: exception or skip ?
+		}
 		
+		if (pCurrent->m_Type != XPKCHUNK_RAW
+			&& pCurrent->m_Type != XPKCHUNK_PACKED
+			&& pCurrent->m_Type != XPKCHUNK_END)
+		{
+			// TODO: exception or skip ?
+		}
 		
 		// move to actual data of chunk (according to chunk header size)
 		Buffer.SetCurrentPos(pCurrent->m_nDataOffset);
@@ -372,3 +317,17 @@ XpkChunk *XpkTags::nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent)
 	}
 }
 */
+
+// verify checksum on chunk data
+// (after unpacking)
+//
+bool XpkTags::verifyChecksum(XpkChunk *pChunk, CReadBuffer *pOutBuffer)
+{
+	uint8_t *pBuf = pOutBuffer->GetAt(pOutBuffer->GetCurrentPos() - pChunk->m_UnLen);
+	uint16_t checksum = cchecksum(pBuf, pChunk->m_UnLen);
+	if (checksum == pChunk->m_ChunkChecksum)
+	{
+		return true;
+	}
+	return false;
+}

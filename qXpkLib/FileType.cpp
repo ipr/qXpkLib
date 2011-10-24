@@ -146,6 +146,26 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
             return HEADERTYPE_LHA;
         }
     }
+
+	// ISOCD image may have empty boot sector 
+	// -> check first actual sector
+	// (expecting fixed sized sectors, fixed boot sector count)
+	if (ulLength >= (2048*16 + 6))
+	{
+		if (::memcmp(pBuffer + (2048*16 +1), "CD001", 5) == 0)
+		{
+			return HEADERTYPE_ISOCD;
+		}
+	}
+    else if (ulLength >= 6)
+    {
+		// check boot sector.. 
+		// (we may skip this entirely if we know boot sector never has this?)
+        if (::memcmp(pBuffer + 1, "CD001", 5) == 0)
+        {
+			return HEADERTYPE_ISOCD;
+        }
+    }
     
     // try to determine by string at start..
     if (::memcmp(pBuffer, "TFMX-SONG ", 10) == 0)
@@ -371,10 +391,31 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// LZX archive
 		return HEADERTYPE_LZX;
 	}
-	else if (::memcmp(pBuffer, "Rar", 3) == 0)
+	else if (pBuffer[0] == 0x52
+			&& pBuffer[1] == 0x61
+			&& pBuffer[2] == 0x72
+			&& pBuffer[3] == 0x21
+			&& pBuffer[4] == 0x1a
+			&& pBuffer[5] == 0x07
+			&& pBuffer[6] == 0x00)
 	{
-		//0x52 0x61 0x72 0x21 0x1a 0x07 0x00
-		// Rar-archive
+		// actually, two formats:
+		// old : 0x52 0x45 0x7e 0x5e
+		// new : 0x52 0x61 0x72 0x21 0x1a 0x07 0x00
+		//
+		// Rar-archive (newer)
+		return HEADERTYPE_RAR;
+	}
+	else if (pBuffer[0] == 0x52
+			&& pBuffer[1] == 0x45
+			&& pBuffer[2] == 0x7e
+			&& pBuffer[3] == 0x5e)
+	{
+		// actually, two formats:
+		// old : 0x52 0x45 0x7e 0x5e
+		// new : 0x52 0x61 0x72 0x21 0x1a 0x07 0x00
+		//
+		// Rar-archive (older)
 		return HEADERTYPE_RAR;
 	}
     else if (::memcmp(pBuffer, "MED", 3) == 0)
@@ -589,9 +630,10 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	if (*pId == 0x71C7
 		|| *pId == 0xC771)
 	{
-		// Un*x CPIO
+		// Un*x CPIO (old format?)
 		return HEADERTYPE_CPIO;
 	}
+	// there's also two newer CPIO-formats which have ASCII-based identifiers?
 	
 	/*
 	// TAR (POSIX)	.tar	75 73 74 61 72	ustar (offset by 257 bytes)

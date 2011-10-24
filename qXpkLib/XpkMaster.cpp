@@ -182,6 +182,10 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 						pProgress->pInputBuffer->GetAt(pChunk->m_nDataOffset), 
 						pChunk->m_ChunkLength);
 						
+			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
+			{
+			}
+						
 			// accounting in master-library
 			pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
 			pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
@@ -213,6 +217,9 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			}
 			
 			// TODO: need checksum somewhere around here..
+			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
+			{
+			}
 
 			// keep accounting in master,
 			// no need to bother sub-libraries with it			

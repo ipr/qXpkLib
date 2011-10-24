@@ -21,9 +21,9 @@
 // use wrapper(s) from parent-library
 #include "AnsiFile.h"
 
-// CRC checksumming now in own class
-// -> moved to decompress..
-//#include "CRCsum.h"
+// CRC checksumming now in own class,
+// needed here and in decompress..
+#include "CRCsum.h"
 
 // decompression now in own class
 #include "Decompress.h"
@@ -71,6 +71,10 @@ private:
 	// internal buffer for read information
 	CReadBuffer m_ReadBuffer;
 	CReadBuffer m_DecrunchBuffer;
+
+	// for header checksumming at least..
+	// see about sharing if data&header share same checksum..
+	CRCsum m_Crc;
 	
 	// could inherit from this..
 	CDecompress m_Decompress;
@@ -109,6 +113,7 @@ public:
 		, m_szExtractionPath()
 		, m_ReadBuffer(1024) // size_rdb
 		, m_DecrunchBuffer(2048) // size_wrb
+		, m_Crc()
 		, m_Decompress()
     {}
     

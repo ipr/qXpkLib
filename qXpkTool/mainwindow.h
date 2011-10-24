@@ -46,6 +46,11 @@ private:
 	QString m_szCurrentArchive;
 	
 	QXpkLib *m_pXpkLib;
+	//QXpkLib::CArchiveInfo m_info; // keep for current?
+	//
+	//.. or could support multiple..?
+	//QList<QXpkLib*> m_libList;
+	//QList<QXpkLib::CArchiveInfo> m_info;
 	
 	// keep some archive-info here
 	bool m_bIsMultiFileArc;

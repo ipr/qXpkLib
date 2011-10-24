@@ -72,6 +72,8 @@ private:
 	CXfdMaster *m_pXfdMaster;
 	CXadMaster *m_pXadMaster;
 
+	// might keep necessary information already here per archive..?
+	//QXpkLib::CArchiveInfo m_info;
 	
 protected:
 	std::string getCruncherType(CReadBuffer *pInputBuffer);

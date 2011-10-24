@@ -126,8 +126,8 @@ protected:
 	size_t size_rdb;
 
 	// given by parent (shared for IO)
-	CReadBuffer *m_pReadBuffer;
-	CReadBuffer *m_pDecrunchBuffer;
+	CReadBuffer *m_pRead;
+	CReadBuffer *m_pDecrunch;
 
 	CRCsum m_Crc;
 	

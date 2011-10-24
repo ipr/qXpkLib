@@ -14,10 +14,22 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadARJ.cpp
+SOURCES += xadARJ.cpp \
+    UnARJ.cpp \
+    Decode.cpp \
+    CRCsum.cpp
 
 HEADERS += xadARJ.h\
         xadARJ_global.h \
-    GenericTime.h
+    GenericTime.h \
+    UnARJ.h \
+    Decode.h \
+    CRCsum.h
+
+
+
+
+
+
 
 

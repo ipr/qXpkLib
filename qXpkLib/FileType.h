@@ -144,9 +144,11 @@ typedef enum tHeaderType
 	HEADERTYPE_DMS_DISK, // Diskmasher compressed disk file, 0x444D5321 == DMS! (big-endian)
 	HEADERTYPE_XMASH, // xMash
 	HEADERTYPE_ZOOM_DISK, // Zoom disk archiver image
+	//HEADERTYPE_ZAP_DISK, // ZAP disk cruncher
+	//HEADERTYPE_WARP_DISK, // Warp disk cruncher
 	//HEADERTYPE_XDM_DISK, // xDM compressed disk file
 	//HEADERTYPE_AMIGA_HARDFILE,
-	//HEADERTYPE_ISOCD,
+	HEADERTYPE_ISOCD, // ISO-9660 CD/DVD-ROM image file
 	//HEADERTYPE_MDF_CDIMAGE, //
 	//HEADERTYPE_MAC_DMG, // MacOS DMG disk image
 	

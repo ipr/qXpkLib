@@ -168,10 +168,8 @@ protected:
 				);
 	}
 	
-	
-	//XpkTag *NextTag(CReadBuffer &Buffer, XpkTag *pPrevious);
-	//bool ReadTagData(CReadBuffer &Buffer, XpkTag *pTag);
-	//void ParseTags(CReadBuffer &Buffer);
+	bool verifyHeaderLong(XpkChunkHdrLong *pChunkHeader);
+	bool verifyHeaderWord(XpkChunkHdrWord *pChunkHeader);
 
 	void ReadChunks(CReadBuffer &Buffer);
 
@@ -192,6 +190,8 @@ public:
 	// TODO: add this so single-pass
 	// can be done without loading entire file to memory
 	//XpkChunk *nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent = nullptr);
+	
+	bool verifyChecksum(XpkChunk *pChunk, CReadBuffer *pOutBuffer);
 	
 	XpkFormat getFormat()
 	{

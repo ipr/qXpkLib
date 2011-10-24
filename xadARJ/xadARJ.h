@@ -10,6 +10,8 @@
 
 #include "qxpklib.h"
 
+// fwd. decl.
+class CUnARJ;
 
 class XADARJSHARED_EXPORT xadARJ : public xadLibraryBase
 {
@@ -32,6 +34,8 @@ public:
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
 	
+private:
+	CUnARJ *m_pArchive;
 };
 
 

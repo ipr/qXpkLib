@@ -89,6 +89,15 @@ public:
 		// (usually in Amiga-packed files)
 		QString m_szComment;
 		
+		// if merged-entry in archive (LZX)
+		// or spanning multiple volumes (ACE,RAR)
+		// for when single-file extraction cannot be done?
+		//bool m_bIsPartial;
+		
+		// if entry versioning is supported (ZOO),
+		// the version of the entry ?
+		//m_version
+		
 		// other contained file metadata?
 		//filetype (module/image/executable..?);
 	};
@@ -145,8 +154,11 @@ public:
 	bool xpkPack();
 	bool xpkUnpack();
 
-	// if user wants result to buffer?
+	// if user wants result to buffer? 
 	void getToBuffer(QByteArray &Array);
+
+	// if so, selection needed for multi-file support..
+	void getToBuffer(QString &entry, QByteArray &Array);
 	
 signals:
 	void message(QString);

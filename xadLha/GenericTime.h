@@ -1,3 +1,9 @@
+/*
+ * "generic time" format handling wrapper,
+ * parse timestamp to more usable Unix-style time_t format.
+ * 
+ */
+
 #ifndef GENERICTIME_H
 #define GENERICTIME_H
 

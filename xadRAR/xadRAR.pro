@@ -14,8 +14,12 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadRAR.cpp
+SOURCES += xadRAR.cpp \
+    UnRAR.cpp
 
 HEADERS += xadRAR.h\
-        xadRAR_global.h
+        xadRAR_global.h \
+    UnRAR.h
+
+
 
