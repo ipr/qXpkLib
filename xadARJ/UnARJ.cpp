@@ -4,17 +4,40 @@
 
 // read and check archive-file header
 //
+// ARJ archive header format goes something like this:
+// ------------------------------------
+// off  size (t)  desc
+// 0    2  (u2)   "magic-id"
+// 2    2  (u2)   header size
+// 4    4  (u4)   crc (for header?)
+//
 bool CUnARJ::readArchiveHeader(CAnsiFile &archive)
 {
+	m_Crc.ClearCrc();
 	m_ReadBuffer.PrepareBuffer(1024, false);
 
 	if (archive.Read(m_ReadBuffer.GetBegin(), 128) == false)
 	{
 		throw IOException("Failed reading archive header");
 	}
+	if (isSupported(m_ReadBuffer.GetBegin()) == false)
+	{
+		// something else or wrong identifier -> not supported here
+		throw IOException("Unsupported file type");
+	}
+	m_ReadBuffer.SetCurrentPos(2);
+	m_archiveInfo.headerSize = getUWord(m_ReadBuffer.GetNext(2));
+	m_archiveInfo.crc = getULong(m_ReadBuffer.GetNext(4));
 	
-	m_ReadBuffer.SetCurrentPos(0); // should be already..
-	
+	// TODO: don't include original CRC in counted crc or set to zero?
+	// just skip this for now.. 
+	/*
+	m_Crc.updatecrc(m_ReadBuffer.GetBegin(), m_ReadBuffer.GetCurrentPos());
+	if (m_Crc.getcrc() != m_archiveInfo.crc)
+	{
+		throw ArcException("CRC error in archive header", m_archiveInfo.crc);
+	}
+	*/
 	
 }
 

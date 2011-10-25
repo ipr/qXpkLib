@@ -174,6 +174,19 @@ protected:
 
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
+
+	void Clear()
+	{
+		auto it = m_EntryList.begin();
+		auto itend = m_EntryList.end();
+		while (it != itend)
+		{
+			RarEntry *pEntry = (*it);
+			delete pEntry;
+			++it;
+		}
+		m_EntryList.clear();
+	}
 	
 public:
     CUnRAR(const std::string &szArchive)
@@ -188,6 +201,10 @@ public:
 		, m_DecrunchBuffer() 
 		, m_archiveHeader()
     {}
+    ~CUnRAR()
+    {
+		Clear();
+    }
     
 	// view a single archive
 	bool List();

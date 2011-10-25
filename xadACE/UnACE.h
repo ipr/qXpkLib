@@ -102,6 +102,19 @@ protected:
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
 
+	void Clear()
+	{
+		auto it = m_EntryList.begin();
+		auto itend = m_EntryList.end();
+		while (it != itend)
+		{
+			AceEntry *pEntry = (*it);
+			delete pEntry;
+			++it;
+		}
+		m_EntryList.clear();
+	}
+
 public:
     CUnACE(const std::string &szArchive)
 		: m_szArchive(szArchive)
@@ -116,6 +129,10 @@ public:
 		, m_Crc()
 		, m_Decompress()
     {}
+    ~CUnACE()
+    {
+		Clear();
+    }
     
     // expecting at least 14 bytes..
     bool isSupported(const uint8_t *pBuf) const
@@ -126,7 +143,7 @@ public:
 			// ACE archiver
 			return true;
         }
-        return false
+        return false;
     }
     
 	// view a single archive:

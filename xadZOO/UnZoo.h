@@ -348,6 +348,9 @@ protected:
 	
 	void Clear()
 	{
+		// statisticals are counted
+		// -> clear when opening
+		
 		m_nFileSize = 0;
 		m_ulTotalUnpacked = 0;
 		m_ulTotalPacked = 0;
@@ -377,8 +380,7 @@ public:
 		, m_crc()
 		, m_archiveInfo()
 		, m_EntryList()
-    {
-    }
+    {}
     ~CUnZoo()
     {
 		Clear();
