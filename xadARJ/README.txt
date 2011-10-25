@@ -13,6 +13,12 @@ Description:
 This version is modified to be used as extension-library with qXpkLib
 for unpacking ARJ-archives.
 
+Also reuses plenty of code already made in other extension-libraries, including:
+* crc (from xadACE) 
+* "generic time" timestamp conversion (xadZOO, xadLha)
+* file-handling and buffer-handling (qXpkLib)
+* etc.
+
 Modifications include:
 * better portability
  - proper ISO-standard typedefs
