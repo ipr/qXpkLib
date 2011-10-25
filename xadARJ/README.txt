@@ -19,6 +19,9 @@ Also reuses plenty of code already made in other extension-libraries, including:
 * file-handling and buffer-handling (qXpkLib)
 * etc.
 
+ARJ is very much like Lha (both created based on Haruhiko Okumura' AR)
+so more code reuse seems possible, only fileformat and metadata seems different.
+
 Modifications include:
 * better portability
  - proper ISO-standard typedefs

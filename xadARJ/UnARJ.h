@@ -13,6 +13,12 @@
 // use wrapper(s) from parent-library
 #include "AnsiFile.h"
 
+// timestamp conversion
+#include "GenericTime.h"
+
+// file mode flags (attributes, protection bits)
+#include "FilemodeFlags.h"
+
 // CRC checksumming now in own class,
 // needed here and in decompress..
 #include "CRCsum.h"
@@ -21,7 +27,30 @@
 class ArjEntry
 {
 public:
-	ArjEntry() {}
+	ArjEntry(const uint8_t fhs) 
+		: first_header_size(fhs)
+	{}
+	
+	uint8_t first_header_size;
+	uint8_t arj_nbr;
+	uint8_t arj_x_nbr;
+	uint8_t host_os; // same types as Lha ?
+	uint8_t arj_flags;
+	uint8_t method; // packing method? same as Lha ?
+	uint8_t file_type;
+	uint8_t padding; // skipped, padding only?
+	
+	time_t timestamp; // just convert it..
+	
+	uint32_t compressed_size;
+	uint32_t original_size;
+	uint32_t file_crc;
+	
+	uint16_t entry_position;
+	uint16_t file_mode;
+	uint16_t host_data;
+	
+	// TODO: filename and rest..
 };
 
 typedef std::vector<ArjEntry*> tArchiveEntryList;
@@ -55,22 +84,22 @@ protected:
 	// see about sharing if data&header share same checksum..
 	CRCsum m_Crc;
 
+	/* actually, skip this..? */
 	// ARJ archive metadata
 	struct ArjArchiveInfo
 	{
 		// constructor
 		ArjArchiveInfo()
-			: headerSize()
-			, crc()
-		{
-		}
+			: id(0)
+			, headerSize(0)
+			, crc(0)
+		{}
+		
+		uint16_t id; // "magic-id"
 		uint16_t headerSize; // archive header size
 		uint32_t crc; // just header crc ?
 	};
 	ArjArchiveInfo m_archiveInfo;
-
-
-
 
 	// arj stores in little-endian order:
 	// "last" byte from buffer is shifted most,
@@ -93,6 +122,8 @@ protected:
 	}
 
 	bool readArchiveHeader(CAnsiFile &archive);
+	
+	ArjEntry *readEntry(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
 
 	void Clear()

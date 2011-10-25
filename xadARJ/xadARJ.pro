@@ -24,7 +24,9 @@ HEADERS += xadARJ.h\
     GenericTime.h \
     UnARJ.h \
     Decode.h \
-    CRCsum.h
+    CRCsum.h \
+    FilemodeFlags.h
+
 
 
 

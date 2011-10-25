@@ -1,7 +1,9 @@
 /*
  * "generic time" format handling wrapper,
  * parse timestamp to more usable Unix-style time_t format.
- * 
+ *
+ * same format is used in various archivers (Lha, ZOO, ARJ..)
+ * in essentially same way
  */
 
 #ifndef GENERICTIME_H
@@ -37,10 +39,9 @@
 class CGenericTime
 {
 protected:
-	long m_lGenericTime;
+	time_t m_time;
 	
 	// inline conversion helpers
-
 	inline int subbits(int n, int off, int len) const
 	{
 		return (((n) >> (off)) & ((1 << (len))-1));
@@ -48,17 +49,36 @@ protected:
 
 	// note: time_t is __time64_t (64-bit) 
 	// unless otherwise define'd with _USE_32BIT_TIME_T on Win32
-	//
-	inline time_t generic_to_unix_stamp(const long t) const
+	
+	inline time_t toUnixtime(const uint16_t date, const uint16_t time) const
+	{
+		struct tm tmp;
+	
+	    tmp.tm_year  = ((date >>  9) & 0x7f) + 80;
+	    tmp.tm_mon   = ((date >>  5) & 0x0f) - 1;
+	    tmp.tm_mday  = ((date      ) & 0x1f);
+	    
+		tmp.tm_hour  = ((time >> 11) & 0x1f);
+		tmp.tm_min   = ((time >>  5) & 0x3f);
+		tmp.tm_sec   = ((time      ) & 0x1f) * 2;
+		
+		tmp.tm_isdst = -1;
+	
+		return mktime(&tmp);
+	}
+	
+	inline time_t toUnixtime(const long t) const
 	{
 		struct tm tmp;
 	
 		tmp.tm_sec  = subbits(t,  0, 5) * 2;
 		tmp.tm_min  = subbits(t,  5, 6);
 		tmp.tm_hour = subbits(t, 11, 5);
+		
 		tmp.tm_mday = subbits(t, 16, 5);
 		tmp.tm_mon  = subbits(t, 21, 4) - 1;
 		tmp.tm_year = subbits(t, 25, 7) + 80;
+		
 		tmp.tm_isdst = -1;
 	
 		return mktime(&tmp);
@@ -66,24 +86,25 @@ protected:
 	
 public:
 	CGenericTime(void)
-		: m_lGenericTime(0)
+		: m_time(0)
 	{}
+	CGenericTime(const uint16_t date, const uint16_t time)
+		: m_time(0)
+	{
+		m_time = toUnixtime(date, time);
+	}
 	CGenericTime(const long lTime)
-		: m_lGenericTime(lTime)
-	{}
+		: m_time(0)
+	{
+		m_time = toUnixtime(lTime);
+	}
 	CGenericTime(const CGenericTime &Helper)
-		: m_lGenericTime(Helper.getRawValue())
+		: m_time((time_t)Helper)
 	{}
-
-	// just convert to something to useful	
+	
 	operator time_t () const
 	{
-		return generic_to_unix_stamp(m_lGenericTime);
-	}
-
-	long getRawValue() const
-	{
-		return m_lGenericTime;
+		return m_time;
 	}
 
 	CGenericTime& operator =(const CGenericTime &Helper)
@@ -94,7 +115,7 @@ public:
 			return *this;
 		}
 		
-		m_lGenericTime = Helper.getRawValue();
+		m_time = (time_t)Helper;
 		return *this;
 	}
 };
