@@ -119,7 +119,7 @@ struct acearchiveheader
 
 	tacehead	header;
 	
-	uint32_t	ADDSIZE; // (optional) additional field, bytes to skip in entry headers?
+	//uint32_t	ADDSIZE; // (optional) additional field, bytes to skip in entry headers?
 
 	// no need to keep this..
 	//uint8_t		ACESIGN[acesign_len]; // 7 characters
@@ -155,8 +155,13 @@ struct acefileheader
 	
 	tacehead	header;
 
-	uint32_t	PSIZE;
-	uint32_t	SIZE;
+	// only for file-entry?
+	// (is this size to use when entry is split in a multi-volume archive
+	// to spanning multiple files?)
+	uint32_t	ADDSIZE; // (optional) additional field, bytes to skip in entry headers?
+
+	uint32_t	PSIZE; // packed size?
+	uint32_t	SIZE; // original size?
 	uint32_t	FTIME; // timestamp? replace with time_t ..?
 	uint32_t	ATTR; // attributes? which format?
 	uint32_t	CRC32;
