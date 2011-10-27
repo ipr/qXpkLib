@@ -102,6 +102,9 @@ protected:
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
 
+	// TODO: need volume-information and access to multiple volumes..
+	bool extractEntry(CAnsiFile &archive, AceEntry *pEntry);
+
 	void Clear()
 	{
 		auto it = m_EntryList.begin();

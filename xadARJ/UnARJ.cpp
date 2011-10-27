@@ -129,6 +129,48 @@ bool CUnARJ::readEntryList(CAnsiFile &archive)
 	}
 }
 
+// extract entry from archive
+bool CUnARJ::extractEntry(CAnsiFile &archive, ArjEntry *pEntry)
+{
+	// locate entry in archive..
+	if (archive.Seek(pHeader->data_pos, SEEK_SET) == false)
+	{
+		throw IOException("Failure seeking entry data");
+	}
+	
+	// read entry data..
+	m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
+	m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
+	if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
+	{
+		//throw ArcException("Failure reading entry data", pEntry->file_name);
+	}
+	
+	// decode to output-buffer..
+
+	// create file for writing
+	std::string outFilename = m_szExtractionPath;
+	if (outFilename.at(outFilename.length() -1) != '/')
+	{
+		outFilename += "/";
+	}
+	outFilename += pEntry->fileName;
+
+	// open file to write	
+	CAnsiFile OutFile;
+	if (OutFile.Open(outFilename, true) == false)
+	{
+		throw ArcException("Failed creating file for writing", outFilename);
+	}
+	if (OutFile.Write(m_DecrunchBuffer.GetBegin(), pEntry->original_size) == false)
+	{
+		throw ArcException("Failed writing output", outFilename);
+	}
+	OutFile.Close(); // closed on destructor anyway..
+	
+	return true; // entry done
+}
+
 
 ////////////// public methods
 
@@ -158,7 +200,27 @@ bool CUnARJ::GetEntryList(tArchiveEntryList &lstArchiveInfo) const
 
 bool CUnARJ::Extract()
 {
-	// TODO:..
+	CAnsiFile archive(m_szArchive);
+	if (archive.IsOk() == false)
+	{
+        throw ArcException("could not open archive", m_szArchive);
+	}
+    m_nFileSize = archive.GetSize();
+    
+    readArchiveHeader(archive);
+    readEntryList(archive);
+
+	auto it = m_EntryList.begin();
+	auto itend = m_EntryList.end();
+	while (it != itend)
+	{
+		ArjEntry *pEntry = (*it);
+		
+		extractEntry(archive, pEntry);
+		
+		++it;
+	}
+	return true;
 }
 
 bool CUnARJ::TestArchive()

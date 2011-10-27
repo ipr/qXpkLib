@@ -126,6 +126,8 @@ protected:
 	ArjEntry *readEntry(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
 
+	bool extractEntry(CAnsiFile &archive, ArjEntry *pEntry);
+
 	void Clear()
 	{
 		auto it = m_EntryList.begin();

@@ -111,7 +111,8 @@ void readdat(void)
 #endif
 }
 
-#define addbits(bits)                                   \
+/* already replaced by inline-method
+define addbits(bits)                                   \
 {                                                       \
   rpos+=(bits_rd+=bits)>>5;                             \
   bits_rd&=31;                                          \
@@ -119,7 +120,7 @@ void readdat(void)
   code_rd=(buf_rd[rpos] << bits_rd)                     \
     +((buf_rd[rpos+1] >> (32-bits_rd))&(!bits_rd-1));   \
 }
-
+*/
 
 
 //---------------------- COMMENT DECOMPRESSION -----------------------------//

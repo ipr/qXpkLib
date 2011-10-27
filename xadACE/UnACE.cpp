@@ -200,6 +200,14 @@ bool CUnACE::readEntryList(CAnsiFile &archive)
 	return true;
 }
 
+
+// TODO: need volume-information and access to multiple volumes..
+// check if entry is spanning multiple volumes, otherwise we can keep simpler
+//
+bool CUnACE::extractEntry(CAnsiFile &archive, AceEntry *pEntry)
+{
+}
+
 ////////////// public methods
 
 bool CUnACE::List()
@@ -212,7 +220,8 @@ bool CUnACE::List()
     m_nFileSize = archive.GetSize();
     
     readArchiveHeader(archive);
-    //readEntryList(archive);
+    readEntryList(archive);
+
     
     return true;
 }
@@ -228,7 +237,29 @@ bool CUnACE::GetEntryList(tArchiveEntryList &lstArchiveInfo) const
 
 bool CUnACE::Extract()
 {
-	// TODO:..
+	CAnsiFile archive(m_szArchive);
+	if (archive.IsOk() == false)
+	{
+        throw ArcException("could not open archive", m_szArchive);
+	}
+    m_nFileSize = archive.GetSize();
+    
+    readArchiveHeader(archive);
+    readEntryList(archive);
+    
+    // TODO: need access to different files
+    // in case of multi-volume archives..
+    // entry may be spanning multiple
+    
+	auto it = m_EntryList.begin();
+	auto itend = m_EntryList.end();
+	while (it != itend)
+	{
+		AceEntry *pEntry = (*it);
+		extractEntry(archive, pEntry);
+		++it;
+	}
+	return true;
 }
 
 bool CUnACE::TestArchive()
