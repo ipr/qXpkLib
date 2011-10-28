@@ -106,6 +106,13 @@ XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer)
 // destroy decruncher when necessary
 void CXfdMaster::release()
 {
+	if (m_pSubLibrary != nullptr)
+	{
+		// don't delete for now, 
+		// static instance given in libraries..
+		// change later
+		m_pSubLibrary = nullptr;
+	}
 	if (m_pXfdSlave != nullptr)
 	{
 		delete m_pXfdSlave;
@@ -117,7 +124,8 @@ void CXfdMaster::release()
 
 CXfdMaster::CXfdMaster(QObject *parent)
 	: QObject(parent)
-	, m_pXfdSlave(nullptr)
+	, m_pXfdSlave(nullptr) // TODO: move to a library?
+	, m_pSubLibrary(nullptr)
 {
 }
 
@@ -161,20 +169,42 @@ bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		szSubType = "xfdSZDD";
 	}
 
-
 	release(); // release existing if necessary
-	m_pXfdSlave = loadDecruncher(pInputBuffer);
-	if (m_pXfdSlave != nullptr)
+	
+	if (szSubType.length() > 0)
 	{
-		// decruncher located -> supported
-		return true;
+		// try loading it
+		// load suitable sub-library?
+		m_pSubLibrary = CXpkLibrarian::getXadInstance(QString::fromStdString(subType), m_SubLib);
+		if (m_pSubLibrary == nullptr)
+		{
+			// not supported/can't load -> can't decrunch it
+			//throw ArcException("Unsupported archive type", subType);
+			return false; // don't throw here, trying to determine if supported..
+		}
 	}
-	return false;
+	else
+	{
+		// try internally known slaves for now
+		
+		// TODO: move to a library?
+		
+		m_pXfdSlave = loadDecruncher(pInputBuffer);
+		if (m_pXfdSlave == nullptr)
+		{
+			// not supported/can't load -> can't decrunch it
+			//throw ArcException("Unsupported archive type", subType);
+			return false; // don't throw here, trying to determine if supported..
+		}
+	}
+	return true;
 }
 
 bool CXfdMaster::decrunch(XpkProgress *pProgress)
 {
 	release(); // release existing if necessary
+	
+	// TODO: switch to external libraries..
 	
 	m_pXfdSlave = loadDecruncher(pProgress->pInputBuffer);
 	if (m_pXfdSlave != nullptr)

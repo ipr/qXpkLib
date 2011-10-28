@@ -49,27 +49,28 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	if (type.m_enFileType == HEADERTYPE_LHA)
 	{
 		szSubType = "xadLha";
-		return true;
 	}
 	else if (type.m_enFileType == HEADERTYPE_LZX)
 	{
 		szSubType = "xadLZX";
-		return true;
-	}
-	else if (type.m_enFileType == HEADERTYPE_ACE)
-	{
-		szSubType = "xadACE";
-		return true;
 	}
 	else if (type.m_enFileType == HEADERTYPE_ZOO)
 	{
 		szSubType = "xadZOO";
-		return true;
 	}
-	
-	// TODO: also try loading sub-library 
-	// before we know that we can unpack it?
-	
+	else if (type.m_enFileType == HEADERTYPE_ACE)
+	{
+		szSubType = "xadACE";
+	}
+	else if (type.m_enFileType == HEADERTYPE_ARJ)
+	{
+		szSubType = "xadARJ";
+	}
+	/*
+	else if (type.m_enFileType == HEADERTYPE_ARC)
+	{
+		szSubType = "xadARC";
+	}
 	
 	// add other decrunchers:
 	// TAR
@@ -78,8 +79,41 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	// ZIP, RAR
 	// StuffIt, PackIt
 	// MSCAB
+	
+	*/
+	
+	
+	// TODO: also try loading sub-library 
+	// before we know that we can unpack it?
+	
+	
+	if (subType.length() == 0)
+	{
+		// should throw exception, for testing just skip
+		return false;
+	}
 
-	return false;
+	// don't delete since libraries now give "static" instance,
+	// change later, for now leave "clean" in case of error..
+	if (m_pSubLibrary != nullptr)
+	{
+		m_pSubLibrary = nullptr;
+	}
+	
+	// load suitable sub-library?
+	m_pSubLibrary = CXpkLibrarian::getXadInstance(QString::fromStdString(subType), m_SubLib);
+	if (m_pSubLibrary == nullptr)
+	{
+		// not supported/can't load -> can't decrunch it
+		//throw ArcException("Unsupported archive type", subType);
+		return false; // don't throw here, trying to determine if supported..
+	}
+	return true;
+}
+
+bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+	return m_pSubLibrary->archiveInfo(info);
 }
 
 void CXadMaster::setExtractPath(QString &szPath)

@@ -24,33 +24,6 @@
 #include "XpkLibrarian.h"
 
 
-///////// protected methods
-
-
-void CXpkMaster::PrepareUnpacker(std::string &subType)
-{
-	// don't delete since libraries now give "static" instance,
-	// change later, for now leave "clean" in case of error..
-	if (m_pSubLibrary != nullptr)
-	{
-		m_pSubLibrary = nullptr;
-	}
-
-	if (subType.length() < 4)
-	{
-		// should throw exception, for testing just skip
-		return;
-	}
-	
-	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(QString::fromStdString(subType), m_SubLib);
-	if (m_pSubLibrary == nullptr)
-	{
-		// not supported/can't load -> can't decrunch it
-		throw ArcException("Unsupported cruncher type", subType);
-	}
-}
-
 ///////// public
 
 CXpkMaster::CXpkMaster(QObject *parent)
@@ -109,20 +82,35 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		return false;
 	}
 
-	/*
-	m_pSubLibrary = XpkLibrarian::getDecruncher(pInputBuffer);
-	if (m_pSubLibrary == nullptr)
+	if (subType.length() < 4)
 	{
-		// not library -> not supported
+		// should throw exception, for testing just skip
 		return false;
 	}
-	*/
 
+	// don't delete since libraries now give "static" instance,
+	// change later, for now leave "clean" in case of error..
+	if (m_pSubLibrary != nullptr)
+	{
+		m_pSubLibrary = nullptr;
+	}
+	
+	// load suitable sub-library?
+	m_pSubLibrary = CXpkLibrarian::getXpkInstance(QString::fromStdString(subType), m_SubLib);
+	if (m_pSubLibrary == nullptr)
+	{
+		// not supported/can't load -> can't decrunch it
+		//throw ArcException("Unsupported cruncher type", subType);
+		return false; // don't throw here, trying to determine if supported..
+	}
 	return true;
 }
 
 bool CXpkMaster::decrunch(XpkProgress *pProgress)
 {
+	// TODO: use from parent instead..
+	//m_Input.GetBuffer()
+	
 	CAnsiFile InFile;
 	if (InFile.Open(m_InputName.toStdString()) == false)
 	{

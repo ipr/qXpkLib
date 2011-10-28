@@ -41,13 +41,9 @@ class CXpkMaster : public QObject
 	Q_OBJECT
 
 private:
-	//CIoContext m_Input;
-	QString m_InputName;
-	CReadBuffer m_InputBuffer;
-	size_t m_nInputFileSize;
-	
+
 	// wrapper for loading/unloading
-	QLibrary m_SubLib;
+	QLibrary m_SubLib; // (parent should have this..)
 
 	// base-pointer (virtual) 
 	// -> load proper by file/packer type
@@ -56,9 +52,7 @@ private:
 	// temp for testing
 	XpkTags m_Tags;
 	
-protected:
-	void PrepareUnpacker(std::string &subType);
-	
+
 public:
     CXpkMaster(QObject *parent = 0);
 	virtual ~CXpkMaster(void);

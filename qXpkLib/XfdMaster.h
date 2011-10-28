@@ -53,8 +53,8 @@ protected:
     */
 
 	// TODO: determine inheritance to use here..
-    XfdSlave *m_pXfdSlave;
-    //xfdLibraryBase *m_pSubLibrary;
+    XfdSlave *m_pXfdSlave; // TODO: move to a library?
+    xfdLibraryBase *m_pSubLibrary;
     
     XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer);
 

@@ -15,106 +15,6 @@
 #include "XpkLibrarian.h"
 
 
-///////// protected methods
-
-std::string CLibMaster::getCruncherType(CReadBuffer *pInputBuffer)
-{
-	// simplify, use std::string and get it done
-	std::string szSubType;
-	
-	// try determine file datatype by header information
-	CFileType type(pInputBuffer->GetBegin(), pInputBuffer->GetSize());
-	if (type.m_enFileType == HEADERTYPE_POWERPACKER)
-	{
-		// Amiga PowerPacker:
-		// not XPK-file but we support it in standalone-format also.
-		szSubType = "xfdPowerPacker";
-	}
-	else if (type.m_enFileType == HEADERTYPE_IMPLODER)
-	{
-		// Amiga Imploder:
-		// multiple identifiers (clones, variations)
-		// but can use same unpacking..
-		szSubType = "xfdImploder";
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
-	{
-		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
-		// also others:
-		// in xpk-dev: NUKE, DUKE, RLEN, HUFF, FAST..
-		// others: SMPL, SLZ3, SHRI, PWPK, PPMQ, 
-		// IDEA?, MASH, LHLB, ILZR, FRLE, FBR2, 
-		// DMCB, DLTA, CBR0, BLZW, BLFH..
-		//
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
-		szSubType = "xpk";
-		szSubType.append(m_InputBuffer.GetAt(8), 4);
-	}
-	else if (type.m_enFileType == HEADERTYPE_XFD_GENERIC)
-	{
-		// XFD-packed file ("XFDD" or "XFDF")
-	}
-	/* testing generic detection -> commented out
-	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
-	{
-		szSubType = "xpkSQSH";
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
-	{
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_RLEN)
-	{
-		// already detected as XPK
-		// -> load sub-library (get actual type)
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
-	}
-	*/
-	else if (type.m_enFileType == HEADERTYPE_AMIGAOS)
-	{
-		// AmigaOS executable (M68k),
-		// may be self-extracting application..
-		// -> needs more extensive checking
-		// if there is "decrunchable" data after loader
-		// or if it needs to be run in emulator or natively..
-	}
-	else if (type.m_enFileType == HEADERTYPE_UNIXELF)
-	{
-		// Unix-style ELF-binary,
-		// PPC Amiga or any Unix-variant or Linux?
-		// may be self-extracting application
-		// -> needs more extensive checking
-		// if there is "decrunchable" data after loader
-		// or if it needs to be run in emulator or natively..
-	}
-	
-	return szSubType;
-}
-
-void CLibMaster::PrepareUnpacker(std::string &subType)
-{
-	// don't delete since libraries now give "static" instance,
-	// change later, for now leave "clean" in case of error..
-	if (m_pSubLibrary != nullptr)
-	{
-		m_pSubLibrary = nullptr;
-	}
-
-	if (subType.length() < 4)
-	{
-		// should throw exception, for testing just skip
-		return;
-	}
-	
-	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getDecruncher(QString::fromStdString(subType), m_SubLib);
-	if (m_pSubLibrary == nullptr)
-	{
-		// not supported/can't load -> can't decrunch it
-		throw ArcException("Unsupported cruncher type", subType);
-	}
-}
-
-
 ///////// public
 
 CLibMaster::CLibMaster(QObject *parent)
@@ -174,15 +74,15 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// - what else?
 
 	bool bSupported = false;
-	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
+	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bSupported = m_pXadMaster->archiveInfo(info);
 	}
-	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bSupported = m_pXfdMaster->archiveInfo(info);
 	}
-	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bSupported = m_pXpkMaster->archiveInfo(info);
 	}
@@ -198,33 +98,22 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 //
 bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 {
-	CAnsiFile InFile;
-	if (InFile.Open(m_InputName.toStdString()) == false)
-	{
-		throw ArcException("Failed to open input", m_InputName.toStdString());
-	}
+	// just read it all to buffer, change later..
+	m_Input.Read();
 
-	// just read it all to buffer, change later if wanted..
-	m_nInputFileSize = InFile.GetSize();
-	m_InputBuffer.PrepareBuffer(InFile.GetSize(), false);
-	if (InFile.Read(m_InputBuffer.GetBegin(), InFile.GetSize()) == false)
-	{
-		throw IOException("Failed reading file data");
-	}
-	
-	pProgress->xp_WholePackedFileSize = InFile.GetSize(); // info to decruncher
-	InFile.Close(); // not needed any more
+	m_nInputFileSize = m_Input.GetFile()->GetSize();
+	pProgress->xp_WholePackedFileSize = m_Input.GetFile()->GetSize(); // info to decruncher
 	
 	// try determine file datatype by header information
-	CFileType type(m_InputBuffer->GetBegin(), m_InputBuffer->GetSize());
+	CFileType type(m_Input.GetBuffer()->GetBegin(), m_Input.GetBuffer()->GetSize());
 
 	// setup info for decrunch
-	pProgress->pInputBuffer = &m_InputBuffer;
+	pProgress->pInputBuffer = m_Input.GetBuffer();
 	pProgress->pOutputBuffer = m_Output.GetBuffer();
 	
 	// just decrunch all at once, write file when done
 	bool bRet = false;
-	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
+	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		// in this case, library should manage loading of data
 		// per each file-entry being decrunched (possibly many)
@@ -233,14 +122,14 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 		m_pXadMaster->setExtractPath(m_outputPath);
 		bRet = m_pXadMaster->decrunch(pProgress);
 	}
-	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		// in this case, we need to load whole file before decrunching
 		// as format is "alien" (only cruncher might know..)
 	
 		bRet = m_pXfdMaster->decrunch(pProgress);
 	}
-	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		// this case is common XPK-style chunk-based format
 		// -> we can handle loading chunks as needed
@@ -284,40 +173,27 @@ bool CLibMaster::setInputFile(QString &szFile)
 {
 	m_InputName = szFile;
 	m_Input.setName(szFile);
-	//m_Input.Read(
+	m_Input.Read(1024);
 	
-	CAnsiFile InFile;
-	if (InFile.Open(m_InputName.toStdString()) == false)
-	{
-		throw ArcException("Failed to open input", m_InputName.toStdString());
-	}
-
 	// just read it all to buffer, change later if wanted..
-	m_nInputFileSize = InFile.GetSize();
-	size_t nReadSize = (1024 < m_nInputFileSize) ? 1024 : m_nInputFileSize;
-	m_InputBuffer.PrepareBuffer(nReadSize, false);
-	if (InFile.Read(m_InputBuffer.GetBegin(), nReadSize) == false)
-	{
-		throw IOException("Failed reading file data");
-	}
-	InFile.Close(); // not needed any more
+	m_nInputFileSize = m_Input.GetFile()->GetSize();
 	
 	// try determine file datatype by header information
-	CFileType type(m_InputBuffer->GetBegin(), nReadSize);
+	CFileType type(m_Input.GetBuffer()->GetBegin(), nReadSize);
 	
 	// TODO : keep info on which handling is needed
 	// for later
 	
 	bool bIsSupported = false;
-	if (m_pXadMaster->isSupported(&m_InputBuffer, type) == true)
+	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bIsSupported = true;
 	}
-	else if (m_pXfdMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bIsSupported = true;
 	}
-	else if (m_pXpkMaster->isSupported(&m_InputBuffer, type) == true)
+	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
 	{
 		bIsSupported = true;
 	}

@@ -22,6 +22,12 @@
 #include "XpkProgress.h"
 
 
+// Purpose of this is to keep track 
+// of how much is read/written to/from input/output,
+// this should be generic so that "sub-master" instances
+// and extension libraries don't need to repeat same stuff..
+// Also try to reduce re-opening files etc.
+// 
 class CIoContext
 {
 protected:
@@ -30,7 +36,10 @@ protected:
 	CReadBuffer m_Buffer;
 	
 	// temp (optional)
-	//CAnsiFile m_File;
+	// this would not be needed in buffer-to-buffer decrunch..
+	CAnsiFile m_File;
+	
+	size_t m_nFileOffset; 
 	
 public:
 	/*
@@ -42,14 +51,17 @@ public:
     CIoContext(size_t nBufferSize = 1024)
 	    : m_Name()
 	    , m_Buffer(nBufferSize)
+	    , m_File()
 	{}
     CIoContext(QString &Name, size_t nBufferSize = 1024)
 	    : m_Name(Name)
 	    , m_Buffer(nBufferSize)
+	    , m_File()
 	{}
     CIoContext(const unsigned char *pBuf, const size_t nSize)
 	    : m_Name()
 	    , m_Buffer(nSize)
+	    , m_File()
 	{
 		m_Buffer.Append(pBuf, nSize);
 	}
@@ -65,47 +77,64 @@ public:
 	{
 		return m_Name;
 	}
-
-	bool Read(XpkProgress *pProgress)
+	CAnsiFile *GetFile()
 	{
-		CAnsiFile InFile;
-		if (InFile.Open(m_Name.toStdString()) == false)
+		return &m_File;
+	}
+
+	//bool Read(XpkProgress *pProgress, size_t nMaxRead = 0)
+	bool Read(size_t nMaxRead = 0)
+	{
+		if (m_File.Open(m_Name.toStdString()) == false)
 		{
 			throw ArcException("Failed to open input", m_Name.toStdString());
 		}
-		pProgress->xp_WholePackedFileSize = InFile.GetSize();
+		//pProgress->xp_WholePackedFileSize = m_File.GetSize();
 		
-		size_t nReadSize = (1024 < InFile.GetSize()) ? 1024 : InFile.GetSize();
-		m_Buffer.PrepareBuffer(nReadSize, false);
-		if (InFile.Read(m_Buffer.GetBegin(), nReadSize) == false)
+		if (nMaxRead == 0)
 		{
-			throw IOException("Failed reading file data");
+			m_Buffer.PrepareBuffer(InFile.GetSize(), false);
+			if (m_File.Read(m_Buffer.GetBegin(), InFile.GetSize()) == false)
+			{
+				throw IOException("Failed reading file data");
+			}
+			m_nFileOffset = InFile.GetSize();
 		}
-		InFile.Close(); // not needed any more
+		else
+		{
+			// TODO: better control over reading.. this just for testing
+			size_t nReadSize = (nMaxRead < InFile.GetSize()) ? nMaxRead : InFile.GetSize();
+			m_Buffer.PrepareBuffer(nReadSize, false);
+			if (m_File.Read(m_Buffer.GetBegin(), nReadSize) == false)
+			{
+				throw IOException("Failed reading file data");
+			}
+			m_nFileOffset += nReadSize;
+		}
 		return true;
 	}
 	
 	// write output to file
-	bool WriteFile(XpkProgress *pProgress)
+	//bool WriteFile(XpkProgress *pProgress)
+	bool WriteFile()
 	{
-		CAnsiFile OutFile;
-		if (OutFile.Open(m_Name.toStdString(), true) == false)
+		if (m_File.Open(m_Name.toStdString(), true) == false)
 		{
 			throw ArcException("Failed to open output", m_Name.toStdString());
 		}
 		
 		// buffer may be larger than actual output: write only actual data
 		//
-		if (OutFile.Write(m_Buffer.GetBegin(), m_Buffer.GetCurrentPos()) == false)
+		if (m_File.Write(m_Buffer.GetBegin(), m_Buffer.GetCurrentPos()) == false)
 		{
 			throw ArcException("Failed to write output", m_Name.toStdString());
 		}
 		
-		if (OutFile.Flush() == false)
+		if (m_File.Flush() == false)
 		{
 			throw ArcException("Failed to flush output", m_Name.toStdString());
 		}
-		OutFile.Close();
+		m_File.Close();
 		return true;
 	}
 };

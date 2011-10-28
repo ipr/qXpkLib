@@ -75,13 +75,6 @@ private:
 	// might keep necessary information already here per archive..?
 	//QXpkLib::CArchiveInfo m_info;
 	
-protected:
-	std::string getCruncherType(CReadBuffer *pInputBuffer);
-	void PrepareUnpacker(std::string &subType);
-
-	//bool ForeignDecrunch(XpkProgress *pProgress);
-	bool OwnDecrunch(XpkProgress *pProgress);
-    
 public:
     explicit CLibMaster(QObject *parent = 0);
 	virtual ~CLibMaster(void);
