@@ -144,7 +144,7 @@ protected:
 	{
 		if ( (bitc -= N) < 16 ) 
 		{
-			uint8_t *pBuf =  m_ReadBuffer.GetAtCurrent();
+			uint8_t *pBuf =  m_BitIo.m_pReadBuf.GetAtCurrent();
 			uint16_t tableBits = getUWordReversed(pBuf);
 		
 			bits  = (bits << 16) + tableBits; 
