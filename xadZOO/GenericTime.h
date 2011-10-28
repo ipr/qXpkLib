@@ -1,7 +1,9 @@
 /*
  * "generic time" format handling wrapper,
  * parse timestamp to more usable Unix-style time_t format.
- *
+ * 
+ * same format is used in various archivers (Lha, ZOO, ARJ..)
+ * in essentially same way
  */
 
 #ifndef GENERICTIME_H

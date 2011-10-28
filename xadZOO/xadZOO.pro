@@ -16,13 +16,19 @@ INCLUDEPATH += ../qXpkLib
 
 SOURCES += xadZOO.cpp \
     UnZoo.cpp \
-    crcsum.cpp
+    crcsum.cpp \
+    Decode.cpp
 
 HEADERS += xadZOO.h\
         xadZOO_global.h \
     UnZoo.h \
     crcsum.h \
-    GenericTime.h
+    GenericTime.h \
+    Decode.h \
+    ZooStructures.h
+
+
+
 
 
 

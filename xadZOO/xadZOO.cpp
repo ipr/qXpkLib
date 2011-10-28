@@ -1,5 +1,6 @@
 #include "xadZOO.h"
 
+#include "ZooStructures.h"
 #include "UnZoo.h"
 
 // (see header)
@@ -87,21 +88,8 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 		info.m_fileList.push_back(QXpkLib::CEntryInfo());
 		QXpkLib::CEntryInfo &entry = info.m_fileList.back();
 		
-		if (pEntry->pathName.length() > 0)
-		{
-			entry.m_fileName = QString::fromStdString(pEntry->pathName);
-			if (entry.m_fileName.at(entry.m_fileName.length() -1) != '/')
-			{
-				entry.m_fileName += "/";
-			}
-			entry.m_fileName += QString::fromStdString(pEntry->fileName);
-		}
-		else
-		{
-			entry.m_fileName = QString::fromStdString(pEntry->fileName);
-		}
-		
-		entry.m_Stamp = pEntry->timestamp;
+		entry.m_fileName = QString::fromStdString(pEntry->getName());
+		entry.m_Stamp = pEntry->timestamp; // use time_t directly, converted already
 		entry.m_ulUnpackedSize = pEntry->original_size;
 		entry.m_ulPackedSize = pEntry->compressed_size;
 		
