@@ -14,8 +14,18 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadARC.cpp
+SOURCES += xadARC.cpp \
+    UnARC.cpp \
+    Decode.cpp
 
 HEADERS += xadARC.h\
-        xadARC_global.h
+        xadARC_global.h \
+    GenericTime.h \
+    UnARC.h \
+    Decode.h
+
+
+
+
+
 
