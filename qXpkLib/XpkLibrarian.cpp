@@ -72,22 +72,22 @@ QString CXpkLibrarian::getLibName(QString &szLib, QString &szPath)
 		szLibName += "/";
 	}
 
-#ifndef _WIN32
-	// "lib" prefix on non-Win32 binaries..
+#ifdef UNIX
+	// "lib" prefix on Unix-like binaries..
 	szLibName.append("lib");
 #endif
 	
 	szLibName.append(szLib);
-	//szFileName.append("xpk");
-	//szFileName.append(QString::fromStdString(szType));
-	// temp, use dummy for testing
-	//szFileName.append("Dummy");
 
 #ifdef AMIGAOS
 	// "library" postfix on Amiga
 	szLibName.append(".library");
 #endif
-	
+#ifdef UNIX
+	// "so" postfix on unix-like systems,
+	// is this needed?
+	szLibName.append(".so");
+#endif
 #ifdef _WIN32
 	// "DLL" postfix on Win32..
 	szLibName.append(".dll");

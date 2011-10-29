@@ -532,6 +532,11 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		*/
 		return HEADERTYPE_ZCOMPRESS;
 	}
+	else if (pBuffer[0] == 'H'
+		&& pBuffer[1] == 'A')
+	{
+		return HEADERTYPE_HA;
+	}
 	else if (pBuffer[0] == 0x60
 		&& pBuffer[1] == 0xEA)
 	{
@@ -562,6 +567,11 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		// note: big-endian
 		// 0x444D5321 // DMS! (big-endian)
 		return HEADERTYPE_DMS_DISK;
+	}
+	else if (ulFirstFour == 0x44494D50)
+	{
+		// "DImp", disk-imploder (packed floppy image)
+		return HEADERTYPE_DISK_IMPLODER;
 	}
 	else if (ulFirstFour == 0x504B0304)
 	{

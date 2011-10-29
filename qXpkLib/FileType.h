@@ -53,6 +53,7 @@ typedef enum tHeaderType
 	HEADERTYPE_BZIP2, // BZip2 packer (bz2)
 	HEADERTYPE_GZIP, // GNU-zip packer (gz)
 	HEADERTYPE_ZCOMPRESS, // Un*X compress (Z)
+	HEADERTYPE_HA, // HA archiver
 	HEADERTYPE_7Z, // 7Z packer (7zip)
 	HEADERTYPE_XZ, // XZ Utils packer (xz)
 	HEADERTYPE_LPAK, // 'LPAK' (similar to 'SZDD')
@@ -142,6 +143,7 @@ typedef enum tHeaderType
 	// disk images
 	HEADERTYPE_ADFDOS_DISK, // amiga disk file format, TODO: is there header signature or just booblock of disk?
 	HEADERTYPE_DMS_DISK, // Diskmasher compressed disk file, 0x444D5321 == DMS! (big-endian)
+	HEADERTYPE_DISK_IMPLODER, // Amiga Disk Imploder
 	HEADERTYPE_XMASH, // xMash
 	HEADERTYPE_ZOOM_DISK, // Zoom disk archiver image
 	//HEADERTYPE_ZAP_DISK, // ZAP disk cruncher

@@ -380,7 +380,7 @@ struct addrreg
 		return getL(p);
 	}
 	
-	// byteordering helpers
+	// byteordering helpers (big-endian data)
 	uint8_t getB(const uint8_t *pBuf) const
 	{
 		return (pBuf[0]);
@@ -394,6 +394,7 @@ struct addrreg
 		return ((pBuf[0] << 24) + (pBuf[1] << 16) + (pBuf[2] << 8) + pBuf[3]);
 	}
 	
+	// byteordering helpers (big-endian data)
 	void setB(uint8_t *pBuf, const uint8_t val) const
 	{
 		pBuf[0] = val;

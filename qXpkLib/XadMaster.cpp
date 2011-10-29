@@ -58,6 +58,10 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	{
 		szSubType = "xadZOO";
 	}
+	else if (type.m_enFileType == HEADERTYPE_HA)
+	{
+		szSubType = "xadHA";
+	}
 	else if (type.m_enFileType == HEADERTYPE_ACE)
 	{
 		szSubType = "xadACE";
