@@ -53,7 +53,7 @@ struct datareg
 		int32_t l;
 	};
 	//} u;
-
+	
 	/*	
 	// check: does these help
 	statusreg s; 
@@ -412,6 +412,11 @@ struct addrreg
 		pBuf[2] = ((val & (0xFF << 8)) >> 8);
 		pBuf[3] = (val & 0xFF);
 	}
+	
+	// constructor
+	addrreg()
+	 : src(nullptr)
+	{}
 };
 
 // address register,
@@ -459,6 +464,8 @@ protected:
 	
     XfdSlave(CReadBuffer *pIn)
 		: m_pIn(pIn)
+		, D0(),D1(),D2(),D3(),D4(),D5(),D6(),D7()
+		, A0(),A1(),A2(),A3(),A4(),A5(),A6(),A7()
     {}
 public:
     virtual bool decrunch(CReadBuffer *pOut) = 0;
