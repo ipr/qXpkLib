@@ -110,28 +110,12 @@ struct NukeData
 };
 
 //starts:	dc.w	0,0,4,10
-uint16_t starts = {0,0,4,10}; 
+uint16_t starts[] = {0,0,4,10}; 
 
-
-
-bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, 
-				const uint32_t chunkIn, const uint32_t chunkOut)
-{
-}
+uint16_t modes[] = {4,6,8,9,4,7,9,11,13,14,5,7,9,11,13,14};
 
 
 /*
-; ==================================================================
-;                      xpkNUKE assembler routines
-; ==================================================================
-	INCLUDE	"exec/types.i"
-	XDEF	_AsmPack
-	XDEF	_AsmUnpack
-	XDEF	NoReadN
-
-
-
-
 dists:	dc.w	$0010,$0040,$0100,$0200
 	dc.w	$0010,$0080,$0200,$0800,$2000,$4000
 	dc.w	$0020,$0080,$0200,$0800,$2000,$4000
@@ -144,9 +128,6 @@ dists:	dc.w	$0010,$0040,$0100,$0200
 	dc.w	4,5,6,7,8,9
 	dc.w	10,11,12,13,14,15
 
-modes	dc.w	4,6,8,9
-	dc.w	4,7,9,11,13,14
-	dc.w	5,7,9,11,13,14
 
 adds	dc.w	$0000,$0010,$0050,$0150
 	dc.w	$0000,$0010,$0090,$0290,$0a90,$2a90
@@ -156,7 +137,9 @@ adds	dc.w	$0000,$0010,$0050,$0150
 	dc.w	c3-TwoBitLen,c3-TwoBitLen,c3-TwoBitLen,c3-TwoBitLen
 	dc.w	c3-TwoBitLen,c3-TwoBitLen
 	dc.w	0,0,0,0,0,0
+*/
 
+/*
 WRITE0:	MACRO
 30$	SUBQ.W	#1,room1(A4)
 	BCC.B	90$
@@ -255,8 +238,6 @@ UNCOMP:	MACRO
 9$
 	ENDM
 
-
-
 WRUNCO:			; d2=number, Cc,  -d0, -a0, -a1
 ;	movem.l	a0-a6/d0-d7,-(sp)	; DEBUG
 ;	bsr	_stat2
@@ -297,45 +278,74 @@ last3	neg.w	d0
 
 uexit	rts
 
+*/
 
+bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, 
+				const uint32_t chunkIn, const uint32_t chunkOut)
+{
+	// this was set to A3 as constant which was not changed later,
+	// used so just because all data registers were already in use..?
+	// -> use as constant instead..
+	const int32_t A3_val = 16;
 
-_AsmPack:
+//_AsmUnpack
+	//movem.l	d2-d7/a3-a6,-(a7) // keep stack
+	//MOVEA.L	A1,A5			; only because of Maxon A5 problem
+	A5.src = A1.src;
+	
+	//moveq	#16,d0
+	D0.l = 16;
+	
+	//move.l	d0,a3
+	// ?? why is this in address-register?
+	// running out of data registers..?
+	// it's never changed anyway so use constant instead
+	//A3.src = 16; 
+	
+	//lea	modes,a6
+	A6.src = &modes;
+	
+	//moveq	#0,d0
+	D0.l = 0;
+	//moveq	#0,d1
+	D1.l = 0;
+	
+	//move.w	#$8000,d2
+	D2.w = 0x8000;
+	
+	//move.w	#$8000,d3
+	D3.w = 0x8000;
+	
+	//moveq	#0,d4
+	D4.l = 0;
+	//moveq	#0,d5
+	D5.l = 0;
+	//moveq	#0,d6
+	D6.l = 0;
+	//moveq	#0,d7
+	D7.l = 0;
 
-;================= Gen entries
+	//bsr	TestCompressed
+	goto TestCompressed;
+	
+	//move.l	a0,d0
+	D0.l = A0.src; // ?? position for length? -> must change for 64-bit..
+	
+	//movem.l	(a7)+,d2-d7/a3-a6 // restore stack
+	return true;
+	//rts
 
+//; d0 mode		a0 writepos
+//; d1 offslen/offset	a1 copysrc
+//; d2 1bit_data		a2 writeend
+//; d3 2bits_data		a3 16
 
-;***************************************************************************
+//; d4 4bits_data		a4 byteread
+//; d5 4bits_in		a5 wordread
+//; d6 xbits_data		a6 table
+//; d7 -xbits_in		a7
 
-
-_AsmUnpack
-	movem.l	d2-d7/a3-a6,-(a7)
-	MOVEA.L	A1,A5			; only because of Maxon A5 problem
-	moveq	#16,d0
-	move.l	d0,a3
-	lea	modes,a6
-	moveq	#0,d0
-	moveq	#0,d1
-	move.w	#$8000,d2
-	move.w	#$8000,d3
-	moveq	#0,d4
-	moveq	#0,d5
-	moveq	#0,d6
-	moveq	#0,d7
-	bsr	TestCompressed
-	move.l	a0,d0
-	movem.l	(a7)+,d2-d7/a3-a6
-	rts
-
-; d0 mode		a0 writepos
-; d1 offslen/offset	a1 copysrc
-; d2 1bit_data		a2 writeend
-; d3 2bits_data		a3 16
-
-; d4 4bits_data		a4 byteread
-; d5 4bits_in		a5 wordread
-; d6 xbits_data		a6 table
-; d7 -xbits_in		a7
-
+/*
 Compressed:
 	dbra	d5,NoRead4		; 70	Read 4 bits (mode)
 	moveq	#7,d5			; 8
@@ -357,7 +367,10 @@ NoRead4:				;
 	asl.l	d7,d1			; |	
 	swap	d1			; |
 	or.l	d1,d6			; |
-	sub.w	a3,d7			; |
+	
+	//sub.w	a3,d7			; |
+	D7.w -= A3_val; // replaced with constant (see before)
+	
 NoReadN:				;
 	move.l	a0,a1			; 70
 	add.w	32(a6,d0.w),d6		; |
@@ -389,7 +402,7 @@ c3:	move.b	(a1)+,(a0)+		; 21
 c2:	move.b	(a1)+,(a0)+		; 21
 	move.b	(a1)+,(a0)+		; |
 
-;----------------------------------------
+//;----------------------------------------
 TestCompressed:				;
 	add.w	d2,d2			; 70	Read 1 (cbit)
 	bcc.s	Uncompressed		; |
@@ -397,7 +410,7 @@ TestCompressed:				;
 	move.w	(a5)+,d2		; 4
 	addx.w	d2,d2			; |
 	bcs.s	Compressed		; 70
-;----------------------------------------
+//;----------------------------------------
 
 Uncompressed:				;
 	add.w	d2,d2			; 30	Read 1 (ulen1)
@@ -439,7 +452,7 @@ UJTable:
 	blt	Compressed		; |
 	rts				;
 
-;---------------------------------------
+//;---------------------------------------
 FJTable:
 	moveq	#0,d0
 	move.b	(a1)+,(a0)+		; |
@@ -475,3 +488,4 @@ Tab15	move.b	(a1)+,(a0)+		; |
 	jmp	FJTable(pc,d0.w)
 */
 
+}
