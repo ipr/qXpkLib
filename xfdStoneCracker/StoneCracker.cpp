@@ -33,11 +33,11 @@ bool Stc300::decrunch(CReadBuffer *pOut)
 {
 
 //dest=		$40000
-	uint8_t *dest = pOut->GetBegin();
+	//uint8_t *dest = pOut->GetBegin();
 
 j:
 		//lea	dest,a4
-		A4.src = dest;
+		A4.src = pOut->GetBegin();
 		
 		//lea	source,a3
 		A3.src = m_pIn->GetBegin();
@@ -149,15 +149,30 @@ bool Stc404::decrunch(CReadBuffer *pOut)
 ; uses d0-a6
 */
 
-/*
+	A1.src = m_pIn->GetBegin();
+	A0.src = pOut->GetBegin();
+
+
 decrunch:
-_l0:		addq	#8,a1			; Skip ID string & security
-						; length..
-		move.l	a0,a5
-		add.l	(a1)+,a0
-		add.l	(a1),a1
-		moveq	#0,d4
-		moveq	#16,d5
+_l0:	
+		//addq	#8,a1			; Skip ID string & security ; length..
+		A1.src += 8;
+		
+		//move.l	a0,a5
+		A5.src = A0.src;
+		
+		//add.l	(a1)+,a0
+		A0.src += A1.l();
+		
+		//add.l	(a1),a1
+		A1.src += A1.l();
+		
+		//moveq	#0,d4
+		D4.l = 0;
+		
+		//moveq	#16,d5
+		D5.l = 16;
+/*		
 		movem.w	(a1),d2/d6/d7
 		not.w	d4
 		lea	_loff6(pc),a3

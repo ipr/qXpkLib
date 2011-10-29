@@ -24,6 +24,14 @@ class DeCrunchMania : public XfdSlave
 {
 protected:
 	uint32_t m_tag;
+	
+	uint32_t m_destLen; // 
+	uint32_t m_sourceLen; // 
+	
+	void OverlapDecrunch(CReadBuffer *pOut);
+	void NormalDecrunch(CReadBuffer *pOut);
+	void FastDecruncher();
+	
 public:
 	DeCrunchMania(CReadBuffer *pIn)
 		: XfdSlave(pIn)
