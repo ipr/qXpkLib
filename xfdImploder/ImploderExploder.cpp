@@ -335,6 +335,17 @@ void CImploderExploder::DeplodeImploder()
 	{
 		throw ImplException("unknown file format");
 	}
+
+	/*	
+	if (m_HeaderMetadata.m_id == 0x44494D50)
+	{
+		if (m_HeaderMetadata.m_out_len < 4
+			|| m_HeaderMetadata.m_out_len > 404)
+		{
+			throw ImplException("output size invalid for disk imploder");
+		}
+	}
+	*/
  
 	/* sanity checks */
 	if (m_HeaderMetadata.m_end_off & 1)

@@ -57,6 +57,8 @@ struct tImploderHeader
 	// check file type ID if is supported file type
 	bool IsSupportedFiletype()
 	{
+		/* 0x44494D50 == DImp == Disk Imploder */ 
+		
 		/* check for magic ID 'IMP!', or one of the other IDs used by Imploder 
 		 clones; ATN!, BDPI, CHFI, Dupa, EDAM, FLT!, M.H., PARA and RDC9 */ 
 		if (m_id != 0x494d5021 && m_id != 0x41544e21 && m_id != 0x42445049 && 
