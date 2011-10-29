@@ -110,8 +110,13 @@ public:
 		Clear();
     }
 
-    bool isSupported(const uint8_t *pBuf) const
+    bool isSupported(const uint8_t *pBuffer) const
     {
+		if (pBuffer[0] == 'H'
+			&& pBuffer[1] == 'A')
+		{
+			return true;
+		}
         return false;
     }
 

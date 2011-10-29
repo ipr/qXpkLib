@@ -31,7 +31,7 @@ bool CHA::readArchiveHeader(CAnsiFile &archive)
 	m_Crc.ClearCrc();
 	m_ReadBuffer.PrepareBuffer(1024, false);
 
-	if (archive.Read(m_ReadBuffer.GetBegin(), bytes_before_acesign + acesign_len) == false)
+	if (archive.Read(m_ReadBuffer.GetBegin(), 2) == false)
 	{
 		throw IOException("Failed reading archive header");
 	}
@@ -41,7 +41,7 @@ bool CHA::readArchiveHeader(CAnsiFile &archive)
 		// something else or wrong identifier -> not supported here
 		throw IOException("Unsupported file type");
 	}
-	m_ReadBuffer.SetCurrentPos(0); // should be already..
+	m_ReadBuffer.SetCurrentPos(2);
 
 	
 }
