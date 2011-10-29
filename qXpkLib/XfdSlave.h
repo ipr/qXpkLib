@@ -364,13 +364,13 @@ struct addrreg
 	int8_t bM(void) // with auto-decrement
 	{
 		int8_t *p = src;
-		src += 1;
+		src -= 1;
 		return *p;
 	}
 	int16_t wM(void) // with auto-decrement
 	{
 		int8_t *p = src;
-		src += 2;
+		src -= 2;
 		return getW(p);
 	}
 	int32_t lM(void) // with auto-decrement
