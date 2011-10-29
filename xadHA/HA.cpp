@@ -25,9 +25,74 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ////////////// protected methods
 
 
-bool CHA::readHeader(CAnsiFile &archive, Fheader &header)
+bool CHA::readFileHeader(CAnsiFile &archive, Fheader &header)
 {
+	header.version = m_ReadBuffer.GetNextByte();
+	if (header.version != 0xFF)
+	{
+		header.method_type = (m_archiveHeader.version & 0xf);
+		header.version >>= 4;
+		if (header.isSupported() == false)
+		{
+			return false;
+		}
+	}
+	else if (header.version == 0xFF)
+	{
+		// invalid value ??
+		// what's this in original?
+	    //dirty=1;
+	    //--i;
+	}
+	
+	header.comp_len = getvalue(4);
+	header.orig_len = getvalue(4);
+	header.crc = getvalue(4);
+	header.time = getvalue(4);
+
+	// path..
+	getstring(archive, header.path);
+	// name..	
+	getstring(archive, header.name);
+
+	// read this final value now..
+	if (archive.Read(&(header.mdilen), 1) == false)
+	{
+		throw IOException("Failed reading archive header");
+	}
+	
+	// calculate total length now    
+    header.calcLen();
+    
+    return true;
 }
+
+Mheader *CHA::readMachineHeader(CAnsiFile &archive, Fheader &parentHeader)
+{
+	Mheader *pmd = new Mheader();
+	pmd->mtype = m_ReadBuffer.GetNextByte();
+	if (pmd->mtype == UNIXMDH)
+	{
+		pmd->attr = getUWord(m_ReadBuffer.GetNext(2));
+		pmd->user = getUWord(m_ReadBuffer.GetNext(2));
+		pmd->group = getUWord(m_ReadBuffer.GetNext(2));
+		return pmd;
+	}
+	
+	switch (parentHeader.method_type)
+	{
+	case M_DIR:
+		//pmd->attr = md_tohaattr(DEF_DIRATTR);
+		//pmd->attr |= HA_IFDIR;
+		break;
+	default:
+		//pmd->attr = md_tohaattr(DEF_FILEATTR);
+		break;
+	}
+		
+	return pmd;
+}
+
 
 // read and check archive-file header
 //
@@ -52,42 +117,12 @@ bool CHA::readArchiveHeader(CAnsiFile &archive)
 	}
 	m_ReadBuffer.SetCurrentPos(2);
 	
-	m_archiveHeader.version = m_ReadBuffer.GetNextByte();
-	if (m_archiveHeader.version != 0xFF)
+	if (readFileHeader(archive, m_archiveHeader) == false)
 	{
-		m_archiveHeader.method_type = (m_archiveHeader.version & 0xf);
-		m_archiveHeader.version >>= 4;
-		if (m_archiveHeader.isSupported() == false)
-		{
-			throw IOException("Unsupported archive", m_archiveHeader.method_type);
-		}
+		// just skip or abort on unsupported type?
+		//return false;
+		throw IOException("Unsupported archive", m_archiveHeader.method_type);
 	}
-	else if (m_archiveHeader.version == 0xFF)
-	{
-		// invalid value ??
-		// what's this in original?
-	    //dirty=1;
-	    //--i;
-	}
-	
-	m_archiveHeader.comp_len = getvalue(4);
-	m_archiveHeader.orig_len = getvalue(4);
-	m_archiveHeader.crc = getvalue(4);
-	m_archiveHeader.time = getvalue(4);
-
-	// path..
-	getstring(archive, m_archiveHeader.path);
-	// name..	
-	getstring(archive, m_archiveHeader.name);
-
-	// read this final value now..
-	if (archive.Read(&(m_archiveHeader.mdilen), 1) == false)
-	{
-		throw IOException("Failed reading archive header");
-	}
-	
-	// calculate total length now    
-    m_archiveHeader.calcLen();
 
 	/*
 	hd=getheader();
@@ -96,8 +131,17 @@ bool CHA::readArchiveHeader(CAnsiFile &archive)
 	    dirty=1;
 	    --i;
 	    */
-
+	    
+	// machine header??
+	// -> read now
+	if (archive.Read(m_ReadBuffer.GetBegin(), m_archiveHeader.mdilen) == false)
+	{
+		throw IOException("Failed reading machine header");
+	}
 	
+	m_archiveHeader.mdhd = readMachineHeader(archive, m_archiveHeader);
+	
+	return true;
 }
 
 // read information on each entry in archive

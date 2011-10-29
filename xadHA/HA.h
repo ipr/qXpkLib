@@ -49,9 +49,33 @@ enum MethodType // in C++0x : uint8_t
 	M_SPECIAL
 };
 
+enum MachineHeaderType
+{
+	MSDOSMDH = 1,		/* Identifiers for machine 	*/
+	UNIXMDH	 = 2		/*   specific header data 	*/
+};
+
+
 const int MyVersion = 2;			/* Version info in archives 	*/
 const int LowVersion = 2;			/* Lowest supported version 	*/
 
+// platform-specific "machine header"? (Mdhd)
+//const int MHeaderLen = 7; /* Length of Mdhd in archive */
+struct Mheader
+{
+	Mheader()
+		: mtype(0)
+		, attr(0)
+		, user(0)
+		, group(0)
+	{}
+
+    uint8_t mtype; 
+    uint16_t attr;
+    uint16_t user;
+    uint16_t group;
+    
+};
 
 /* Header of file in archive 	*/
 struct Fheader
@@ -64,11 +88,21 @@ struct Fheader
 		, orig_len(0)
 		, time(0)
 		, crc(0)
-		, path(nullptr)
-		, name(nullptr)
+		, path()
+		, name()
 		, mdilen(0)
 		, mylen(0)
+		, mdhd(nullptr)
 	{}
+	// destructor
+	~Fheader()
+	{
+		if (mdhd != nullptr)
+		{
+			delete mdhd;
+			mdhd = nullptr; 
+		}
+	}
 	
 	bool isSupported()
 	{
@@ -103,12 +137,11 @@ struct Fheader
     std::string path;
     std::string name;
     
-    // CHECK! these were just "unsigned" without proper size..
-    // check size for reading from file/buffer..
-    uint8_t mdilen; // just 8-bit unsigned?
+    uint8_t mdilen; // just 8-bit unsigned in file
     size_t mylen; // calculated, not read directly
+    
+    Mheader *mdhd; // "machine header" (see also mdilen)
 };
-
 
 
 // file-entry in archive
@@ -152,6 +185,7 @@ protected:
 	// metadata of archive itself
 	Fheader m_archiveHeader;
 
+	// the way used in original HA
 	uint32_t getvalue(const size_t nLen) const
 	{
 		// get next N bytes (update offset)
@@ -181,8 +215,28 @@ protected:
 		
 		return string.length();
 	}
+
+	// HA stores in little-endian order:
+	// "last" byte from buffer is shifted most,
+	// use general helpers..
+	uint16_t getUWord(const uint8_t *pBuf) const
+	{
+		uint16_t res = pBuf[0];
+		res += (pBuf[1] << 8);
+		return res;
+	}
+
+	uint32_t getULong(const uint8_t *pBuf) const
+	{
+		uint32_t res = pBuf[0];
+		res += (pBuf[1] << 8);
+		res += (pBuf[2] << 16);
+		res += (pBuf[3] << 24);
+		return res;
+	}
 	
-	bool readHeader(CAnsiFile &archive, Fheader &header);
+	bool readFileHeader(CAnsiFile &archive, Fheader &header);
+	Mheader *readMachineHeader(CAnsiFile &archive, Fheader &parentHeader);
 
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
