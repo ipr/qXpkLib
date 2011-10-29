@@ -33,19 +33,21 @@ void ByteKiller::Eoruj()
 	// rotate-with-extend, shift right and use status-register
 	// as "buffer" for previous bits..
 	roxr.l	#1,d0
-	
 */
+	
+	// simulate rotate with something like this..
+	// (in base-class)
+	roxr(D0, 1, 0x0010);
 }
 
 // called from derived instances
 void ByteKiller::D_CRUN()
 {
-
 /*
-
 D_CRUN:
 		//movem.l	d0-d7/a0-a6,-(sp) // stack
-		eor.l	d0,d5
+		//eor.l	d0,d5
+		D5.l ^= D0.l;
 		
 lbC000046:	
 		//lsr.l	#1,d0
@@ -54,12 +56,14 @@ lbC000046:
 		bne.s	lbC000054
 		//bsr.b	Eoruj
 		Eoruj();
+		
 lbC000054:	
 		bcs.s	lbC0000B0
 		moveq	#8,d1
 		moveq	#1,d3
 		lsr.l	#1,d0
 		bne.s	lbC000068
+
 		//bsr.b	Eoruj
 		Eoruj();
 		
@@ -67,16 +71,22 @@ lbC000068:
 		bcs.w	lbC0000FE
 		moveq	#3,d1
 		clr.w	d4
+
 lbC000070:	
 		subq.w	#1,d1
 		clr.w	d2
+
 lbC000074:	
 		lsr.l	#1,d0
 		bne.s	lbC000082
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
+
+		// reduce repeating code: use routine in method
+		//move.l	-(a0),d0
+		//eor.l	d0,d5
+		//move.w	#$0010,ccr
+		//roxr.l	#1,d0
+		Eoruj(); // exactly same segment of code
+		
 lbC000082:	
 		roxl.l	#1,d2
 		dbra	d1,lbC000074
@@ -87,10 +97,12 @@ lbC00008C:
 lbC00008E:	
 		lsr.l	#1,d0
 		bne.s	lbC00009C
+		
 		move.l	-(a0),d0
 		eor.l	d0,d5
 		move.w	#$0010,ccr
 		roxr.l	#1,d0
+		
 lbC00009C:	
 		roxl.l	#1,d2
 		dbra	d1,lbC00008E
@@ -110,10 +122,14 @@ lbC0000B0:
 lbC0000B6:	
 		lsr.l	#1,d0
 		bne.s	lbC0000C4
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
+		
+		// reduce repeating code: use routine in method
+		//move.l	-(a0),d0
+		//eor.l	d0,d5
+		//move.w	#$0010,ccr
+		//roxr.l	#1,d0
+		Eoruj(); // exactly same segment of code
+		
 lbC0000C4:	
 		roxl.l	#1,d2
 		dbra	d1,lbC0000B6
@@ -127,10 +143,14 @@ lbC0000C4:
 lbC0000DC:	
 		lsr.l	#1,d0
 		bne.s	lbC0000EA
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
+		
+		// reduce repeating code: use routine in method
+		//move.l	-(a0),d0
+		//eor.l	d0,d5
+		//move.w	#$0010,ccr
+		//roxr.l	#1,d0
+		Eoruj(); // exactly same segment of code
+
 lbC0000EA:	
 		roxl.l	#1,d2
 		dbra	d1,lbC0000DC
@@ -148,10 +168,14 @@ lbC0000FE:
 lbC000102:	
 		lsr.l	#1,d0
 		bne.s	lbC000110
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
+		
+		// reduce repeating code: use routine in method
+		//move.l	-(a0),d0
+		//eor.l	d0,d5
+		//move.w	#$0010,ccr
+		//roxr.l	#1,d0
+		Eoruj(); // exactly same segment of code
+		
 lbC000110:	
 		roxl.l	#1,d2
 		dbra	d1,lbC000102
@@ -166,14 +190,17 @@ lbC000120:
 		blt.w	lbC000046
 		tst.l	d5
 		bne.s	lbC00013A
-		movem.l	(sp)+,d0-d7/a0-a6
-		moveq	#0,d0
-		rts
+		//movem.l	(sp)+,d0-d7/a0-a6 // restore stack
+		//moveq	#0,d0
+		D0.l = 0;
+		return;
+		//rts
 lbC00013A:	
-		//movem.l	(sp)+,d0-d7/a0-a6 // stack
+		//movem.l	(sp)+,d0-d7/a0-a6 // restore stack
 		//moveq	#-1,d0
 		D0.l = -1;
-		rts
+		return;
+		//rts
 */
 }
 
