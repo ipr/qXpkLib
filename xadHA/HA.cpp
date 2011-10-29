@@ -24,14 +24,23 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ////////////// protected methods
 
+
+bool CHA::readHeader(CAnsiFile &archive, Fheader &header)
+{
+}
+
 // read and check archive-file header
 //
 bool CHA::readArchiveHeader(CAnsiFile &archive)
 {
-	m_Crc.ClearCrc();
+	//m_Crc.ClearCrc();
 	m_ReadBuffer.PrepareBuffer(1024, false);
 
-	if (archive.Read(m_ReadBuffer.GetBegin(), 2) == false)
+	// 2 for "HA", 18 for header to have anything usable,
+	// rest depend on length of NULL-terminated names
+	// so read more then
+	// 
+	if (archive.Read(m_ReadBuffer.GetBegin(), 20) == false)
 	{
 		throw IOException("Failed reading archive header");
 	}
@@ -42,6 +51,51 @@ bool CHA::readArchiveHeader(CAnsiFile &archive)
 		throw IOException("Unsupported file type");
 	}
 	m_ReadBuffer.SetCurrentPos(2);
+	
+	m_archiveHeader.version = m_ReadBuffer.GetNextByte();
+	if (m_archiveHeader.version != 0xFF)
+	{
+		m_archiveHeader.method_type = (m_archiveHeader.version & 0xf);
+		m_archiveHeader.version >>= 4;
+		if (m_archiveHeader.isSupported() == false)
+		{
+			throw IOException("Unsupported archive", m_archiveHeader.method_type);
+		}
+	}
+	else if (m_archiveHeader.version == 0xFF)
+	{
+		// invalid value ??
+		// what's this in original?
+	    //dirty=1;
+	    //--i;
+	}
+	
+	m_archiveHeader.comp_len = getvalue(4);
+	m_archiveHeader.orig_len = getvalue(4);
+	m_archiveHeader.crc = getvalue(4);
+	m_archiveHeader.time = getvalue(4);
+
+	// path..
+	getstring(archive, m_archiveHeader.path);
+	// name..	
+	getstring(archive, m_archiveHeader.name);
+
+	// read this final value now..
+	if (archive.Read(&(m_archiveHeader.mdilen), 1) == false)
+	{
+		throw IOException("Failed reading archive header");
+	}
+	
+	// calculate total length now    
+    m_archiveHeader.calcLen();
+
+	/*
+	hd=getheader();
+	pos+=hd->clen+hd->mylen;
+	if (hd->ver==0xff) {
+	    dirty=1;
+	    --i;
+	    */
 
 	
 }

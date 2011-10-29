@@ -27,14 +27,88 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <QObject>
 #include <QString>
 
-// use standard typedefs when possible
+// use standard typedefs when possible:
+// prefer portable types whenever size is specific
 #include <stdint.h>
+#include <limits.h>
 
 #include <string>
 #include <vector>
 
 // use wrapper(s) from parent-library
 #include "AnsiFile.h"
+
+/* Method types	*/
+enum MethodType // in C++0x : uint8_t
+{
+	M_CPY=0,
+	M_ASC,
+	M_HSC,
+	M_UNK,
+	M_DIR=14,
+	M_SPECIAL
+};
+
+const int MyVersion = 2;			/* Version info in archives 	*/
+const int LowVersion = 2;			/* Lowest supported version 	*/
+
+
+/* Header of file in archive 	*/
+struct Fheader
+{
+	// constructor
+	Fheader()
+		: method_type(0)
+		, version(0)
+		, comp_len(0)
+		, orig_len(0)
+		, time(0)
+		, crc(0)
+		, path(nullptr)
+		, name(nullptr)
+		, mdilen(0)
+		, mylen(0)
+	{}
+	
+	bool isSupported()
+	{
+		if (version > MyVersion
+			|| version < LowVersion)
+		{
+			return false;
+		}
+		if (method_type != M_SPECIAL 
+			&& method_type != M_DIR 
+			&& method_type >= M_UNK)
+		{
+			return false;
+		} 
+		return true;
+	}
+	
+	size_t calcLen()
+	{
+		mylen = mdilen + 20 + path.length() + name.length();
+		return mylen;
+	}
+
+    uint8_t method_type; // see MethodType
+    uint8_t version;
+    uint32_t comp_len; // compressed length?
+    uint32_t orig_len; // original length?
+    uint32_t time;
+    uint32_t crc;
+    
+    // replaced with common std::string
+    std::string path;
+    std::string name;
+    
+    // CHECK! these were just "unsigned" without proper size..
+    // check size for reading from file/buffer..
+    uint8_t mdilen; // just 8-bit unsigned?
+    size_t mylen; // calculated, not read directly
+};
+
 
 
 // file-entry in archive
@@ -75,6 +149,41 @@ private:
 
 protected:
 
+	// metadata of archive itself
+	Fheader m_archiveHeader;
+
+	uint32_t getvalue(const size_t nLen) const
+	{
+		// get next N bytes (update offset)
+		uint8_t *buf = m_ReadBuffer.GetNext(nLen);
+		uint32_t val = 0;
+		for (int i = 0; i < nLen; i++)
+		{
+			// the last shift is somewhat odd..
+			// should shift by 8 anyway..?
+			val |= (uint32_t)((buf[i]&0xFF) << (i<<3));
+		}
+		return val;
+	}
+	
+	// read NULL-terminated string from file.. 
+	size_t getstring(CAnsiFile &archive, std::string &string) const
+	{
+		do
+		{
+			char c = UCHAR_MAX;
+			if (archive.Read(&c, 1) == false)
+			{
+				throw IOException("Failure reading NULL-terminated string");
+			}
+			string += c;
+		} while (c != 0);
+		
+		return string.length();
+	}
+	
+	bool readHeader(CAnsiFile &archive, Fheader &header);
+
 	bool readArchiveHeader(CAnsiFile &archive);
 	bool readEntryList(CAnsiFile &archive);
 
@@ -104,6 +213,7 @@ public:
 		, m_szExtractionPath()
 		, m_ReadBuffer(1024) //
 		, m_DecrunchBuffer(2048) // 
+		, m_archiveHeader()
     {}
     ~CHA()
     {
