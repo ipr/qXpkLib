@@ -463,30 +463,6 @@ public:
     virtual bool decrunch(CReadBuffer *pOut) = 0;
 };
 
-////////// ByteKiller
-
-class XfdByteKiller : public XfdSlave
-{
-protected:
-	bool crun(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool crnd(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool marc(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool xvdg(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	/*
-	bool amos(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	*/
-	bool arpf(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool arp3(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool ace(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	bool pack(CReadBuffer *pOut, uint8_t *src, uint32_t size);
-	
-public:
-	XfdByteKiller(CReadBuffer *pIn)
-		: XfdSlave(pIn)
-	{}
-    virtual bool decrunch(CReadBuffer *pOut);
-};
-
 ////////// Vice
 
 class XfdVice : public XfdSlave

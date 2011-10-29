@@ -52,6 +52,18 @@ XfdSlave *CXfdMaster::loadDecruncher(CReadBuffer *pInputBuffer)
 		// "Microsoft SZDD data cruncher",
 		// The compressed data format is basically LZSS
 	}
+	else if (::memcmp(pInputBuffer->GetBegin(), "CrM!", 4) == 0)
+	{
+		// Amiga CrunchMania packed file
+	}
+	else if (::memcmp(pInputBuffer->GetBegin(), "S404", 4) == 0)
+	{
+		// Amiga StoneCracker packed file
+	}
+	else if (::memcmp(pInputBuffer->GetBegin(), "S300", 4) == 0)
+	{
+		// Amiga StoneCracker packed file
+	}
 	else if (::memcmp(pInputBuffer->GetBegin(), "CRUN", 4) == 0)
 	{
 		// ByteKiller clones
@@ -170,6 +182,9 @@ bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	}
 
 	release(); // release existing if necessary
+	
+	// TODO: enumerate suitable sub-libraries,
+	// ask each one if this is supported there..
 	
 	if (szSubType.length() > 0)
 	{
