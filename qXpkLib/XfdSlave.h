@@ -17,30 +17,81 @@
 
 #include "AnsiFile.h"
 
-// status bits for operations?
+// status bits for operations,
 // does this help or is it just simpler to convert immediately..?
 //
 // only 5 of user-bits cared about,
-// 15 system-bit can be ignored..?
+// rest of can be ignored..? (system-bits)
+// (only 16-bit register in M68k,
+// all other regs 32-bits).
 //
-struct statusreg
+// "ccr" (condition code register)
+// refers to lower byte of status register..?
+//
+// this should be shared regardless of register(s) operated on..?
+//
+struct ccreg
 {
-	bool n; // negative
-	bool x; // extended
-	bool z; // zero
-	bool v; // overflow
-	bool c; // carry
+	union
+	{
+		struct ccrbits
+		{
+			// bits: 
+			// upper 3 unused,
+			// lower 5 used
+			unsigned e1:1; // empty1
+			unsigned e2:1; // empty2
+			unsigned e3:1; // empty3
+			unsigned x:1; // extend
+			unsigned n:1; // negative
+			unsigned z:1; // zero
+			unsigned v:1; // overflow
+			unsigned c:1; // carry
+		} ccr;
+		
+		// 4       0
+		// X N Z V C 
+		uint8_t m_ccr;
+	};
+
+	/*
+	const uint8_t MASK_C = 1;
+	const uint8_t MASK_V = (1 << 1);
+	const uint8_t MASK_Z = (1 << 2);
+	const uint8_t MASK_N = (1 << 3);
+	const uint8_t MASK_X = (1 << 4);
+	*/
 	
 	void clear()
 	{
-		n = false;
-		x = false;
-		z = false;
-		v = false;
-		c = false;
+		ccr.x = false;
+		ccr.n = false;
+		ccr.z = false;
+		ccr.v = false;
+		ccr.c = false;
 	}
-	
+	void init(const uint8_t bits)
+	{
+		m_ccr = bits;
+	}
 };
+
+struct statusreg
+{
+	union
+	{
+		uint8_t system; // needs supervisor-mode to access (not in user-mode)
+		ccreg ccr; // lower byte, condition code register
+	};
+};
+
+
+// TODO: register for program counter (pc)?
+// some code depends on pc-relative jumps in code,
+// is there better way to convert than "emulating" it?
+// need some kinda "jump-table" to label/method..?
+//
+//typedef uint32_t pcreg;
 
 // simplify asm to c conversion,
 // for each register with access methods
@@ -56,6 +107,7 @@ struct datareg
 	
 	/*	
 	// check: does these help
+	// should be shared regardless of registers operated on..?
 	statusreg s; 
 	
 	int8_t b() const
@@ -456,6 +508,59 @@ protected:
         tmp |= ((uint32_t)(buf[0]));
         return tmp;
     }
+    
+    // some instructions for quick&dirty convert
+    void moveq(const uint32_t val, datareg &D) const
+    {
+		D.l = val;
+    }
+
+	// simulate "rotate-with-extend" using ccr-bits as buffer,
+	// "right-shift" rotate
+    void roxr(datareg &reg, const int32_t count, const uint8_t ccrInit)
+    {
+		ccreg ccr;
+		ccr.init(ccrInit);
+		
+		for (int32_t i = 0; i < count; i++)
+		{
+			//ccr.ccr.n = (reg.l & (1 << 31)) ? 1 : 0;
+		
+			// keep low bit (to be rotated)
+			ccr.ccr.c = (reg.l & 1) ? 1 : 0;
+			
+			// rotate bit
+			reg.l >>= 1;
+
+			// highest bit to last rotated out
+			reg.l &= ((ccr.ccr.x) << 31);
+			ccr.ccr.x = ccr.ccr.c;
+		}
+    }
+
+	// simulate "rotate-with-extend" using ccr-bits as buffer,
+	// "left-shift" rotate
+    void roxl(datareg &reg, const int32_t count, const uint8_t ccrInit)
+    {
+		ccreg ccr;
+		ccr.init(ccrInit);
+		
+		for (int32_t i = 0; i < count; i++)
+		{
+			//ccr.ccr.n = (reg.l & (1 << 31)) ? 1 : 0;
+		
+			// keep high bit (to be rotated)
+			ccr.ccr.c = (reg.l & 1) ? 1 : 0;
+			
+			// rotate bit
+			reg.l <<= 1;
+
+			// lowest bit to previous rotated out
+			reg.l &= ((ccr.ccr.x) ? 1 : 0);
+			ccr.ccr.x = ccr.ccr.c;
+		}
+    }
+
 
 	// less typing this way (instead of R[n]..)
 	//
