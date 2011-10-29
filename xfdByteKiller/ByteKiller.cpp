@@ -15,142 +15,54 @@
 
 #include "ByteKiller.h"
 
-///////// ByteKiller
+///////// ByteKiller (base)
 
-bool crun::decrunch(CReadBuffer *pOut)
+// called from derived instances
+void ByteKiller::Eoruj()
 {
-	// in caller
-	//cmp.l	#'CRUN',(A0)+
-	//bne.s	.Exit
-	//A0 = A0+4;
-	//D0.l = size;
-	//A0.src = src;
-	
-	//tst.b	(A0)
-	//bne.b	.Exit
-	if (A0.b(0) != 0)
-	{
-		return false;
-	}
-	
-	//move.l	(A0)+,D1
-	D1.l = A0.l();
-	if (D1.b == 0)
-	{
-		//beq.b	.Exit
-		return false;
-	}
-	
-	//btst	#0,D1
-	if ((D1.b & 1) != 0)
-	{
-		//bne.b	.Exit
-		return false;
-	}
-	
-	//moveq	#12,D0
-	D0.l = 12;
-	//add.l	D0,D1
-	D1.l += D0.l;
+	//move.l	-(a0),d0
+	D0.l = A0.lM();
 
-	//move.l	D1,xfdrr_MinSourceLen(A1)
-	//if (m_pIn->GetSize() != D1.l)
-	
-	//tst.b	(A0)
-	//bne.b	.Exit
-	if (*(A0.src) != 0)
-	{
-		return false;
-	}
-		
-	//move.l	(A0),D1
-	D1.l = A0; // "auto" lvalue -> operator? 
-	
-	//beq.b	.Exit
-	//bmi.b	.Exit
-	if (D1.l <= 0)
-	{
-		return false;
-	}
-	
-	//move.l	D1,xfdrr_MinTargetLen(A1)
-	//move.l	D1,xfdrr_FinalTargetLen(A1)
-	pOut->Reserve(D1.l);
-
-
-DB_CRUN:
-		//movem.l	d2-d7/a2-a6,-(a7) // stack store
-		//move.l	a0,a5
-		A5.setl(A0);
-		
-		//move.l	xfdbi_UserTargetBuf(A5),A1
-		//move.l	xfdbi_SourceBuffer(A5),A0
-		A0.src = m_pIn->GetBegin();
-		//move.l	4(a0),d0
-		D0.l = A0.l(4);
-		
-		//move.l	8(a0),d1
-		D1.l = A0.l(8);
-		
-		//lea	12(a0),a0
-		A0.src += 12;
-		
-		//movea.l	a1,a2
-		A2.src = A1.src;
-		
-		//adda.l	d1,a2
-		A2.src += D1.l;
-		
-		//adda.l	d0,a0
-		A0.src += D0.l;
-		
-		//move.l	-(a0),d5
-		D5.l = A0.l(0);
-		A0.src -= 4;
-		
-		//move.l	-(a0),d0
-		D0.l = A0.l(0);
-		A0.src -= 4;
-		
-		//bsr.s	D_CRUN
-		goto D_CRUN;
-		// replace goto, should return here..
-
-		//tst.l	d0
-		//bne.b	Error
-		if (D0.l != 0)
-		{
-			throw IOException("XFD:corrupted data");
-		}
-		
-		// just flag for exit -> return true
-		//moveq	#1,d0
-		//D0.l = 1;
-		return true;
+	//eor.l	d0,d5
+	D5.l ^= D0.l;
 
 /*
-Eoruj:
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
-		rts
+	// set lower-part (ccr) of status-register?
+	move.w	#$0010,ccr
+	
+	// rotate-with-extend, shift right and use status-register
+	// as "buffer" for previous bits..
+	roxr.l	#1,d0
+	
+*/
+}
+
+// called from derived instances
+void ByteKiller::D_CRUN()
+{
+
+/*
 
 D_CRUN:
 		//movem.l	d0-d7/a0-a6,-(sp) // stack
 		eor.l	d0,d5
 		
 lbC000046:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
+		
 		bne.s	lbC000054
-		bsr.b	Eoruj
+		//bsr.b	Eoruj
+		Eoruj();
 lbC000054:	
 		bcs.s	lbC0000B0
 		moveq	#8,d1
 		moveq	#1,d3
 		lsr.l	#1,d0
 		bne.s	lbC000068
-		bsr.b	Eoruj
+		//bsr.b	Eoruj
+		Eoruj();
+		
 lbC000068:	
 		bcs.w	lbC0000FE
 		moveq	#3,d1
@@ -262,8 +174,122 @@ lbC00013A:
 		//moveq	#-1,d0
 		D0.l = -1;
 		rts
-
 */
+}
+
+
+///////// crun
+
+bool crun::decrunch(CReadBuffer *pOut)
+{
+	// in caller
+	//cmp.l	#'CRUN',(A0)+
+	//bne.s	.Exit
+	//A0 = A0+4;
+	//D0.l = size;
+	//A0.src = src;
+	
+	//tst.b	(A0)
+	//bne.b	.Exit
+	if (A0.b(0) != 0)
+	{
+		return false;
+	}
+	
+	//move.l	(A0)+,D1
+	D1.l = A0.l();
+	if (D1.b == 0)
+	{
+		//beq.b	.Exit
+		return false;
+	}
+	
+	//btst	#0,D1
+	if ((D1.b & 1) != 0)
+	{
+		//bne.b	.Exit
+		return false;
+	}
+	
+	//moveq	#12,D0
+	D0.l = 12;
+	//add.l	D0,D1
+	D1.l += D0.l;
+
+	//move.l	D1,xfdrr_MinSourceLen(A1)
+	//if (m_pIn->GetSize() != D1.l)
+	
+	//tst.b	(A0)
+	//bne.b	.Exit
+	if (*(A0.src) != 0)
+	{
+		return false;
+	}
+		
+	//move.l	(A0),D1
+	D1.l = A0; // "auto" lvalue -> operator? 
+	
+	//beq.b	.Exit
+	//bmi.b	.Exit
+	if (D1.l <= 0)
+	{
+		return false;
+	}
+	
+	//move.l	D1,xfdrr_MinTargetLen(A1)
+	//move.l	D1,xfdrr_FinalTargetLen(A1)
+	pOut->Reserve(D1.l);
+
+
+DB_CRUN:
+	//movem.l	d2-d7/a2-a6,-(a7) // stack store
+	//move.l	a0,a5
+	A5.setl(A0);
+	
+	//move.l	xfdbi_UserTargetBuf(A5),A1
+	//move.l	xfdbi_SourceBuffer(A5),A0
+	A0.src = m_pIn->GetBegin();
+	//move.l	4(a0),d0
+	D0.l = A0.l(4);
+	
+	//move.l	8(a0),d1
+	D1.l = A0.l(8);
+	
+	//lea	12(a0),a0
+	A0.src += 12;
+	
+	//movea.l	a1,a2
+	A2.src = A1.src;
+	
+	//adda.l	d1,a2
+	A2.src += D1.l;
+	
+	//adda.l	d0,a0
+	A0.src += D0.l;
+	
+	//move.l	-(a0),d5
+	D5.l = A0.l(0);
+	A0.src -= 4;
+	
+	//move.l	-(a0),d0
+	D0.l = A0.l(0);
+	A0.src -= 4;
+	
+	//bsr.s	D_CRUN
+	D_CRUN();
+
+	//tst.l	d0
+	//bne.b	Error
+	if (D0.l != 0)
+	{
+		throw IOException("XFD:corrupted data");
+	}
+	
+	// just flag for exit -> return true
+	//moveq	#1,d0
+	//D0.l = 1;
+	return true;
+
 
 
  // just flag for exit -> return false		
@@ -275,7 +301,61 @@ lbC00013A:
 
 bool crnd::decrunch(CReadBuffer *pOut)
 {
+/*
+RB_CRND		cmp.l	#"CRND",(A0)+
+		bne.s	.Exit
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0),D1
+		beq.b	.Exit
+		btst	#0,D1
+		bne.b	.Exit
+		add.l	D1,A0
+		moveq	#20,D0
+		add.l	D0,D1
+		move.l	D1,xfdrr_MinSourceLen(A1)
+		move.l	(A0),D1
+		beq.b	.Exit
+		bmi.b	.Exit
+		move.l	D1,xfdrr_MinTargetLen(A1)
+		move.l	D1,xfdrr_FinalTargetLen(A1)
+		moveq	#1,d0
+		rts
+.Exit		
+		moveq	#0,d0 
+		rts
+		*/
+/*
+DB_CRND		
+		movem.l	d2-d7/a2-a6,-(a7) // keep stack
+		move.l	a0,a5
 
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	xfdbi_MinSourceLen(A5),D0
+
+		move.l	a0,a4
+		adda.l	D0,A0
+		movem.l	-8(a0),a2/a3
+		movem.l	a2/a3,(a4)
+		LEA	-16(A0),A0
+		movea.l	(A0),A2
+		adda.l	A1,A2
+
+		move.l	4(a0),d5
+		move.l	-(a0),d0
+
+		//bsr.w	D_CRUN
+		D_CRUN();
+
+		tst.l	d0
+		bne.w	Error
+
+		moveq	#1,d0
+.Exit		
+		movem.l	(a7)+,d2-d7/a2-a6 // restore stack
+		rts
+*/
 	return false;
 }
 

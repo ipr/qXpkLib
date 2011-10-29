@@ -26,6 +26,11 @@ class ByteKiller : public XfdSlave
 {
 protected:
 	uint32_t m_tag;
+	
+	// shared for all instances
+	void Eoruj();
+	void D_CRUN();
+	
 public:
 	ByteKiller(CReadBuffer *pIn)
 		: XfdSlave(pIn)
