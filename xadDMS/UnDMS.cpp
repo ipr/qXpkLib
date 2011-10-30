@@ -47,27 +47,19 @@
 #endif
 
 
-// just four-byte identifier -> no need for global..
-//unsigned char info_header[4];
-// just for some metadata -> no need for separate buffer
-//unsigned char archive_header[52];
+uint8_t quick_buffer[256];
+uint8_t medium_buffer[16384];
 
-//unsigned char track_header[20];
-uint8_t *track_header;
+uint8_t deep_buffer[16384];
+uint16_t deep_weights[628];
+uint16_t deep_symbols[628];
+uint16_t deep_hash[942];
 
-unsigned char quick_buffer[256];
-unsigned char medium_buffer[16384];
-
-unsigned char deep_buffer[16384];
-unsigned short deep_weights[628];
-unsigned short deep_symbols[628];
-unsigned short deep_hash[942];
-
-unsigned char heavy_buffer[8192];
-unsigned short heavy_literal_table[5120];
-unsigned short heavy_offset_table[320];
-unsigned char heavy_literal_len[512];
-unsigned char heavy_offset_len[32];
+uint8_t heavy_buffer[8192];
+uint16_t heavy_literal_table[5120];
+uint16_t heavy_offset_table[320];
+uint8_t heavy_literal_len[512];
+uint8_t heavy_offset_len[32];
 
 unsigned int quick_local;
 unsigned int medium_local;
@@ -75,10 +67,6 @@ unsigned int deep_local;
 unsigned int heavy_local;
 unsigned int heavy_last_offset;
 
-unsigned int pack_size;
-unsigned int rle_size;
-unsigned int unpack_size;
-unsigned int high_track;
 unsigned int no_clear_flag;
 
 /* --------------------------------------------------------------------- */
@@ -331,8 +319,8 @@ int crunch_medium(unsigned char *source, unsigned char *source_end,
 
 void deep_clear()
 {
-   unsigned short count, temp;
-   temp = 627;
+   uint16_t count = 0;
+   uint16_t temp = 627;
    for(count = 0; count < 314; count++)
    {
       deep_weights[count] = 1;
@@ -776,54 +764,53 @@ int crunch_heavy(unsigned char *source, unsigned char *source_end,
 
 // access track from buffer: caller determines where it is regardless of how much in RAM (read or mapped)
 //
-bool CUnDMS::decrunch(const int32_t pack_mode, uint8_t *pack_buffer)
+uint8_t *CUnDMS::decrunch(const Track_Header *track, uint8_t *pack_buffer)
 {
-	//size_t nUnpacked = 0;
 	uint8_t *unpack_buffer = m_DecrunchBuffer.GetAtCurrent();
 	uint8_t *buffer = nullptr;
 	
-	switch(pack_mode) /* pack_mode */
+	switch(track->pack_mode) /* pack_mode */
 	{
 	case PACK_STORE: /* store */
 		{
-		if(!crunch_store(pack_buffer, pack_buffer + pack_size, unpack_buffer, unpack_buffer + unpack_size))
+		if(!crunch_store(pack_buffer, pack_buffer + track->pack_size, unpack_buffer, unpack_buffer + track->unpack_size))
 		buffer = unpack_buffer;
 		break;
 		}
 	case PACK_RLE: /* rle */
 		{
-		if(!crunch_rle(pack_buffer, pack_buffer + pack_size, unpack_buffer, unpack_buffer + unpack_size))
+		if(!crunch_rle(pack_buffer, pack_buffer + track->pack_size, unpack_buffer, unpack_buffer + track->unpack_size))
 		buffer = unpack_buffer;
 		break;
 		}
 	case PACK_QUICK: /* quick */
 		{
-		if(!crunch_quick(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
-			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+		if(!crunch_quick(pack_buffer, pack_buffer + track->pack_size + 16, unpack_buffer, unpack_buffer + track->rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + track->rle_size, pack_buffer, pack_buffer + track->unpack_size))
 				buffer = pack_buffer;
 		break;
 		}
 	case PACK_MEDIUM: /* medium */
 		{
-		if(!crunch_medium(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
-			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+		if(!crunch_medium(pack_buffer, pack_buffer + track->pack_size + 16, unpack_buffer, unpack_buffer + track->rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + track->rle_size, pack_buffer, pack_buffer + track->unpack_size))
 				buffer = pack_buffer;
 		break;
 		}
 	case PACK_DEEP: /* deep */
 		{
-		if(!crunch_deep(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
-			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+		if(!crunch_deep(pack_buffer, pack_buffer + track->pack_size + 16, unpack_buffer, unpack_buffer + track->rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + track->rle_size, pack_buffer, pack_buffer + track->unpack_size))
 				buffer = pack_buffer;
 		break;
 		}
 	case PACK_HEAVY1: /* heavy1 */
 		{
-		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size, track_header[12] & 2, 13))
+		if(!crunch_heavy(pack_buffer, pack_buffer + track->pack_size + 16, unpack_buffer, unpack_buffer + track->rle_size, track->pack_flag & 2, 13))
 		{
-			if(track_header[12] & 4) /* pack_flag */
+			if(track->isPackFlagHeavyRle()) /* pack_flag */
 			{
-			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + track->rle_size, pack_buffer, pack_buffer + track->unpack_size))
 				buffer = pack_buffer;
 			}
 			else
@@ -833,11 +820,11 @@ bool CUnDMS::decrunch(const int32_t pack_mode, uint8_t *pack_buffer)
 		}
 	case PACK_HEAVY2: /* heavy2 */
 		{
-		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size, track_header[12] & 2, 14))
+		if(!crunch_heavy(pack_buffer, pack_buffer + track->pack_size + 16, unpack_buffer, unpack_buffer + track->rle_size, track->pack_flag & 2, 14))
 		{
-			if(track_header[12] & 4) /* pack_flag */
+			if(track->isPackFlagHeavyRle()) /* pack_flag */
 			{
-			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + track->rle_size, pack_buffer, pack_buffer + track->unpack_size))
 				buffer = pack_buffer;
 			}
 			else
@@ -851,47 +838,9 @@ bool CUnDMS::decrunch(const int32_t pack_mode, uint8_t *pack_buffer)
 	} /* switch */
 	
 	// keep collecting until done
-	m_DecrunchBuffer.SetCurrentPos(m_DecrunchBuffer.GetCurrentPos() + unpack_size);
+	m_DecrunchBuffer.SetCurrentPos(m_DecrunchBuffer.GetCurrentPos() + track->unpack_size);
 
-	if(!buffer)
-	{
-		throw IOException("Extract failed");
-	}
-	if (!(mysimplecrc(buffer, unpack_size) == ((track_header[14] << 8) + track_header[15]))) /* unpack_sum */
-	{
-		throw IOException("CRC error (unpack data)");
-	}
-	
-	if((current_track < 1000) && (unpack_size >= 8192)) /* try and skip illegal tracks */
-	{
-		// unpacking of track expects this to be checked here it seems..
-		if(current_track < high_track)
-		{
-			no_clear_flag = track_header[12] & 1; // pack_flag 
-		}
-	
-		// skip this, write entirely when done
-		/*
-		actual = fwrite(buffer, 1, unpack_size, out_file);
-		if(actual == unpack_size)
-		{
-		 if(current_track < high_track)
-		 {
-		  no_clear_flag = track_header[12] & 1; // pack_flag 
-		  //abort = 0; // continue 
-		 }
-		 else
-			return true;
-		  //result = 0; // successful completion 
-		}
-		*/
-	}
-	else
-	{
-		//qDebug() << "illegal track"
-	}
-
-	return true;
+	return buffer;
 }
 
 bool CUnDMS::unpack()
@@ -934,13 +883,13 @@ bool CUnDMS::unpack()
 	
 	// just access directly until checking done
 	uint8_t *archive_header = m_ReadBuffer.GetNext(52);
-	//::memcpy(archive_header, m_ReadBuffer.GetNext(52), 52);
+	m_header.parseBuf(archive_header);
 	
-	if (!(mycrc(archive_header, 50) == ((archive_header[50] << 8) + archive_header[51]))) /* header_sum */
+	if (mycrc(archive_header, 50) != m_header.header_sum) /* header_sum */
 	{
 		throw IOException("Invalid CRC (archive header)");
 	}
-	if (!(((archive_header[44] << 8) + archive_header[45]) <= 111)) /* extract_ver */
+	if (m_header.extract_ver > ExtractVersion) /* extract_ver */
 	{
 		throw IOException("Need newer version..");
 	}
@@ -951,60 +900,89 @@ bool CUnDMS::unpack()
 	
 	m_DecrunchBuffer.PrepareBuffer(max_image_size, false);
 	
+	// max 80 tracks allowed/supported
+	high_track = (m_header.hightrack > 80) ? 80 : m_header.hightrack;
 	
-	// ..globals..
-	high_track = (archive_header[14] << 8) + archive_header[15]; /* hightrack */
-	high_track = (high_track > 80) ? 80 : high_track;
+	if (m_tracks != nullptr)
+	{
+		delete[] m_tracks;
+	}
+	m_tracks = new Track_Header[m_header.hightrack]; // keep until processed
 	
 	// loop from here for each track? 
+	for (int i = m_header.lowtrack; i < m_header.hightrack; i++)
+	{
+		Track_Header *track = &m_tracks[i];
 
-	// this needed elsewhere too..
-	track_header = m_ReadBuffer.GetNext(20);
-	//::memcpy(track_header, m_ReadBuffer.GetNext(20), 20);
-	if (!((track_header[0] == 84) && (track_header[1] == 82))) /* TR */
-	{
-		throw IOException("Invalid track count");
-	}
-	if (!(mycrc(track_header, 18) == ((track_header[18] << 8) + track_header[19]))) /* header_sum */
-	{
-		throw IOException("Invalid CRC (track header)");
-	}
-	
-	// .. more globals..
-	current_track = (track_header[2] << 8) + track_header[3]; /* track */
-	pack_size = (track_header[6] << 8) + track_header[7]; /* pack_size */
-	rle_size = (track_header[8] << 8) + track_header[9]; /* rle_size */
-	unpack_size = (track_header[10] << 8) + track_header[11]; /* unpack_size */
-	pack_mode = track_header[13]; /* pack_mode */
-	if (pack_mode < 0 || pack_mode >= 7)
-	{
-		throw IOException("Invalid packing mode");
-	}
+		// use until checking done
+		uint8_t *track_header = m_ReadBuffer.GetNext(20);
+		if (track->isTR(track_header) == false)
+		{
+			throw IOException("Invalid track count");
+		}
+		// keep related info
+		track->parseBuf(track_header);
 
-	/*
-	if ((pack_size + 16 < BUFFERSIZE) && 
-		(rle_size + 16 < BUFFERSIZE) &&
-		(unpack_size + 16 < BUFFERSIZE)) // allow for overrun 
-	{
-	}
-	*/
-	if (pack_size > max_image_size || rle_size > max_image_size || unpack_size > max_image_size)
-	{
-		throw IOException("Invalid size for data");
-	}
+		if (track->pack_mode < 0 || track->pack_mode >= 7)
+		{
+			throw IOException("Invalid packing mode");
+		}
+		if (track->pack_size > max_image_size || track->rle_size > max_image_size || track->unpack_size > max_image_size)
+		{
+			throw IOException("Invalid size for data");
+		}
+		if (mycrc(track_header, 18) != track->header_sum) /* header_sum */
+		{
+			throw IOException("Invalid CRC (track header)");
+		}
+		
+		if (mycrc(m_ReadBuffer.GetAtCurrent(), track->pack_size) != track->data_sum) /* data_sum */
+		{
+			throw IOException("Invalid CRC (pack buffer)");
+		}
+		
+		// check we still have enough space (if invalid guess before..)
+		m_DecrunchBuffer.Reserve(track->unpack_size);
 	
-	if (!(mycrc(m_ReadBuffer.GetAtCurrent(), pack_size) == ((track_header[16] << 8) + track_header[17]))) /* data_sum */
-	{
-		throw IOException("Invalid CRC (pack buffer)");
-	}
-	
-	// check we still have enough space (if invalid guess before..)
-	m_DecrunchBuffer.Reserve(unpack_size);
-
-	// decrunch etc.
-	if (decrunch(pack_mode, m_ReadBuffer.GetNext(pack_size)) == false)
-	{
-		throw IOException("Decrunch failure");
+		// decrunch etc.
+		uint8_t *decrbuf = decrunch(track, m_ReadBuffer.GetNext(track->pack_size));
+		if (!decrbuf)
+		{
+			throw IOException("Extract failed");
+		}
+		if (mysimplecrc(decrbuf, track->unpack_size) != track->unpack_sum) /* unpack_sum */
+		{
+			throw IOException("CRC error (unpack data)");
+		}
+		
+		if ((track->current_track < 1000) && (track->unpack_size >= 8192)) /* try and skip illegal tracks */
+		{
+			// unpacking of track expects this to be checked here it seems..
+			if (track->current_track < high_track)
+			{
+				no_clear_flag = track->pack_flag & 1; // pack_flag 
+			}
+		
+			// skip this, write entirely when done
+			/*
+			actual = fwrite(buffer, 1, unpack_size, out_file);
+			if(actual == unpack_size)
+			{
+			 if(current_track < high_track)
+			 {
+			  no_clear_flag = track_header[12] & 1; // pack_flag 
+			  //abort = 0; // continue 
+			 }
+			 else
+				return true;
+			  //result = 0; // successful completion 
+			}
+			*/
+		}
+		else
+		{
+			//qDebug() << "illegal track"
+		}
 	}
 	
 	// finally, output
