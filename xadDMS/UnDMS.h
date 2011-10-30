@@ -47,7 +47,7 @@ private:
 	
 protected:
 	// TODO: use enum-types instead..
-	bool decrunch(const int32_t pack_mode);
+	bool decrunch(const int32_t pack_mode, uint8_t *pack_buffer);
 
 public:
     CUnDMS()

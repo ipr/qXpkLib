@@ -13,6 +13,10 @@ xadLibraryBase *GetXpkInstance(void)
 xadDMS::xadDMS()
  : xadLibraryBase()
 {
+	// only whole file decrunching
+	// -> master-library may read/map to memory for us
+	m_XpkCaps.whole_file_only = true;
+	
 	// so far only to/from file(s) supported here,
 	// may add more (in progress)
 	m_XpkCaps.input.file = true;

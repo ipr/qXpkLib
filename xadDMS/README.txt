@@ -1,16 +1,20 @@
 
 xadDMS - DMS unpack library
 
-Original author: ??
-Code is in public domain..?
+Original Author: dt14uow.edu.au (David Tritscher)
 
 Modified to C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
 
 Summary:
 DMS implementation for qXpkLib to load.
 
-Plaholder only currently..
 In progress..
+
+Modifications include (not limited to):
+* remove console in/out for use in library
+* prepare for purely buffer in/out handling (library user may want buffer-to-buffer)
+* reduce globals/fixed-sized buffers etc.
+* etc.
 
 
 Description:

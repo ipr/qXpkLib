@@ -4,6 +4,7 @@
 // modified by Ilkka Prusi <ilkka.prusi@gmail.com>
 //
 // based on undms-1.3.c:
+// Author:	dt14uow.edu.au (David Tritscher)
 //
 /* $VER: undms 1.3 (12.2.98) */
 /* Release 1.2: 12.2.98 */
@@ -41,11 +42,18 @@
 
 #include "UnDMS.h"
 
+#ifdef _DEBUG
+#include <QDebug>
+#endif
+
+
 // just four-byte identifier -> no need for global..
 //unsigned char info_header[4];
+// just for some metadata -> no need for separate buffer
+//unsigned char archive_header[52];
 
-unsigned char archive_header[52];
-unsigned char track_header[20];
+//unsigned char track_header[20];
+uint8_t *track_header;
 
 unsigned char quick_buffer[256];
 unsigned char medium_buffer[16384];
@@ -172,7 +180,7 @@ int crunch_store(unsigned char *source, unsigned char *source_end,
    while((destination < destination_end) && (source < source_end))
       *destination++ = *source++;
 
-if(DEBUG)printf(" ...store %s",((source != source_end) || (destination != destination_end)) ? "bad" : "good");
+//if(DEBUG)printf(" ...store %s",((source != source_end) || (destination != destination_end)) ? "bad" : "good");
    return((source != source_end) || (destination != destination_end));
 }
 
@@ -207,7 +215,7 @@ int crunch_rle(unsigned char *source, unsigned char *source_end,
       }
    } /* while */
 
-if(DEBUG)printf(" ...runlength %s",((source != source_end) || (destination != destination_end)) ? "bad" : "good");
+//if(DEBUG)printf(" ...runlength %s",((source != source_end) || (destination != destination_end)) ? "bad" : "good");
    return((source != source_end) || (destination != destination_end));
 }
 
@@ -255,7 +263,7 @@ int crunch_quick(unsigned char *source, unsigned char *source_end,
       }
    } /* while */
 
-if(DEBUG)printf(" ...quick %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
+//if(DEBUG)printf(" ...quick %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
    return((source > source_end) || (destination != destination_end));
 }
 
@@ -315,7 +323,7 @@ int crunch_medium(unsigned char *source, unsigned char *source_end,
       }
    } /* while */
 
-if(DEBUG)printf(" ...medium %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
+//if(DEBUG)printf(" ...medium %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
    return((source > source_end) || (destination != destination_end));
 }
 
@@ -343,7 +351,7 @@ void deep_clear()
    deep_weights[count] = 65535;
    deep_hash[temp] = 0;
 
-if(DEBUG)printf(" ...clear");
+//if(DEBUG)printf(" ...clear");
 }
 
 /* --------------------------------------------------------------------- */
@@ -381,7 +389,7 @@ void deep_scale()
       deep_hash[temp] = symbol; if(temp < 627) deep_hash[temp + 1] = symbol;
    }
 
-if(DEBUG)printf(" ...scale");
+//if(DEBUG)printf(" ...scale");
 }
 
 /* --------------------------------------------------------------------- */
@@ -474,7 +482,7 @@ int crunch_deep(unsigned char *source, unsigned char *source_end,
       }
    } /* while */
 
-if(DEBUG)printf(" ...deep %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
+//if(DEBUG)printf(" ...deep %s",((source > source_end) || (destination != destination_end)) ? "bad" : "good");
    return((source > source_end) || (destination != destination_end));
 }
 
@@ -551,7 +559,7 @@ int make_decode_table(int number_symbols, int table_size,
       }
    }
 
-if(DEBUG)printf(" ...table %s",((pos != table_mask) || abort) ? "bad" : "good");
+//if(DEBUG)printf(" ...table %s",((pos != table_mask) || abort) ? "bad" : "good");
    return((pos != table_mask) || abort);
 }
 
@@ -762,87 +770,78 @@ int crunch_heavy(unsigned char *source, unsigned char *source_end,
       }
    } /* if(!flag) */
 
-if(DEBUG)printf(" ...heavy %s",((source > source_end) || (destination != destination_end) || flag) ? "bad" : "good");
+	//if(DEBUG)printf(" ...heavy %s",((source > source_end) || (destination != destination_end) || flag) ? "bad" : "good");
    return((source > source_end) || (destination != destination_end) || flag);
 }
 
-// TODO: use enum-types instead..
-bool CUnDMS::decrunch(const int32_t pack_mode)
+// access track from buffer: caller determines where it is regardless of how much in RAM (read or mapped)
+//
+bool CUnDMS::decrunch(const int32_t pack_mode, uint8_t *pack_buffer)
 {
+	//size_t nUnpacked = 0;
+	uint8_t *unpack_buffer = m_DecrunchBuffer.GetAtCurrent();
+	uint8_t *buffer = nullptr;
+	
 	switch(pack_mode) /* pack_mode */
 	{
 	case PACK_STORE: /* store */
 		{
-		if(!crunch_store(pack_buffer, pack_buffer + pack_size,
-		unpack_buffer, unpack_buffer + unpack_size))
+		if(!crunch_store(pack_buffer, pack_buffer + pack_size, unpack_buffer, unpack_buffer + unpack_size))
 		buffer = unpack_buffer;
 		break;
 		}
 	case PACK_RLE: /* rle */
 		{
-		if(!crunch_rle(pack_buffer, pack_buffer + pack_size,
-		unpack_buffer, unpack_buffer + unpack_size))
+		if(!crunch_rle(pack_buffer, pack_buffer + pack_size, unpack_buffer, unpack_buffer + unpack_size))
 		buffer = unpack_buffer;
 		break;
 		}
 	case PACK_QUICK: /* quick */
 		{
-		if(!crunch_quick(pack_buffer, pack_buffer + pack_size + 16,
-		unpack_buffer, unpack_buffer + rle_size))
-		if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-		pack_buffer, pack_buffer + unpack_size))
-		buffer = pack_buffer;
+		if(!crunch_quick(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+				buffer = pack_buffer;
 		break;
 		}
 	case PACK_MEDIUM: /* medium */
 		{
-		if(!crunch_medium(pack_buffer, pack_buffer + pack_size + 16,
-		unpack_buffer, unpack_buffer + rle_size))
-		if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-		pack_buffer, pack_buffer + unpack_size))
-		buffer = pack_buffer;
+		if(!crunch_medium(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+				buffer = pack_buffer;
 		break;
 		}
 	case PACK_DEEP: /* deep */
 		{
-		if(!crunch_deep(pack_buffer, pack_buffer + pack_size + 16,
-		unpack_buffer, unpack_buffer + rle_size))
-		if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-		pack_buffer, pack_buffer + unpack_size))
-		buffer = pack_buffer;
+		if(!crunch_deep(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size))
+			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+				buffer = pack_buffer;
 		break;
 		}
 	case PACK_HEAVY1: /* heavy1 */
 		{
-		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16,
-		unpack_buffer, unpack_buffer + rle_size,
-		track_header[12] & 2, 13))
+		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size, track_header[12] & 2, 13))
 		{
-		if(track_header[12] & 4) /* pack_flag */
-		{
-		if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-		pack_buffer, pack_buffer + unpack_size))
-		buffer = pack_buffer;
-		}
-		else
-		buffer = unpack_buffer;
+			if(track_header[12] & 4) /* pack_flag */
+			{
+			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+				buffer = pack_buffer;
+			}
+			else
+				buffer = unpack_buffer;
 		}
 		break;
-	}
+		}
 	case PACK_HEAVY2: /* heavy2 */
 		{
-		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16,
-		unpack_buffer, unpack_buffer + rle_size,
-		track_header[12] & 2, 14))
+		if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16, unpack_buffer, unpack_buffer + rle_size, track_header[12] & 2, 14))
 		{
-		if(track_header[12] & 4) /* pack_flag */
-		{
-		if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-		pack_buffer, pack_buffer + unpack_size))
-		buffer = pack_buffer;
-		}
-		else
-		buffer = unpack_buffer;
+			if(track_header[12] & 4) /* pack_flag */
+			{
+			if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size, pack_buffer, pack_buffer + unpack_size))
+				buffer = pack_buffer;
+			}
+			else
+				buffer = unpack_buffer;
 		}
 		break;
 		}
@@ -850,7 +849,49 @@ bool CUnDMS::decrunch(const int32_t pack_mode)
 		// silence GCC..
 		break;
 	} /* switch */
+	
+	// keep collecting until done
+	m_DecrunchBuffer.SetCurrentPos(m_DecrunchBuffer.GetCurrentPos() + unpack_size);
 
+	if(!buffer)
+	{
+		throw IOException("Extract failed");
+	}
+	if (!(mysimplecrc(buffer, unpack_size) == ((track_header[14] << 8) + track_header[15]))) /* unpack_sum */
+	{
+		throw IOException("CRC error (unpack data)");
+	}
+	
+	if((current_track < 1000) && (unpack_size >= 8192)) /* try and skip illegal tracks */
+	{
+		// unpacking of track expects this to be checked here it seems..
+		if(current_track < high_track)
+		{
+			no_clear_flag = track_header[12] & 1; // pack_flag 
+		}
+	
+		// skip this, write entirely when done
+		/*
+		actual = fwrite(buffer, 1, unpack_size, out_file);
+		if(actual == unpack_size)
+		{
+		 if(current_track < high_track)
+		 {
+		  no_clear_flag = track_header[12] & 1; // pack_flag 
+		  //abort = 0; // continue 
+		 }
+		 else
+			return true;
+		  //result = 0; // successful completion 
+		}
+		*/
+	}
+	else
+	{
+		//qDebug() << "illegal track"
+	}
+
+	return true;
 }
 
 bool CUnDMS::unpack()
@@ -890,7 +931,10 @@ bool CUnDMS::unpack()
 		throw IOException("Unsupported file");
 	}
 	m_ReadBuffer.SetCurrentPos(4); // after identifier
-	::memcpy(archive_header, m_ReadBuffer.GetNext(52), 52);
+	
+	// just access directly until checking done
+	uint8_t *archive_header = m_ReadBuffer.GetNext(52);
+	//::memcpy(archive_header, m_ReadBuffer.GetNext(52), 52);
 	
 	if (!(mycrc(archive_header, 50) == ((archive_header[50] << 8) + archive_header[51]))) /* header_sum */
 	{
@@ -901,11 +945,22 @@ bool CUnDMS::unpack()
 		throw IOException("Need newer version..");
 	}
 	
+	// DMS/ADF disk-images should be less than 1MB when unpacked,
+	// we should have that much RAM -> simplify checks
+	const int32_t max_image_size = (1*1024*1024);
+	
+	m_DecrunchBuffer.PrepareBuffer(max_image_size, false);
+	
+	
 	// ..globals..
 	high_track = (archive_header[14] << 8) + archive_header[15]; /* hightrack */
 	high_track = (high_track > 80) ? 80 : high_track;
+	
+	// loop from here for each track? 
 
-	::memcpy(track_header, m_ReadBuffer.GetNext(20), 20);
+	// this needed elsewhere too..
+	track_header = m_ReadBuffer.GetNext(20);
+	//::memcpy(track_header, m_ReadBuffer.GetNext(20), 20);
 	if (!((track_header[0] == 84) && (track_header[1] == 82))) /* TR */
 	{
 		throw IOException("Invalid track count");
@@ -926,9 +981,6 @@ bool CUnDMS::unpack()
 		throw IOException("Invalid packing mode");
 	}
 
-	// DMS/ADF disk-images should be less than 1MB when unpacked,
-	// we should have that much RAM -> simplify checks
-	const int32_t max_image_size = (1*1024*1024);
 	/*
 	if ((pack_size + 16 < BUFFERSIZE) && 
 		(rle_size + 16 < BUFFERSIZE) &&
@@ -941,17 +993,16 @@ bool CUnDMS::unpack()
 		throw IOException("Invalid size for data");
 	}
 	
-	m_DecrunchBuffer.PrepareBuffer(pack_size, false);
-	//m_DecrunchBuffer.Reserve(pack_size); // check we have at least this much 
-	::memcpy(m_DecrunchBuffer.GetBegin(), m_ReadBuffer.GetNext(pack_size), pack_size);
-
-	if (!(mycrc(m_DecrunchBuffer.GetBegin(), pack_size) == ((track_header[16] << 8) + track_header[17]))) /* data_sum */
+	if (!(mycrc(m_ReadBuffer.GetAtCurrent(), pack_size) == ((track_header[16] << 8) + track_header[17]))) /* data_sum */
 	{
 		throw IOException("Invalid CRC (pack buffer)");
 	}
+	
+	// check we still have enough space (if invalid guess before..)
+	m_DecrunchBuffer.Reserve(unpack_size);
 
 	// decrunch etc.
-	if (decrunch(pack_mode) == false)
+	if (decrunch(pack_mode, m_ReadBuffer.GetNext(pack_size)) == false)
 	{
 		throw IOException("Decrunch failure");
 	}
@@ -979,256 +1030,6 @@ bool CUnDMS::unpack()
 	return true;	
 }
 
-/* --------------------------------------------------------------------- */
-
-// replace with class/library interface..
-//
-// urgh..
-// how many levels of if..else there are ???
-// -> replace with above..
-//
-int main(int argc, char ** argv)
-{
- FILE *in_file, *out_file;
- int result = 1; /* assume an error */
- int abort = 0;
- int actual;
- unsigned int current_track;
- unsigned char pack_mode;
- unsigned char *buffer;
-
- no_clear_flag = 0;
-
- if (argc >= 3)
- {
-  DEBUG = (argc >= 4);
-  if(in_file = fopen(argv[1],"rb"))
-  {
-   actual = fread(info_header, 1, 4, in_file);
-   if(!ferror(in_file))
-   {
-    if(actual == 4)
-    {
-     if((info_header[0] == 68) && (info_header[1] == 77) && /* DMS! */
-        (info_header[2] == 83) && (info_header[3] == 33))
-     {
-      actual = fread(archive_header, 1, 52, in_file);
-      if(!ferror(in_file))
-      {
-       if(actual == 52)
-       {
-        if(mycrc(archive_header, 50) == ((archive_header[50] << 8) + archive_header[51])) /* header_sum */
-        {
-         if(((archive_header[44] << 8) + archive_header[45]) <= 111) /* extract_ver */
-         {
-          if(out_file = fopen(argv[2],"wb"))
-          {
-           high_track = (archive_header[14] << 8) + archive_header[15]; /* hightrack */
-           high_track = (high_track > 80) ? 80 : high_track;
-           while(!abort)
-           {
-            abort = 1; /* assume an error */
-            buffer = 0; /* assume an error */
-            actual = fread(track_header, 1, 20, in_file);
-            if(!ferror(in_file))
-            {
-             if(actual == 20)
-             {
-              if((track_header[0] == 84) && (track_header[1] == 82)) /* TR */
-              {
-               if(mycrc(track_header, 18) == ((track_header[18] << 8) + track_header[19])) /* header_sum */
-               {
-                current_track = (track_header[2] << 8) + track_header[3]; /* track */
-                pack_size = (track_header[6] << 8) + track_header[7]; /* pack_size */
-                rle_size = (track_header[8] << 8) + track_header[9]; /* rle_size */
-                unpack_size = (track_header[10] << 8) + track_header[11]; /* unpack_size */
-                pack_mode = track_header[13]; /* pack_mode */
-                if((pack_size + 16 < BUFFERSIZE) && (rle_size + 16 < BUFFERSIZE) &&
-                   (unpack_size + 16 < BUFFERSIZE)) /* allow for overrun */
-                {
-                 actual = fread(pack_buffer, 1, pack_size, in_file);
-                 if(!ferror(in_file))
-                 {
-                  if(actual == pack_size)
-                  {
-                   if(mycrc(pack_buffer, pack_size) == ((track_header[16] << 8) + track_header[17])) /* data_sum */
-                   {
-                    if(pack_mode < 7)
-                    {
-if(DEBUG)printf("track %d pack %d rle %d unpack %d", current_track, pack_size, rle_size, unpack_size);
-                     switch(track_header[13]) /* pack_mode */
-                     {
-                      case 0: /* store */
-                      {
-                       if(!crunch_store(pack_buffer, pack_buffer + pack_size,
-                                        unpack_buffer, unpack_buffer + unpack_size))
-                       buffer = unpack_buffer;
-                       break;
-                      }
-                      case 1: /* rle */
-                      {
-                       if(!crunch_rle(pack_buffer, pack_buffer + pack_size,
-                                      unpack_buffer, unpack_buffer + unpack_size))
-                       buffer = unpack_buffer;
-                       break;
-                      }
-                      case 2: /* quick */
-                      {
-                       if(!crunch_quick(pack_buffer, pack_buffer + pack_size + 16,
-                                        unpack_buffer, unpack_buffer + rle_size))
-                       if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-                                      pack_buffer, pack_buffer + unpack_size))
-                       buffer = pack_buffer;
-                       break;
-                      }
-                      case 3: /* medium */
-                      {
-                       if(!crunch_medium(pack_buffer, pack_buffer + pack_size + 16,
-                                         unpack_buffer, unpack_buffer + rle_size))
-                       if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-                                      pack_buffer, pack_buffer + unpack_size))
-                       buffer = pack_buffer;
-                       break;
-                      }
-                      case 4: /* deep */
-                      {
-                       if(!crunch_deep(pack_buffer, pack_buffer + pack_size + 16,
-                                       unpack_buffer, unpack_buffer + rle_size))
-                       if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-                                      pack_buffer, pack_buffer + unpack_size))
-                       buffer = pack_buffer;
-                       break;
-                      }
-                      case 5: /* heavy1 */
-                      {
-                       if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16,
-                                       unpack_buffer, unpack_buffer + rle_size,
-                                       track_header[12] & 2, 13))
-                       {
-                        if(track_header[12] & 4) /* pack_flag */
-                        {
-                         if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-                                        pack_buffer, pack_buffer + unpack_size))
-                          buffer = pack_buffer;
-                        }
-                        else
-                         buffer = unpack_buffer;
-                       }
-                       break;
-                      }
-                      case 6: /* heavy2 */
-                      {
-                       if(!crunch_heavy(pack_buffer, pack_buffer + pack_size + 16,
-                                        unpack_buffer, unpack_buffer + rle_size,
-                                        track_header[12] & 2, 14))
-                       {
-                        if(track_header[12] & 4) /* pack_flag */
-                        {
-                         if(!crunch_rle(unpack_buffer, unpack_buffer + rle_size,
-                                        pack_buffer, pack_buffer + unpack_size))
-                          buffer = pack_buffer;
-                        }
-                        else
-                         buffer = unpack_buffer;
-                       }
-                       break;
-                      }
-                     } /* switch */
-if(DEBUG)printf("\n");
-                     if(buffer)
-                     {
-                      if(mysimplecrc(buffer, unpack_size) == ((track_header[14] << 8) + track_header[15])) /* unpack_sum */
-                      {
-                       if((current_track < 1000) && (unpack_size >= 8192)) /* try and skip illegal tracks */
-                       {
-                        actual = fwrite(buffer, 1, unpack_size, out_file);
-                        if(actual == unpack_size)
-                        {
-                         if(current_track < high_track)
-                         {
-                          no_clear_flag = track_header[12] & 1; /* pack_flag */
-                          abort = 0; /* continue */
-                         }
-                         else
-                          result = 0; /* successful completion */
-                        }
-                        else
-                         perror("FWrite()");
-                       }
-                       else
-                        abort = 0; /* skip this chunk */
-                      }
-                      else
-                       puts("CRC: Unpack_Data");
-                     }
-                     else
-                      puts("Extract failed");
-                    }
-                    else
-                     puts("Unknown Pack_Mode");
-                   }
-                   else
-                    puts("CRC: Track_Buffer");
-                  }
-                  else
-                   puts("EOF: Track_Data");
-                 }
-                 else
-                  perror("FRead(Track_Data)");
-                }
-                else
-                 puts("Unpack buffers are too small");
-               }
-               else
-                puts("CRC: Track_Header");
-              }
-              else
-               puts("Unknown Track_Header");
-             }
-             else
-              puts("EOF: Track_Header");
-            }
-            else
-             perror("FRead(Track_Header)");
-           } /* while */
-           fclose(out_file);
-          }
-          else
-           perror("FOpen(Destination)");
-         }
-         else
-          puts("Need newer extractor");
-        }
-        else
-         puts("CRC: Archive_Header");
-       }
-       else
-        puts("EOF: Archive_Header");
-      }
-      else
-       perror("FRead(Archive_Header)");
-     }
-     else
-      puts("Unknown Info_Header");
-    }
-    else
-      puts("EOF: Info_Header");
-   }
-   else
-    perror("FRead(Info_Header)");
-   fclose(in_file);
-  }
-  else
-   perror("FOpen(Source)");
- }
- else
- {
-  puts("Usage: undms source destination");
-  result = 0;
- }
-
- return(result);
-}
 
 /* --------------------------------------------------------------------- */
 
