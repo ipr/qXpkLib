@@ -53,6 +53,8 @@ Credits:
 Licensing:
 GPL v2, see COPYING.txt
 Free for non-profit use.
+Note extension-libraries may have different requirements, 
+see each respective library README.txt for details.
 
 Implementation, design:
 * qXpkLib implements master-library levels 2 and 1 of original XPK design
