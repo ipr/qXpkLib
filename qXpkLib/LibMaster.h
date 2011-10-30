@@ -51,8 +51,6 @@ class CLibMaster : public QObject
     Q_OBJECT
     
 private:
-	QString m_InputName;
-	CReadBuffer m_InputBuffer;
 	size_t m_nInputFileSize;
 	
 	// for multi-file extraction
@@ -74,6 +72,9 @@ private:
 
 	// might keep necessary information already here per archive..?
 	//QXpkLib::CArchiveInfo m_info;
+
+	// status (display also or just internal?)
+	XpkProgress *m_pProgress;
 	
 public:
     explicit CLibMaster(QObject *parent = 0);
@@ -81,7 +82,7 @@ public:
 
 	bool archiveInfo(QXpkLib::CArchiveInfo &info);
 	
-	bool archiveUnpack(XpkProgress *pProgress);
+	bool archiveUnpack();
 
 	// get unpacked result to user-buffer as-is
 	CReadBuffer *getResult()
@@ -91,6 +92,7 @@ public:
 
 public slots:
 	bool setInputBuffer(CReadBuffer *buffer);
+	bool setOutputBuffer(CReadBuffer *buffer);
 
 	bool setInputFile(QString &szFile);
 	

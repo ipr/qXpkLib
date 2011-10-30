@@ -25,9 +25,8 @@ CLibMaster::CLibMaster(QObject *parent)
     , m_pXpkMaster(nullptr)
     , m_pXfdMaster(nullptr)
     , m_pXadMaster(nullptr)
-    , m_InputName()
     , m_nInputFileSize(0)
-    , m_InputBuffer(1024)
+    , m_pProgress(nullptr)
 {
 	// temp, check handling later..
 	// create when selected archive changed?
@@ -64,6 +63,11 @@ CLibMaster::~CLibMaster(void)
 		delete m_pXpkMaster;
 		m_pXpkMaster = nullptr;
 	}
+	if (m_pProgress != nullptr)
+	{
+		delete m_pProgress;
+		m_pProgress = nullptr;
+	}
 }
 
 bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
@@ -96,7 +100,7 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 //
 // At least RAR and ACE support multi-volume archives?
 //
-bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
+bool CLibMaster::archiveUnpack()
 {
 	// just read it all to buffer, change later..
 	m_Input.Read();
@@ -139,7 +143,7 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	
 	if (bRet == false)
 	{
-		throw ArcException("Decrunching failed", m_InputName.toStdString());
+		throw ArcException("Decrunching failed", m_Input.getName().toStdString());
 	}
 
 	// buffer-output? (no out-file given)
@@ -151,7 +155,7 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 	}
 	
 	// overwrite existing file?
-	if (m_InputName == m_Output.getName())
+	if (m_Input.getName() == m_Output.getName())
 	{
 		InFile.Close();
 	}
@@ -164,6 +168,15 @@ bool CLibMaster::archiveUnpack(XpkProgress *pProgress)
 // can we detect type of compression or do we need user info..?
 bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 {
+	// TODO: buffer as input:
+	//m_Input->setInput(buffer);
+	return false;
+}
+
+bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
+{
+	// TODO: buffer as output?
+	//m_Output->setInput(buffer);
 	return false;
 }
 
@@ -171,7 +184,15 @@ bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 // (for information to caller)
 bool CLibMaster::setInputFile(QString &szFile)
 {
-	m_InputName = szFile;
+	if (m_pProgress != nullptr)
+	{
+		delete m_pProgress;
+	}
+	m_pProgress = new XpkProgress();
+	
+	m_pProgress->pInputIo = &m_Input;
+	m_pProgress->pOutputIo = &m_Output;
+
 	m_Input.setName(szFile);
 	m_Input.Read(1024);
 	

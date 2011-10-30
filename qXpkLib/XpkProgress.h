@@ -11,13 +11,15 @@
 
 // fwd. decl.
 class CReadBuffer;
+class CIoContext;
 
 struct XpkProgress 
 {
 	// constructor
 	XpkProgress()
 	{
-		// TODO: reduce these, may be too many..
+		pInputIo = nullptr;
+		pOutputIo = nullptr;
 		
 		pInputBuffer = nullptr;
 		pOutputBuffer = nullptr;
@@ -30,6 +32,12 @@ struct XpkProgress
 		xp_UnpackedProcessed = 0;
 		xp_UnpackedSize = 0;
 	}
+
+	// TODO: replace buffers by context:
+	// this way can wrap in/out to/from file/buffer..
+	//
+	CIoContext *pInputIo;
+	CIoContext *pOutputIo;
 
 	/* input and output buffers for sub-library (decruncher) */
 	CReadBuffer *pInputBuffer;

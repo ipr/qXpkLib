@@ -28,9 +28,6 @@
 
 //// fwd. decl.
 class CLibMaster;
-//class CxpkProgress; // TODO: see about what to do..
-struct XpkProgress;
-
 
 class QXPKLIBSHARED_EXPORT QXpkLib : public QObject
 {
@@ -38,12 +35,6 @@ class QXPKLIBSHARED_EXPORT QXpkLib : public QObject
 
 private:
 	CLibMaster *m_pMaster;
-	
-	// current pack/unpack related item
-	//TagItem *m_pItem;
-	
-	// status (display also or just internal?)
-	XpkProgress *m_pProgress;
 	
 protected:
 	void PrepareMaster();

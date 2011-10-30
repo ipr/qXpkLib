@@ -40,7 +40,6 @@ void QXpkLib::PrepareMaster()
 QXpkLib::QXpkLib(QObject *parent)
 	: QObject(parent)
 	, m_pMaster(nullptr)
-    , m_pProgress(nullptr)
 {
 	// TODO: create this instance only when user starts new file:
 	// would be simplest to instantiate per pack/unpack file
@@ -50,10 +49,6 @@ QXpkLib::QXpkLib(QObject *parent)
 
 QXpkLib::~QXpkLib()
 {
-	if (m_pProgress != nullptr)
-	{
-		delete m_pProgress;
-	}
 	if (m_pMaster != nullptr)
 	{
 		delete m_pMaster;
@@ -66,14 +61,6 @@ bool QXpkLib::xpkInfo(QXpkLib::CArchiveInfo &info)
 {
 	try
 	{
-		/*
-		if (m_pProgress != nullptr)
-		{
-			delete m_pProgress;
-		}
-		m_pProgress = new XpkProgress();
-		*/
-	
 		// get info to caller from master-instance
 		return m_pMaster->archiveInfo(info);
 	}
@@ -93,14 +80,7 @@ bool QXpkLib::xpkPack()
 		// no packing (yet)
 		
 		/*
-		// new status-container
-		if (m_pProgress != nullptr)
-		{
-			delete m_pProgress;
-		}
-		m_pProgress = new XpkProgress();
-		
-		return m_pMaster->xpkPack(m_pProgress);
+		return m_pMaster->xpkPack();
 		*/
 	}
 	catch (std::exception &exp)
@@ -115,14 +95,7 @@ bool QXpkLib::xpkUnpack()
 {
 	try
 	{
-		// new status-container
-		if (m_pProgress != nullptr)
-		{
-			delete m_pProgress;
-		}
-		m_pProgress = new XpkProgress();
-		
-		return m_pMaster->archiveUnpack(m_pProgress);
+		return m_pMaster->archiveUnpack();
 	}
 	catch (std::exception &exp)
 	{
