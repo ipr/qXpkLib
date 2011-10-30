@@ -18,11 +18,17 @@ struct XpkCapabilities
 {
 	// constructor
 	XpkCapabilities()
-	 : input()
+	 : whole_file_only(false)
+	 , input()
 	 , output()
 	 , m_LibIdentifier()
 	 , m_LibDescription()
 	{}
+	
+	// if only whole file decrunching possible
+	// -> master-library may read/map to memory
+	// when necessary
+	bool whole_file_only;
 
 	struct IOtypes
 	{

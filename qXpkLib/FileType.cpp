@@ -381,7 +381,8 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 		return HEADERTYPE_MSCAB;
 	}
 	*/
-	else if (::memcmp(pBuffer, "ZOM5", 4) == 0)
+	else if (::memcmp(pBuffer, "ZOOM", 4) == 0
+		|| ::memcmp(pBuffer, "ZOM5", 4) == 0)
 	{
 		// Zoom disk archiver
 		return HEADERTYPE_ZOOM_DISK;
@@ -572,6 +573,11 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	{
 		// "DImp", disk-imploder (packed floppy image)
 		return HEADERTYPE_DISK_IMPLODER;
+	}
+	else if (ulFirstFour == 0x5A4F4F4D)
+	{
+		// ZAP disk-image (packed floppy image)
+		return HEADERTYPE_ZAP_DISK;
 	}
 	else if (ulFirstFour == 0x504B0304)
 	{

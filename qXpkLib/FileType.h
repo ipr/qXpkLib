@@ -146,7 +146,7 @@ typedef enum tHeaderType
 	HEADERTYPE_DISK_IMPLODER, // Amiga Disk Imploder
 	HEADERTYPE_XMASH, // xMash
 	HEADERTYPE_ZOOM_DISK, // Zoom disk archiver image
-	//HEADERTYPE_ZAP_DISK, // ZAP disk cruncher
+	HEADERTYPE_ZAP_DISK, // ZAP disk cruncher
 	//HEADERTYPE_WARP_DISK, // Warp disk cruncher
 	//HEADERTYPE_XDM_DISK, // xDM compressed disk file
 	//HEADERTYPE_AMIGA_HARDFILE,
