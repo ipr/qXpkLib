@@ -232,7 +232,8 @@ bool crun::decrunch(CReadBuffer *pOut)
 	}
 	
 	//btst	#0,D1
-	if ((D1.b & 1) != 0)
+	btst(0, D1);
+	if (bne())
 	{
 		//bne.b	.Exit
 		return false;
@@ -295,12 +296,10 @@ DB_CRUN:
 	A0.src += D0.l;
 	
 	//move.l	-(a0),d5
-	D5.l = A0.l(0);
-	A0.src -= 4;
+	D5.l = A0.lM();
 	
 	//move.l	-(a0),d0
-	D0.l = A0.l(0);
-	A0.src -= 4;
+	D0.l = A0.lM();
 	
 	//bsr.s	D_CRUN
 	D_CRUN();
@@ -328,18 +327,44 @@ DB_CRUN:
 
 bool crnd::decrunch(CReadBuffer *pOut)
 {
+RB_CRND:
+		// already in caller/constructor
+		//cmp.l	#"CRND",(A0)+
+		//bne.s	.Exit
+		//tst.b	(A0)
+		if (A0.b(0) != 0)
+		{
+			//bne.b	.Exit
+			return false;
+		}
+		
+		//move.l	(A0),D1
+		D1.l = A0.l(0); // no address increment
+		
+		if (D1.l == 0)
+		{
+			//beq.b	.Exit
+			return false;
+		}
+
+		//btst	#0,D1
+		btst(0, D1);
+		if (bne())
+		{
+			//bne.b	.Exit
+			return false;
+		}
+		
+		//add.l	D1,A0
+		A0.src += D1.l;
+		
+		//moveq	#20,D0
+		moveq(20, D0);
+		
+		//add.l	D0,D1
+		D1.l += D0.l;
 /*
-RB_CRND		cmp.l	#"CRND",(A0)+
-		bne.s	.Exit
-		tst.b	(A0)
-		bne.b	.Exit
-		move.l	(A0),D1
-		beq.b	.Exit
-		btst	#0,D1
-		bne.b	.Exit
-		add.l	D1,A0
-		moveq	#20,D0
-		add.l	D0,D1
+		// just load limits (that we have in buffer-class now)		
 		move.l	D1,xfdrr_MinSourceLen(A1)
 		move.l	(A0),D1
 		beq.b	.Exit
@@ -349,8 +374,9 @@ RB_CRND		cmp.l	#"CRND",(A0)+
 		moveq	#1,d0
 		rts
 .Exit		
-		moveq	#0,d0 
-		rts
+		//moveq	#0,d0 
+		//rts
+		return false;
 		*/
 /*
 DB_CRND		
@@ -388,13 +414,126 @@ DB_CRND
 
 bool marc::decrunch(CReadBuffer *pOut)
 {
+/*
+RB_MARC		move.l	D2,-(A7)
+		btst	#0,D0
+		bne.b	.Exit
+		move.l	A0,D2
+		add.l	D0,A0
+.FindCos	cmp.l	D2,A0
+		beq.b	.Exit
+		tst.w	-(A0)
+		beq.b	.FindCos
+		subq.l	#2,A0
+		cmp.l	#'MARC',(A0)
+		beq.b	.OK
+		cmp.l	#'TMB!',(A0)
+		beq.b	.OK
+		cmp.l	#'TXIC',(A0)
+		beq.b	.OK
+		cmp.l	#'SCC!',(A0)
+		beq.b	.OK
+		cmp.l	#'ons ',(A0)
+		bne.b	.Exit
+		cmp.l	#' Sym',-(A0)
+		bne.b	.Exit
+		cmp.l	#'Gary',-(A0)
+		bne.b	.Exit
+.OK		move.l	-4(A0),D1
+		beq.b	.Exit
+		bmi.b	.Exit
+		move.l	D1,xfdrr_MinTargetLen(A1)
+		move.l	D1,xfdrr_FinalTargetLen(A1)
+		sub.l	D2,A0
+		addq.l	#4,A0
+		move.l	A0,xfdrr_MinSourceLen(A1)
+		move.l	(A7)+,D2
+		moveq	#1,d0
+		rts
+.Exit		move.l	(A7)+,D2
+		moveq	#0,d0
+		rts
+*/
+
+/*
+DB_MARC		movem.l	d2-d7/a2-a6,-(a7)
+		move.l	a0,a5
+
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	xfdbi_MinSourceLen(A5),D0
+
+		adda.l	D0,A0
+		subq.l	#4,A0
+
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+
+		//bsr.w	D_CRUN
+		D_CRUN();
+
+		tst.l	d0
+		bne.w	Error
+
+		moveq	#1,d0
+.Exit		movem.l	(a7)+,d2-d7/a2-a6
+		rts
+
+*/
 
 	return false;
 }
 
 bool xvdg::decrunch(CReadBuffer *pOut)
 {
-
+/*
+RB_xVdg		cmp.l	#'xVdg',(A0)+
+		bne.s	.Exit
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0)+,D1
+		beq.b	.Exit
+		bmi.b	.Exit
+		moveq	#12,D0
+		move.l	D1,xfdrr_MinTargetLen(A1)
+		sub.l	D0,D1
+		move.l	D1,xfdrr_FinalTargetLen(A1)
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0),D1
+		beq.b	.Exit
+		btst	#0,D1
+		bne.b	.Exit
+		add.l	D0,D1
+		move.l	D1,xfdrr_MinSourceLen(A1)
+		moveq	#1,d0
+		rts
+.Exit		moveq	#0,d0
+		rts
+*/
+/*
+DB_xVdg		movem.l	d2-d7/a2-a6,-(a7)
+		move.l	a0,a5
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	xfdbi_MinSourceLen(A5),D0
+		adda.l	D0,A0
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+		tst.l	d0
+		bne.w	Error
+		moveq	#1,d0
+.Exit		movem.l	(a7)+,d2-d7/a2-a6
+		rts
+*/
 	return false;
 }
 
@@ -413,20 +552,209 @@ bool amos::decrunch(CReadBuffer *pOut)
 
 bool arpf::decrunch(CReadBuffer *pOut)
 {
+/*
+RB_ARPF		cmp.l	#"ARPF",(A0)+
+		bne.s	.Exit
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0)+,D1
+		beq.b	.Exit
+		btst	#0,D1
+		bne.b	.Exit
+		add.l	D1,A0
+		moveq	#12,D0
+		add.l	D0,D1
+		move.l	D1,xfdrr_MinSourceLen(A1)
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0),D1
+		beq.b	.Exit
+		bmi.b	.Exit
+		move.l	D1,xfdrr_MinTargetLen(A1)
+		move.l	D1,xfdrr_FinalTargetLen(A1)
+		moveq	#1,d0
+		rts
+.Exit		moveq	#0,d0
+		rts
 
+DB_ARPF		movem.l	d2-d7/a2-a6,-(a7)
+		move.l	a0,a5
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	xfdbi_MinSourceLen(A5),D0
+		adda.l	D0,A0
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+		tst.l	d0
+		bne.w	Error
+		moveq	#1,d0
+.Exit		movem.l	(a7)+,d2-d7/a2-a6
+		rts
+
+*/
 	return false;
 }
 
 bool arp3::decrunch(CReadBuffer *pOut)
 {
+/*
+RB_ARP3		movem.l	d2-d5,-(a7)
+		cmp.l	#'ARP3',(A0)+
+		bne.b	.Exit
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0)+,D1
+		beq.b	.Exit
+		btst	#0,D1
+		bne.b	.Exit
+		move.l	(A0)+,D2
+		beq.b	.Skip1
+		btst	#0,D2
+		bne.b	.Exit
+		sub.l	#$C00000,D2
+.Skip1		move.l	(A0)+,D3
+		beq.b	.Skip2
+		btst	#0,D3
+		bne.b	.Exit
+		sub.l	#$200000,D3
+.Skip2		moveq	#16,D5
+		add.l	D5,D1
+		add.l	D1,A0
+		move.l	-(A0),D4
+		beq.b	.Exit
+		bmi.b	.Exit
+		tst.l	D2
+		beq.b	.NoSlow
+		add.l	D2,A0
+		add.l	(A0),D4
+		add.l	D2,D1
+.NoSlow		tst.l	D3
+		beq.b	.NoFast
+		add.l	D3,A0
+		add.l	(A0),D4
+		add.l	D3,D1
+.NoFast		add.l	D5,D1
+		move.l	D1,xfdrr_MinSourceLen(A1)
+		move.l	D4,xfdrr_FinalTargetLen(A1)
+		move.l	D4,xfdrr_MinTargetLen(A1)
+		moveq	#1,d0
+		bra.b	.End
+		rts
+.Exit		moveq	#0,d0
+.End		movem.l	(a7)+,d2-d5
+		rts
 
+DB_ARP3		movem.l	d2-d7/a2-a6,-(a7)
+		move.l	a0,a5
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	4(a0),d0
+		adda.l	D0,A0
+		lea	$20(A0),A0
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+		tst.l	D0
+		bne.w	Error
+		move.l	xfdbi_SourceBuffer(a5),a2
+		tst.l	8(A2)
+		beq.b	.skip3
+		addq.l	#8,A0
+		add.l	(A0)+,A1
+		add.l	8(A2),A0
+		sub.l	#$C00000,A0
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+		tst.l	D0
+		bne.w	Error
+.skip3		move.l	xfdbi_SourceBuffer(a5),a2
+		tst.l	12(A2)
+		beq.b	.skip4
+		addq.l	#8,A0
+		add.l	(A0)+,A1
+		add.l	12(A2),A0
+		sub.l	#$200000,A0
+		movea.l	-(A0),A2
+		adda.l	A1,A2
+		move.l	-(a0),d5
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+.skip4		tst.l	d0
+		bne.w	Error
+		moveq	#1,d0
+.Exit		movem.l	(a7)+,d2-d7/a2-a6
+		rts
+*/
 	return false;
 }
 
 // Pepsi ACE
 bool ace::decrunch(CReadBuffer *pOut)
 {
+/*
+RB_ACE		cmp.l	#"ACE!",(A0)+
+		bne.s	.Exit
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0)+,D1
+		beq.b	.Exit
+		btst	#0,D1
+		bne.b	.Exit
+		moveq	#12,D0
+		add.l	D0,D1
+		move.l	D1,xfdrr_MinSourceLen(A1)
+		tst.b	(A0)
+		bne.b	.Exit
+		move.l	(A0),D1
+		beq.b	.Exit
+		bmi.b	.Exit
+		move.l	D1,xfdrr_MinTargetLen(A1)
+		move.l	D1,xfdrr_FinalTargetLen(A1)
+		moveq	#1,d0
+		rts
+.Exit		moveq	#0,d0
+		rts
 
+DB_ACE		movem.l	d2-d7/a2-a6,-(a7)
+		move.l	a0,a5
+		move.l	xfdbi_UserTargetBuf(A5),A1
+		move.l	xfdbi_SourceBuffer(A5),A0
+		move.l	xfdbi_MinSourceLen(A5),D0
+		move.l	8(a0),a2
+		move.l	12(a0),d5
+		adda.l	D0,A0
+		adda.l	A1,A2
+		move.l	-(a0),d0
+		
+		//bsr.w	D_CRUN
+		D_CRUN();
+		
+		tst.l	d0
+		bne.w	Error
+		moveq	#1,d0
+.Exit		movem.l	(a7)+,d2-d7/a2-a6
+		rts
+*/
 	return false;
 }
 

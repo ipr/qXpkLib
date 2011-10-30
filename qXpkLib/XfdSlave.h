@@ -510,16 +510,29 @@ protected:
     }
     
     // some instructions for quick&dirty convert
-    void moveq(const uint32_t val, datareg &D) const
+    // without addressing-mode variations.. (must do manually)
+    void moveq(const uint32_t val, datareg &reg) const
     {
-		D.l = val;
+		reg.l = val;
     }
+
+    void btst(const uint32_t bitix, datareg &reg)
+    {
+		// if ccr is necessary to keep..?
+		ccr.ccr.z = ((reg.l & (1 << bitix)) ? 0 : 1); // isZero
+		//return ((reg.l & (1 << bitix)) ? true : false);
+    }
+    bool bne()
+    {
+		// "not-equal"
+		return ((ccr.ccr.z) ? true : false);
+    }
+
 
 	// simulate "rotate-with-extend" using ccr-bits as buffer,
 	// "right-shift" rotate
     void roxr(datareg &reg, const int32_t count, const uint8_t ccrInit)
     {
-		ccreg ccr;
 		ccr.init(ccrInit);
 		
 		for (int32_t i = 0; i < count; i++)
@@ -542,7 +555,6 @@ protected:
 	// "left-shift" rotate
     void roxl(datareg &reg, const int32_t count, const uint8_t ccrInit)
     {
-		ccreg ccr;
 		ccr.init(ccrInit);
 		
 		for (int32_t i = 0; i < count; i++)
@@ -566,6 +578,9 @@ protected:
 	//
 	datareg D0,D1,D2,D3,D4,D5,D6,D7;
 	addrreg A0,A1,A2,A3,A4,A5,A6,A7; // SP == A7
+
+	//statusreg sr;
+	ccreg ccr; // keep this at least?
 	
     XfdSlave(CReadBuffer *pIn)
 		: m_pIn(pIn)

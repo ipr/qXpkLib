@@ -142,6 +142,8 @@ public:
 /*
 class amos : public ByteKiller
 {
+protected:
+	void D_AMOS();
 public:
 	amos(CReadBuffer *pIn)
 		: ByteKiller(pIn)
