@@ -14,8 +14,16 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadDMS.cpp
+SOURCES += xadDMS.cpp \
+    UnDMS.cpp
 
 HEADERS += xadDMS.h\
-        xadDMS_global.h
+        xadDMS_global.h \
+    UnDMS.h
+
+
+
+
+
+
 
