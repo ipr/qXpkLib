@@ -632,28 +632,6 @@ public:
     virtual bool decrunch(CReadBuffer *pOut) = 0;
 };
 
-////////// Vice
-
-class XfdVice : public XfdSlave
-{
-public:
-	XfdVice(CReadBuffer *pIn)
-		: XfdSlave(pIn)
-	{}
-    virtual bool decrunch(CReadBuffer *pOut);
-};
-
-////////// VDCO (Virtual Dreams)
-
-class XfdVDCO : public XfdSlave
-{
-public:
-	XfdVDCO(CReadBuffer *pIn)
-		: XfdSlave(pIn)
-	{}
-    virtual bool decrunch(CReadBuffer *pOut);
-};
-
 
 ////////////////////
 
