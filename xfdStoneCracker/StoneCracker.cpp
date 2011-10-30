@@ -47,7 +47,7 @@ j:
 		// checked before (see header)
 		
 /*
-		lea	$dff180,a2
+		lea	$dff180,a2 // what is this fixed offset of..?
 		lea	16(a3),a5
 		move.l	a4,a0
 		add.l	8(a3),a0
@@ -152,7 +152,7 @@ bool Stc404::decrunch(CReadBuffer *pOut)
 	A1.src = m_pIn->GetBegin();
 	A0.src = pOut->GetBegin();
 
-
+/*
 decrunch:
 _l0:	
 		//addq	#8,a1			; Skip ID string & security ; length..
@@ -172,27 +172,62 @@ _l0:
 		
 		//moveq	#16,d5
 		D5.l = 16;
-/*		
-		movem.w	(a1),d2/d6/d7
-		not.w	d4
+		
+		// all three set to same value
+		// referenced from A1, 
+		// no increment of address,
+		// word
+		//movem.w	(a1),d2/d6/d7
+		D2.w = D6.w = D7.w = A1.w(0);
+		
+		//not.w	d4
+		D4.w = ~(D4.w);
+		
 		lea	_loff6(pc),a3
 		lea	_llen5a(pc),a4
-		moveq	#1,d0
-		moveq	#-1,d3
-		bra.s	_ltest1
+		
+		//moveq	#1,d0
+		moveq(1, D0);
+		//moveq	#-1,d3
+		moveq(-1, D3);
+		//bra.s	_ltest1
+		goto _ltest1; // unconditional
 
-_lins:		subq.w	#8,d7
+_lins:		
+		//subq.w	#8,d7
+		D7.w -= 8;
 		bpl.s	_lins2
-_lins1:		move.w	d7,d1
-		addq.w	#8,d7
-		lsl.l	d7,d6
-		move.w	-(a1),d6
-		neg.w	d1
-		lsl.l	d1,d6
-		addq.w	#8,d7
-		swap	d6
+
+_lins1:		
+		//move.w	d7,d1
+		D1.w = D7.w;
+		
+		//addq.w	#8,d7
+		D7.w += 8;
+		
+		//lsl.l	d7,d6
+		D6.l <<= D7.w;
+		
+		//move.w	-(a1),d6
+		D6.w = A1.wM();
+		
+		//neg.w	d1
+		D1.w = (0 - D1.w);
+		
+		//lsl.l	d1,d6
+		D6.l <<= D1.w;
+		
+		//addq.w	#8,d7
+		D7.w += 8;
+		
+		// swap register halves (32-bit)
+		swap(D6);
+		
 		move.b	d6,-(a0)
-		swap	d6
+		
+		//swap	d6
+		swap(D6);
+		
 		cmp.l	a0,a5
 		dbhs	d7,_lmain
 		bra.s	_lexma

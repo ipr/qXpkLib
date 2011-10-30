@@ -57,6 +57,14 @@ public:
 	}
 	
     virtual bool decrunch(CReadBuffer *pOut);
+    
+protected:
+    // few "sub-routines" as inlinable methods
+    void BitTest();
+    //void BTNoLoop();
+    
+    void GetBits();
+    void GBNoLoop();
 };
 
 #endif // DECRUNCHMANIA_H

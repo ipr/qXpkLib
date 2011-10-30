@@ -32,13 +32,14 @@
 //
 struct ccreg
 {
-	union
-	{
+	//union
+	//{
 		struct ccrbits
 		{
 			// bits: 
 			// upper 3 unused,
 			// lower 5 used
+			//unsigned e:3; // empty (3 bits)
 			unsigned e1:1; // empty1
 			unsigned e2:1; // empty2
 			unsigned e3:1; // empty3
@@ -51,8 +52,8 @@ struct ccreg
 		
 		// 4       0
 		// X N Z V C 
-		uint8_t m_ccr;
-	};
+		//uint8_t m_ccr;
+	//};
 
 	/*
 	const uint8_t MASK_C = 1;
@@ -64,15 +65,21 @@ struct ccreg
 	
 	void clear()
 	{
-		ccr.x = false;
-		ccr.n = false;
-		ccr.z = false;
-		ccr.v = false;
-		ccr.c = false;
+		ccr.x = 0;
+		ccr.n = 0;
+		ccr.z = 0;
+		ccr.v = 0;
+		ccr.c = 0;
 	}
 	void init(const uint8_t bits)
 	{
-		m_ccr = bits;
+		ccr.x = (bits & (1<<4)) ? 1 : 0;
+		ccr.n = (bits & (1<<3)) ? 1 : 0;
+		ccr.z = (bits & (1<<2)) ? 1 : 0;
+		ccr.v = (bits & (1<<1)) ? 1 : 0;
+		ccr.c = (bits & 1) ? 1 : 0;
+	
+		//m_ccr = bits;
 	}
 };
 
@@ -516,6 +523,13 @@ protected:
 		reg.l = val;
     }
 
+	// swap register halves (32-bit swap of 16-bit values)
+    void swap(datareg &reg) const
+    {
+		int16_t tmp = (reg.l & 0xFFFF);
+		reg.l = ((tmp << 16) | ((reg.l >> 16) & 0xFFFF));
+    }
+
     void btst(const uint32_t bitix, datareg &reg)
     {
 		// if ccr is necessary to keep..?
@@ -558,7 +572,7 @@ protected:
 			//ccr.ccr.n = (reg.l & (1 << 31)) ? 1 : 0;
 		
 			// keep high bit (to be rotated)
-			ccr.ccr.c = (reg.l & 1) ? 1 : 0;
+			ccr.ccr.c = (reg.l & (1 << 31)) ? 1 : 0;
 			
 			// rotate bit
 			reg.l <<= 1;
@@ -569,6 +583,37 @@ protected:
 		}
     }
 
+	// "rotate-right" without extend
+    void ror(const int32_t count, datareg &reg)
+    {
+		for (int32_t i = 0; i < count; i++)
+		{
+			// keep low bit (to be rotated)
+			ccr.ccr.c = (reg.l & 1) ? 1 : 0;
+			
+			// rotate bit
+			reg.l >>= 1;
+			
+			// highest bit to lowest rotated out
+			reg.l &= ((ccr.ccr.c) << 31);
+		}
+    }
+
+	// "rotate-left" without extend
+    void rol(const int32_t count, datareg &reg)
+    {
+		for (int32_t i = 0; i < count; i++)
+		{
+			// keep high bit (to be rotated)
+			ccr.ccr.c = (reg.l & (1 << 31)) ? 1 : 0;
+			
+			// rotate bit
+			reg.l <<= 1;
+			
+			// lowest bit to highest rotated out
+			reg.l &= ((ccr.ccr.c) ? 1 : 0);
+		}
+    }
 
 	// less typing this way (instead of R[n]..)
 	//

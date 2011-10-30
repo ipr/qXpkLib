@@ -240,14 +240,20 @@ InsertBytes:
 	bsr.w	GetBits
 	move.b	d0,-(a1)
 	dbf	d4,InsertBytes
-	bra.s	DecrLoop
+	//bra.s	DecrLoop
+	goto DecrLoop;
+
 // *------------
 SpecialInsert:
-	moveq	#14,d4
-	moveq	#5,d1
+	//moveq	#14,d4
+	moveq(14, D4);
+	//moveq	#5,d1
+	moveq(5, D1);
+	
 	bsr.s	BitTest
 	bcs.s	IB1
-	moveq	#14,d1
+	//moveq	#14,d1
+	moveq(14, D1);
 IB1:	bsr.s	GetBits
 	add.w	d0,d4
 	bra.s	InsertBytes
@@ -306,53 +312,103 @@ InsSeqLoop:
 	dbf	d4,InsSeqLoop
 
 	bra.w	DecrLoop
+*/
+
 	
-// *------------
-// -> make inline method
-// -> return status for check when returning
-BitTest:
-	subq.w	#1,d7
-	bne.s	BTNoLoop
-	moveq	#16,d7			;hier kein add notwendig: d7 vorher 0
-	move.w	d6,d0
-	lsr.l	#1,d6			;Bit rausschieben und Flags setzen
-	swap	d6			;ror.l	#16,d6
-	move.w	-(a2),d6		;nächstes Wort holen
-	swap	d6			;rol.l	#16,d6
-	lsr.w	#1,d0			;Bit rausschieben und Flags setzen
+
+/*
+// *-----------
+DecrEnd:
+	rts		;a5: Start of decrunched Data
+*/
+}
+
+void DeCrunchMania::BitTest()
+{
+//BitTest:
+	//subq.w	#1,d7
+	D7.w -= 1;
+	if (D7.w != 0)
+	{
+		//bne.s	BTNoLoop <- inline instead of jumping to one statement..
+		//lsr.l	#1,d6			;Bit rausschieben und Flags setzen
+		D6.l >>= 1;
+		return; // rts in BTNoLoop too
+	}
 	
-	// TODO: cc/cs
-	rts
+	//moveq	#16,d7			;hier kein add notwendig: d7 vorher 0
+	moveq(16, D7);
 	
-BTNoLoop:
-	lsr.l	#1,d6			;Bit rausschieben und Flags setzen
-	rts
+	//move.w	d6,d0
+	D0.w = D6.w;
 	
-// *----------
-GetBits:				;d1:AnzBits->d0:Bits
-	move.w	d6,d0			;d6:Akt Wort
-	lsr.l	d1,d6			;nächste Bits nach vorne bringen
-	sub.w	d1,d7			;d7:Anz Bits, die noch im Wort sind
-	bgt.s	GBNoLoop
+	//lsr.l	#1,d6			;Bit rausschieben und Flags setzen
+	D6.l >>= 1;
+	
+	//swap	d6			;ror.l	#16,d6
+	swap(D6);
+	
+	//move.w	-(a2),d6		;nächstes Wort holen
+	D6.w = A2.wM();
+	
+	//swap	d6			;rol.l	#16,d6
+	swap(D6);
+	
+	//lsr.w	#1,d0			;Bit rausschieben und Flags setzen
+	D0.w >>= 1;
+	
+	// TODO: cc/cs into ccr
+	//rts
+}
+
+void DeCrunchMania::GetBits()
+{
+//GetBits:				;d1:AnzBits->d0:Bits
+	//move.w	d6,d0			;d6:Akt Wort
+	D0.w = D6.w;
+	//lsr.l	d1,d6			;nächste Bits nach vorne bringen
+	D6.l >>= D1.w;
+	//sub.w	d1,d7			;d7:Anz Bits, die noch im Wort sind
+	D7.w -= D1.w;
+	
+	if (D7.w > 0)
+	{
+		//bgt.s	GBNoLoop
+		GBNoLoop();
+		return;
+	}
+	
+	// first was commented-out in original too..
 //;	add.w	#16,d7			;BitCounter korrigieren
-	add.w	d3,d7			;BitCounter korrigieren
-	ror.l	d7,d6			;restliche Bits re rausschieben
-	move.w	-(a2),d6		;nächstes Wort holen
-	rol.l	d7,d6			;und zurückrotieren
-GBNoLoop:
-	add.w	d1,d1			;*2 (in Tab sind Ws)
+	//add.w	d3,d7			;BitCounter korrigieren
+	D7.w += D3.w;
+	
+	//ror.l	d7,d6			;restliche Bits re rausschieben
+	ror(D7.w, D6);
+	
+	//move.w	-(a2),d6		;nächstes Wort holen
+	D6.w = A2.wM();
+	
+	//rol.l	d7,d6			;und zurückrotieren
+	rol(D7.w, D6);
+
+	GBNoLoop(); // continued to "below" in asm?
+}
+
+void DeCrunchMania::GBNoLoop()
+{
+/*
+	//add.w	d1,d1			;*2 (in Tab sind Ws)
+	D1.w += D1.w;
+	
 	and.w	AndData-2(pc,d1.w),d0	;unerwünschte Bits rausschmeißen
-	rts
+	
 // *----------
 AndData:
 	dc.w	%1,%11,%111,%1111,%11111,%111111,%1111111
 	dc.w	%11111111,%111111111,%1111111111
 	dc.w	%11111111111,%111111111111
 	dc.w	%1111111111111,%11111111111111
-// *-----------
-DecrEnd:
-	rts		;a5: Start of decrunched Data
 */
-	
 }
 
