@@ -1,8 +1,16 @@
-#include "xadZAP.h"
+#include "xadZoom.h"
 
-#include "UnZAP.h"
+#include "UnZoom.h"
 
-xadZAP::xadZAP()
+// (see header)
+xadZoom g_Instance;
+xadLibraryBase *GetXpkInstance(void)
+{
+  // TODO: switch to: new lib() when there are members..
+	return &g_Instance;
+}
+
+xadZoom::xadZoom()
  : xadLibraryBase()
 {
 	// so far only to/from file(s) supported here,
@@ -11,16 +19,16 @@ xadZAP::xadZAP()
 	//m_XpkCaps.input.buffer = true;
 	m_XpkCaps.output.file = true;
 	//m_XpkCaps.output.buffer = true;
-	m_XpkCaps.m_LibIdentifier = "ZAP";
-	m_XpkCaps.m_LibDescription = "ZAP disk-image unpacking";
+	m_XpkCaps.m_LibIdentifier = "Zoom";
+	m_XpkCaps.m_LibDescription = "Zoom disk-image unpacking";
 }
 
-xadZAP::~xadZAP()
+xadZoom::~xadZoom()
 {
 }
 
 // unpack/decompress
-bool xadZAP::Decrunch(XpkProgress *pProgress)
+bool xadZoom::Decrunch(XpkProgress *pProgress)
 {
 
 	try

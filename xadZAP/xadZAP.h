@@ -16,10 +16,10 @@ public:
     virtual ~xadZAP();
 
 	// set path to uncompress files to
-	virtual bool setExtractPath(QString &szPath);
+	//virtual bool setExtractPath(QString &szPath);
 	
 	// test archive integrity
-	virtual bool testArchive();
+	//virtual bool testArchive();
 	
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);

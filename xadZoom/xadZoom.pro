@@ -1,25 +1,25 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2011-10-16T00:18:54
+# Project created by QtCreator 2011-10-30T04:53:32
 #
 #-------------------------------------------------
 
 QT       -= gui
 
-TARGET = xadZAP
+TARGET = xadZoom
 TEMPLATE = lib
 
-DEFINES += XADZAP_LIBRARY
+DEFINES += XADZOOM_LIBRARY
 DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadZAP.cpp \
-    UnZAP.cpp
+SOURCES += xadZoom.cpp \
+    UnZoom.cpp
 
-HEADERS += xadZAP.h\
-        xadZAP_global.h \
-    UnZAP.h
+HEADERS += xadZoom.h\
+        xadZoom_global.h \
+    UnZoom.h
 
 
 
