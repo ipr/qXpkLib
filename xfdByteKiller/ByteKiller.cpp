@@ -37,13 +37,13 @@ void ByteKiller::Eoruj()
 	
 	// simulate rotate with something like this..
 	// (in base-class)
-	roxr(D0, 1, 0x0010);
+	ccr.init(0x0010);
+	roxr(1, D0);
 }
 
 // called from derived instances
 void ByteKiller::D_CRUN()
 {
-/*
 D_CRUN:
 		//movem.l	d0-d7/a0-a6,-(sp) // stack
 		//eor.l	d0,d5
@@ -59,9 +59,16 @@ lbC000046:
 		
 lbC000054:	
 		bcs.s	lbC0000B0
-		moveq	#8,d1
-		moveq	#1,d3
-		lsr.l	#1,d0
+		
+		//moveq	#8,d1
+		moveq(8, D1);
+		
+		//moveq	#1,d3
+		moveq(1, D3);
+		
+		//lsr.l	#1,d0
+		D0.l >>= 1;
+		
 		bne.s	lbC000068
 
 		//bsr.b	Eoruj
@@ -69,15 +76,22 @@ lbC000054:
 		
 lbC000068:	
 		bcs.w	lbC0000FE
-		moveq	#3,d1
+		
+		//moveq	#3,d1
+		moveq(3, D1);
+		
 		clr.w	d4
 
 lbC000070:	
-		subq.w	#1,d1
+		//subq.w	#1,d1
+		D1.w -= 1;
+		
 		clr.w	d2
 
 lbC000074:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
+		
 		bne.s	lbC000082
 
 		// reduce repeating code: use routine in method
@@ -88,39 +102,83 @@ lbC000074:
 		Eoruj(); // exactly same segment of code
 		
 lbC000082:	
-		roxl.l	#1,d2
-		dbra	d1,lbC000074
-		move.w	d2,d3
-		add.w	d4,d3
+		//roxl.l	#1,d2
+		roxl(1, D2);
+		
+		//dbra	d1,lbC000074
+		while ((D1.l--) > -1) // decrement-test-branch
+		{
+			goto lbC000074;
+		}
+		
+		//move.w	d2,d3
+		D3.w = D2.w;
+		//add.w	d4,d3
+		D3.w += D4.w;
+		
 lbC00008C:	
-		moveq	#7,d1
+		//moveq	#7,d1
+		moveq(7,D1);
 lbC00008E:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
 		bne.s	lbC00009C
 		
-		move.l	-(a0),d0
-		eor.l	d0,d5
-		move.w	#$0010,ccr
-		roxr.l	#1,d0
+		// reduce repeating code: use routine in method
+		//move.l	-(a0),d0
+		//eor.l	d0,d5
+		//move.w	#$0010,ccr
+		//roxr.l	#1,d0
+		Eoruj(); // exactly same segment of code
 		
 lbC00009C:	
-		roxl.l	#1,d2
-		dbra	d1,lbC00008E
-		cmpa.l	a1,a2
-		ble.w	lbC00013A
-		move.b	d2,-(a2)
-		dbra	d3,lbC00008C
-		bra.s	lbC000120
+		//roxl.l	#1,d2
+		roxl(1, D2);
+		
+		//dbra	d1,lbC00008E
+		while ((D1.l--) > -1) // decrement-test-branch
+		{
+			goto lbC00008E;
+		}
+		
+		//cmpa.l	a1,a2
+		if ((A2.src - A1.src) <= 0)
+		{
+			//ble.w	lbC00013A
+			goto lbC00013A;
+		}
+		
+		//move.b	d2,-(a2)
+		D2.b = A2.bM();
+		
+		//dbra	d3,lbC00008C
+		while ((D3.l--) > -1) 
+		{
+			goto lbC00008C;
+		}
+		
+		//bra.s	lbC000120
+		goto lbC000120;
+		
 lbC0000AA:	
-		moveq	#8,d1
-		moveq	#8,d4
-		bra.s	lbC000070
+		//moveq	#8,d1
+		moveq(8, D1);
+		//moveq	#8,d4
+		moveq(8, D4);
+		//bra.s	lbC000070
+		goto lbC000070;
+		
 lbC0000B0:	
-		moveq	#2,d1
-		subq.w	#1,d1
+		//moveq	#2,d1
+		moveq(2, D1);
+		//subq.w	#1,d1
+		D1.w -= 1;
+		
 		clr.w	d2
+
 lbC0000B6:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
 		bne.s	lbC0000C4
 		
 		// reduce repeating code: use routine in method
@@ -131,8 +189,15 @@ lbC0000B6:
 		Eoruj(); // exactly same segment of code
 		
 lbC0000C4:	
-		roxl.l	#1,d2
-		dbra	d1,lbC0000B6
+		//roxl.l	#1,d2
+		roxl(1, D2);
+		
+		//dbra	d1,lbC0000B6
+		while ((D1.l--) > -1) 
+		{
+			goto lbC0000B6;
+		}
+		
 		cmpi.b	#2,d2
 		blt.s	lbC0000F6
 		cmpi.b	#3,d2
@@ -140,8 +205,10 @@ lbC0000C4:
 		moveq	#8,d1
 		subq.w	#1,d1
 		clr.w	d2
+
 lbC0000DC:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
 		bne.s	lbC0000EA
 		
 		// reduce repeating code: use routine in method
@@ -152,21 +219,44 @@ lbC0000DC:
 		Eoruj(); // exactly same segment of code
 
 lbC0000EA:	
-		roxl.l	#1,d2
-		dbra	d1,lbC0000DC
-		move.w	d2,d3
-		moveq	#12,d1
-		bra.s	lbC0000FE
+		//roxl.l	#1,d2
+		roxl(1, D2);
+		
+		//dbra	d1,lbC0000DC
+		while ((D1.l--) > -1) 
+		{
+			goto lbC0000DC;
+		}
+		
+		//move.w	d2,d3
+		D3.w = D2.w;
+		
+		//moveq	#12,d1
+		moveq(12, D1);
+		
+		//bra.s	lbC0000FE
+		goto lbC0000FE;
+		
 lbC0000F6:	
-		moveq	#9,d1
-		add.w	d2,d1
-		addq.w	#2,d2
-		move.w	d2,d3
+		//moveq	#9,d1
+		moveq(9, D1);
+		//add.w	d2,d1
+		D1.w += D2.w;
+		//addq.w	#2,d2
+		D2.w += 2;
+		//move.w	d2,d3
+		D3.w = D2.w;
+		goto lbC0000FE; // flow below
+		
 lbC0000FE:	
-		subq.w	#1,d1
+		//subq.w	#1,d1
+		D1.w -= 1;
 		clr.w	d2
+		goto lbC000102; // flow below
+
 lbC000102:	
-		lsr.l	#1,d0
+		//lsr.l	#1,d0
+		D0.l >>= 1;
 		bne.s	lbC000110
 		
 		// reduce repeating code: use routine in method
@@ -176,15 +266,33 @@ lbC000102:
 		//roxr.l	#1,d0
 		Eoruj(); // exactly same segment of code
 		
+		goto lbC000110; // flow below
+		
 lbC000110:	
-		roxl.l	#1,d2
-		dbra	d1,lbC000102
+		//roxl.l	#1,d2
+		roxl(1, D2);
+		
+		//dbra	d1,lbC000102
+		while ((D1.l--) > -1) 
+		{
+			goto lbC000102;
+		}
+		goto lbC000116; // flow below
+		
 lbC000116:	
-		subq.w	#1,a2
-		cmpa.l	a1,a2
-		blt.s	lbC00013A
-		move.b	0(a2,d2.w),(a2)		;move.b -1(A2,D2.W),-(A2)
-		dbra	d3,lbC000116
+		do
+		{
+			//subq.w	#1,a2
+			A2.src -= 1;
+			cmpa.l	a1,a2
+			blt.s	lbC00013A
+			move.b	0(a2,d2.w),(a2)		;move.b -1(A2,D2.W),-(A2)
+			
+			//dbra	d3,lbC000116
+		} while ((D3.l--) > -1);
+		
+		goto lbC000120; // flow below (for now)
+		
 lbC000120:	
 		cmpa.l	a2,a1
 		blt.w	lbC000046
@@ -199,7 +307,7 @@ lbC00013A:
 		//movem.l	(sp)+,d0-d7/a0-a6 // restore stack
 		//moveq	#-1,d0
 		D0.l = -1;
-		return;
+		return; 
 		//rts
 */
 }

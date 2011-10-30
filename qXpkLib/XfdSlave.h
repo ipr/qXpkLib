@@ -530,11 +530,9 @@ protected:
 
 
 	// simulate "rotate-with-extend" using ccr-bits as buffer,
-	// "right-shift" rotate
-    void roxr(datareg &reg, const int32_t count, const uint8_t ccrInit)
+	// "right-shift" rotate, depends on ccr (init before this)
+    void roxr(const int32_t count, datareg &reg)
     {
-		ccr.init(ccrInit);
-		
 		for (int32_t i = 0; i < count; i++)
 		{
 			//ccr.ccr.n = (reg.l & (1 << 31)) ? 1 : 0;
@@ -552,11 +550,9 @@ protected:
     }
 
 	// simulate "rotate-with-extend" using ccr-bits as buffer,
-	// "left-shift" rotate
-    void roxl(datareg &reg, const int32_t count, const uint8_t ccrInit)
+	// "left-shift" rotate, depends on ccr (init before this)
+    void roxl(const int32_t count, datareg &reg)
     {
-		ccr.init(ccrInit);
-		
 		for (int32_t i = 0; i < count; i++)
 		{
 			//ccr.ccr.n = (reg.l & (1 << 31)) ? 1 : 0;
