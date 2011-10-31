@@ -43,10 +43,10 @@ enum XpkChunkHeaderType
 */
 struct XpkStreamHeader 
 {
-  uint32_t xsh_Pack; // common 4-byte IFF-style ID (magic number)
-  uint32_t xsh_CLen; // size of file minus two first fields (8 bytes)
-  uint32_t xsh_Type; // type of sub-library (4-byte IFF-style ID)
-  uint32_t xsh_ULen; // uncompressed length of all data in file?
+  uint32_t xsh_PackID; // common 4-byte IFF-style ID (magic number)
+  uint32_t xsh_CompressedLen; // size of file minus two first fields (8 bytes)
+  uint32_t xsh_PackerType; // type of sub-library (4-byte IFF-style ID)
+  uint32_t xsh_UnpackedLen; // uncompressed length of all data in file?
   
   // initial 16-bytes of original file?
   uint8_t xsh_Initial[16];
@@ -55,7 +55,7 @@ struct XpkStreamHeader
   uint8_t xsh_Flags; 
   
   // this header checksum?
-  uint8_t xsh_HChk;
+  uint8_t xsh_HeaderChk;
   
   // required version of sub-library?
   uint8_t xsh_SubVrs;
@@ -64,6 +64,8 @@ struct XpkStreamHeader
   uint8_t xsh_MasVrs;
 };
 
+// following need forced to 1-byte align, no padding,
+// converted to XpkChunk for better usability in code
 #pragma pack(push, 1)
 
 // chunk header may have either of two formats
@@ -143,6 +145,9 @@ private:
 	// size of extended header (if exists in file)	
 	size_t m_extHeaderLen;
 	
+	// type name/ID of cruncher used in file
+	std::string m_typeName;
+	
 	XpkChunk *m_pFirst;
 
 protected:
@@ -167,13 +172,26 @@ protected:
 				((val & 0x00FF0000) >> 8) + ((val & 0xFF000000) >>24)
 				);
 	}
+
+	// need better way of sharing code..
+	uint32_t MakeTag(const char *buf) const
+    {
+        uint32_t tmp = 0;
+        tmp |= (((uint32_t)(buf[3])) << 24);
+        tmp |= (((uint32_t)(buf[2])) << 16);
+        tmp |= (((uint32_t)(buf[1])) << 8);
+        tmp |= ((uint32_t)(buf[0]));
+        return tmp;
+    }
 	
 	bool verifyHeaderLong(XpkChunkHdrLong *pChunkHeader);
 	bool verifyHeaderWord(XpkChunkHdrWord *pChunkHeader);
 
 	void ReadChunks(CReadBuffer &Buffer);
 
-	void ReadFileInfo(CReadBuffer &Buffer);
+	bool ReadFileInfo(CReadBuffer &Buffer);
+	
+	void Clear();
 	
 public:
     XpkTags();
@@ -182,10 +200,10 @@ public:
 	// verify that file is XPK:
 	// expect certain structure
 	// regardless of sub-type (packer)
-	bool IsXpkFile(CReadBuffer *pBuffer);
+	bool isXpkFile(const uint8_t *buffer) const;
 	
-	// TODO: this should be: ParseHeader()
-	void ParseChunks(CReadBuffer &Buffer);
+	bool ParseHeader(CReadBuffer *pBuffer);
+	bool ParseChunks(CReadBuffer *pBuffer);
 
 	// TODO: add this so single-pass
 	// can be done without loading entire file to memory
@@ -193,17 +211,22 @@ public:
 	
 	bool verifyChecksum(XpkChunk *pChunk, CReadBuffer *pOutBuffer);
 	
-	XpkFormat getFormat()
+	XpkFormat getFormat() const
 	{
 		return m_formatType;
 	}
 	
-	XpkStreamHeader *getHeader()
+	XpkStreamHeader *getHeader() const
 	{
 		return &m_streamHeader;
 	}
 	
-	XpkChunk *getFirst()
+	std::string& getTypename() const
+	{
+		return m_typeName;
+	}
+	
+	XpkChunk *getFirst() const
 	{
 		return m_pFirst;
 	}

@@ -56,9 +56,7 @@ CXpkMaster::~CXpkMaster(void)
 
 bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 {
-	// simplify, use std::string and get it done
-	std::string szSubType;
-	
+	/*	
 	if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
 	{
 		// TODO: if "PWPK" then XPK-contained PowerPacker crunching?
@@ -68,35 +66,18 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		// IDEA?, MASH, LHLB, ILZR, FRLE, FBR2, 
 		// DMCB, DLTA, CBR0, BLZW, BLFH..
 		//
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 		szSubType = "xpk";
 		szSubType.append(m_InputBuffer.GetAt(8), 4);
-		
-		// TODO: try loading library to see if we can decrunch it too
-	}
-	/* testing generic detection -> commented out
-	else if (type.m_enFileType == HEADERTYPE_XPK_SQSH)
-	{
-		szSubType = "xpkSQSH";
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_NUKE)
-	{
-	}
-	else if (type.m_enFileType == HEADERTYPE_XPK_RLEN)
-	{
-		// already detected as XPK
-		// -> load sub-library (get actual type)
-		//szSubType.assign(m_InputBuffer.GetAt(8), 4);
 	}
 	*/
 	
-	if (m_Tags.IsXpkFile(pInputBuffer) == false)
+	if (m_Tags.ParseHeader(pInputBuffer) == false)
 	{
-		// should have detected already..
 		return false;
 	}
 
-	if (subType.length() < 4)
+	std::string szSubType = m_Tags.getTypename();
+	if (szSubType.length() < 4)
 	{
 		// should throw exception, for testing just skip
 		return false;
@@ -109,8 +90,11 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		m_pSubLibrary = nullptr;
 	}
 	
-	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getXpkInstance(QString::fromStdString(subType), m_SubLib);
+	// try to load suitable sub-library?
+	QString szLib = "xpk";
+	szLib.append(QString::fromStdString(subType));
+	
+	m_pSubLibrary = CXpkLibrarian::getXpkInstance(szLib, m_SubLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it
@@ -120,15 +104,33 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	return true;
 }
 
+bool CXpkMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+	// TODO: check that file header has been processed already
+	// and that it's supported..
+	
+	// get XPK-archive descriptor (file-header)
+	// 
+	XpkStreamHeader *pHead = m_Tags.getHeader();
+	
+	info.m_bIsMultifile = false;
+	info.m_bIsMultiVolume = false;
+	info.m_archiveInfo.m_packing = QString::fromStdString(m_Tags.getTypename());
+	info.m_archiveInfo.m_ulPackedSize = pHead->xsh_CompressedLen;
+	info.m_archiveInfo.m_ulUnpackedSize = pHead->xsh_UnpackedLen;
+	
+	return true;
+}
+
 bool CXpkMaster::decrunch(XpkProgress *pProgress)
 {
 	// just decrunch all at once, write file when done
 	// XPK-container, process into tags
 	// and chunk-nodes
-	m_Tags.ParseChunks(*(pProgress->pInputBuffer));
+	m_Tags.ParseChunks(pProgress->pInputBuffer);
 	
 	// result unpacked size
-	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_ULen;
+	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_UnpackedLen;
 
 	// XPK-container format in file:
 	// we need to process XPK-tags in file

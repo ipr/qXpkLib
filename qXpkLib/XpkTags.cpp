@@ -14,7 +14,6 @@
 #include "xpkmaster_checksum.h"
 
 
-
 // verify chunk header according to size of it
 bool XpkTags::verifyHeaderLong(XpkChunkHdrLong *pChunkHeader)
 {
@@ -150,24 +149,48 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 //  - actually version required of sub-library..
 // - 1 byte for major version of cruncher/library ?
 //
-void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
+bool XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 {
-	//Buffer.SetCurrentPos(0);
+	// should have enough data to actually parse file header
+	if (Buffer.GetSize() < sizeof(XpkStreamHeader))
+	{
+		return false;
+	}
 	
-	// default
+	if (isXpkFile(Buffer.GetBegin()) == false)
+	{
+		return false;
+	}
+	Buffer.SetCurrentPos(0); // start at beginning if not already..
+	
+	// set default
 	m_formatType = XPKMODE_UPSTD;
 	
 	// "XPKF", 0x58504b46 (XPK_COOKIE, magic number)
 	// note: support also XFD-packed files? ("XFDD")
-	m_streamHeader.xsh_Pack = GetULong(Buffer.GetNext(4));
+	m_streamHeader.xsh_PackID = GetULong(Buffer.GetNext(4));
+	
+	if (m_streamHeader.xsh_PackID != MakeTag("XPKF"))
+	// this too ? && m_streamHeader.xsh_PackID != MakeTag("XFDD"))
+	{
+		return false;
+	}
 	
 	// file length without IFF header (type+length = 8) ?
-	m_streamHeader.xsh_CLen = GetULong(Buffer.GetNext(4));
+	m_streamHeader.xsh_CompressedLen = GetULong(Buffer.GetNext(4));
+	
+	// keep packer type as type name/ID,
+	// just access as-is
+	m_typeName.assign((char*)Buffer.GetAtCurrent(), 4);
 	
 	// packer type, e.g. "SQSH", "NUKE", "RLEN"..
-	m_streamHeader.xsh_Type = GetULong(Buffer.GetNext(4));
+	m_streamHeader.xsh_PackerType = GetULong(Buffer.GetNext(4));
+	
+	// TODO: check supported types..? if != MakeTag()..
+	// -> caller/parent should do (knows libraries..)
+	
 	// uncompressed length?
-	m_streamHeader.xsh_ULen = GetULong(Buffer.GetNext(4));
+	m_streamHeader.xsh_UnpackedLen = GetULong(Buffer.GetNext(4));
 
 	// first 16 bytes of original file
 	::memcpy(m_streamHeader.xsh_Initial, Buffer.GetNext(16), 16);
@@ -177,7 +200,7 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	
 	/*
 	// also check "XFDD", 0x58464444 in file ID?
-	if (m_streamHeader.xsh_Flags & XMF_XFD && m_streamHeader.xsh_Pack == "XFDD")
+	if (m_streamHeader.xsh_Flags & XMF_XFD && m_streamHeader.xsh_PackID == MakeTag("XFDD"))
 	{
 		m_formatType = XPKMODE_UPXFD;
 	}
@@ -195,7 +218,7 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	*/
 	
 	// ..no idea.. header checksum?
-	m_streamHeader.xsh_HChk = Buffer.GetNextByte();
+	m_streamHeader.xsh_HeaderChk = Buffer.GetNextByte();
 	
 	// minor&major version of XPK master/cruncher?
 	m_streamHeader.xsh_SubVrs = Buffer.GetNextByte(); // sub-library version required?
@@ -210,7 +233,7 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
 	// non-zero header checksum? (note where doing checksumming..)
     if (hchecksum(Buffer.GetBegin(), sizeof(XpkStreamHeader)) != 0)
     {
-		throw ArcException("Header checksum error", m_streamHeader.xsh_HChk);
+		throw ArcException("Header checksum error", m_streamHeader.xsh_HeaderChk);
     }
     
     // has extended header?
@@ -237,8 +260,24 @@ void XpkTags::ReadFileInfo(CReadBuffer &Buffer)
         
         // note: increase buffer position by size of extended header?
 	}
-	
-	// -> continue with chunks..
+
+	// header parsed, should be valid file?	
+	return true;
+}
+
+
+void XpkTags::Clear()
+{
+
+	XpkChunk *pCurrent = m_pFirst;
+	while (pCurrent != nullptr)
+	{
+		XpkChunk *pNext = pCurrent->m_pNext;
+		delete pCurrent;
+		pCurrent = pNext;
+	}
+	m_pFirst = nullptr;
+	m_typeName.clear();
 }
 
 //////////// public methods
@@ -247,59 +286,53 @@ XpkTags::XpkTags()
     : m_streamHeader()
     , m_formatType(XPKMODE_UNKNOWN)
     , m_extHeaderLen(0)
+    , m_typeName()
     , m_pFirst(nullptr)
 {
 }
 
 XpkTags::~XpkTags()
 {
-	XpkChunk *pCurrent = m_pFirst;
-	while (pCurrent != nullptr)
-	{
-		XpkChunk *pNext = pCurrent->m_pNext;
-		delete pCurrent;
-		pCurrent = pNext;
-	}
+	Clear();
 }
 
 // verify that file is XPK:
 // expect certain structure
 // regardless of sub-type (packer)
-bool XpkTags::IsXpkFile(CReadBuffer *pBuffer)
+bool XpkTags::isXpkFile(const uint8_t *buffer) const
 {
-	unsigned char *pBuf = pBuffer->GetBegin();
-	if (::memcmp(pBuf, "XPKF", 4) == 0)
+	if (::memcmp(buffer, "XPKF", 4) == 0)
 	{
 		return true;
 	}
 	return false;
 }
 
-void XpkTags::ParseChunks(CReadBuffer &Buffer)
+// used to check and parse file metadata
+// to detect support file
+// -> don't throw exception if invalid file?
+bool XpkTags::ParseHeader(CReadBuffer *pBuffer)
 {
-	// should have enough data to actually parse file header
-	if (Buffer.GetSize() < sizeof(XpkStreamHeader))
-	{
-		//throw IOException("File too small");
-		return;
-	}
+	// read&parse file header 
+	return ReadFileInfo(*pBuffer);
+}
 
-	if (IsXpkFile(Buffer) == false)
-	{
-		// can't do anything about it
-		//throw IOException("Not XPK file");
-		return;
-	}
-	
-	// keep original size
-	Buffer.SetCurrentPos(0); // start at beginning..
+// parse information,
+// should throw exception on error? 
+// (cannot continue where expected to..)
+bool XpkTags::ParseChunks(CReadBuffer *pBuffer)
+{
+	Clear(); // should make new instance of this instead..
 
-	// read&parse file header as "streamheader"
-	ReadFileInfo(Buffer);
+	// read&parse file header 
+	if (ReadFileInfo(*pBuffer) == false)
+	{
+		return false;
+	}
 
 	// read chunks from file
-	ReadChunks(Buffer);
-
+	ReadChunks(*pBuffer);
+	return true;
 }
 
 // TODO: add this so single-pass
