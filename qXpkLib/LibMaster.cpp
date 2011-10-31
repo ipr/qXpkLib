@@ -48,6 +48,17 @@ CLibMaster::CLibMaster(QObject *parent)
 
 CLibMaster::~CLibMaster(void)
 {
+	if (m_pInput != nullptr)
+	{
+		delete m_pInput;
+		m_pInput = nullptr;
+	}
+	if (m_pOutput != nullptr)
+	{
+		delete m_pOutput;
+		m_pOutput = nullptr;
+	}
+
 	if (m_pXadMaster != nullptr)
 	{
 		delete m_pXadMaster;
@@ -170,13 +181,24 @@ bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 {
 	// TODO: buffer as input:
 	//m_Input->setInput(buffer);
-	return false;
+	if (m_pInput != nullptr)
+	{
+		delete m_pInput;
+	}
+	m_pInput = CBufferIO(buffer);
+	return true;
 }
 
 // input-file given: check what it is
 // (for information to caller)
 bool CLibMaster::setInputFile(QString &szFile)
 {
+	if (m_pInput != nullptr)
+	{
+		delete m_pInput;
+	}
+	m_pInput = new CBufferedFileIO(szFile);
+
 	if (m_pProgress != nullptr)
 	{
 		delete m_pProgress;
@@ -189,7 +211,6 @@ bool CLibMaster::setInputFile(QString &szFile)
 	m_pProgress->pInputBuffer = m_pInput->GetBuffer();
 	m_pProgress->pOutputBuffer = m_pOutput->GetBuffer();
 
-	m_pInput->setName(szFile);
 	m_pInput->Read(1024);
 	
 	m_pProgress->xp_WholePackedFileSize = m_pInput->GetFile()->GetSize(); // info to decruncher
@@ -206,17 +227,22 @@ bool CLibMaster::setInputFile(QString &szFile)
 // TODO: check what to do with these, might not be slots..
 bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
 {
-	// TODO: buffer as output?
-	//m_Output->setInput(buffer);
-	return false;
+	if (m_pOutput != nullptr)
+	{
+		delete m_pOutput;
+	}
+	m_pOutput = CBufferIO(buffer);
+	return true;
 }
 void CLibMaster::setOutputFile(QString &szFile)
 {
 	if (m_pOutput != nullptr)
 	{
-		m_pOutput.setName(szFile);
+		delete m_pOutput;
 	}
+	m_pOutput = new CBufferedFileIO(szFile);
 }
+
 void CLibMaster::setOutputPath(QString &szPath)
 {
 	m_outputPath = szPath;

@@ -8,93 +8,104 @@
 // Defines wrapper for IO:
 // buffered-IO, memorymapping or just buffered
 //
-
-
-#ifndef IOCONTEXT_H
-#define IOCONTEXT_H
-
-#include <QObject>
-#include <QString>
-#include <QFile>
-
-#include "AnsiFile.h"
-//#include "MemoryMappedFile.h"
-
-#include "XpkCapabilities.h"
-#include "XpkProgress.h"
-
-
+// IoContext:
 // Purpose of this is to keep track 
 // of how much is read/written to/from input/output,
 // this should be generic so that "sub-master" instances
 // and extension libraries don't need to repeat same stuff..
 // Also try to reduce re-opening files etc.
 //
-// TODO: change to pure virtual (abstract) interface only
-// 
+
+#ifndef IOCONTEXT_H
+#define IOCONTEXT_H
+
+#include <QObject>
+#include <QString>
+#include <QFile> // cross-platform mmap() implementation
+
+#include "AnsiFile.h"
+
+#include "XpkCapabilities.h"
+#include "XpkProgress.h"
+
+
+// abstract interface only 
+// (add virtual methods..)
+//
 class CIoContext
 {
 protected:
-	QString m_Name; // in/out name
-	//QString m_Path; // for multi-file output?
-	CReadBuffer m_Buffer;
-	
-	// temp (optional)
-	// this would not be needed in buffer-to-buffer decrunch..
-	CAnsiFile m_File;
-	
-	// TODO: memory-mapped file would be simpler 
-	// and generally better choice..
-	// -> switch later..
-	
 	size_t m_nFileOffset; 
 	
 public:
-	/*
     CIoContext(void)
-	    : m_Name()
-	    , m_Buffer(1024)
+	    : m_nFileOffset(0)
 	{}
-	*/
-    CIoContext(size_t nBufferSize = 1024)
-	    : m_Name()
-	    , m_Buffer(nBufferSize)
-	    , m_File()
-	    , m_nFileOffset(0)
+	
+};
+
+// refactoring
+
+class CMemoryMappedIO : public CIoContext
+{
+protected:
+	QFile *m_file;
+	QString m_Name; // in/out name
+
+public:
+    CMemoryMappedIO(QString &Name)
+	    : CIoContext()
+	    , m_Name(Name)
 	{}
-    CIoContext(QString &Name, size_t nBufferSize = 1024)
-	    : m_Name(Name)
-	    , m_Buffer(nBufferSize)
-	    , m_File()
-	    , m_nFileOffset(0)
-	{}
-    CIoContext(const unsigned char *pBuf, const size_t nSize)
-	    : m_Name()
-	    , m_Buffer(nSize)
-	    , m_File()
-	    , m_nFileOffset(0)
-	{
-		m_Buffer.Append(pBuf, nSize);
-	}
-	CReadBuffer *GetBuffer()
-	{
-		return &m_Buffer;
-	}
-	void setName(QString &Name)
-	{
-		m_Name = Name;
-	}
 	QString getName() const
 	{
 		return m_Name;
+	}
+	
+};
+
+class CBufferIO : public CIoContext
+{
+protected:
+	CReadBuffer *m_pBuffer;
+
+public:
+	CBufferIO(CReadBuffer *buffer)
+		: CIoContext()
+		, m_pBuffer(buffer)
+	{}
+	
+};
+
+class CBufferedFileIO : public CIoContext
+{
+protected:
+	CReadBuffer m_Buffer;
+	CAnsiFile m_File;
+	
+	QString m_Name; // in/out name
+
+public:
+    CBufferedFileIO(QString &Name, size_t nBufferSize = 1024)
+	    : CIoContext()
+	    , m_Name(Name)
+	    , m_Buffer(nBufferSize)
+	    , m_File()
+	    , m_nFileOffset(0)
+	{}
+	CReadBuffer *GetBuffer()
+	{
+		return &m_Buffer;
 	}
 	CAnsiFile *GetFile()
 	{
 		return &m_File;
 	}
+	QString getName() const
+	{
+		return m_Name;
+	}
 
-	//bool Read(XpkProgress *pProgress, size_t nMaxRead = 0)
-	
 	void Read() // whole file
 	{
 		if (m_File.IsOpen() == false)
@@ -174,44 +185,6 @@ public:
 		m_File.Close();
 		return true;
 	}
-};
-
-// refactoring
-
-class CMemoryMappedIO : public CIoContext
-{
-protected:
-	QFile *m_file;
-	QString m_Name; // in/out name
-
-public:
-	CMemoryMappedIO()
-		: CIoContext()
-	{}
-	
-};
-
-class CBufferIO : public CIoContext, public CReadBuffer
-{
-public:
-	CBufferIO()
-		: CIoContext()
-	{}
-	
-};
-
-class CBufferedFileIO : public CIoContext
-{
-protected:
-	CReadBuffer m_Buffer;
-	CAnsiFile m_File;
-	
-	QString m_Name; // in/out name
-
-public:
-	CBufferedFileIO()
-		: CIoContext()
-	{}
 	
 };
 
