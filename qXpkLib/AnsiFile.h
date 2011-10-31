@@ -104,6 +104,8 @@ protected:
 	//
 	size_t m_nCurrentPos;
 
+    bool m_bConstBuffer; // disallow alterations (when attached to another), memory-mapped file even..?
+
 	// we could keep amount of buffer actually used
 	// here, but accounting for it would be problem
 	// in each caller which may use direct buffer access..
@@ -114,6 +116,7 @@ public:
 		: m_pReadBuffer(nullptr)
 		, m_nReadBufferSize(0)
 		, m_nCurrentPos(0)
+		, m_bConstBuffer(false)
 	{
 		CreateBuffer(INITIAL_READ_BUFFER_SIZE);
 	}
@@ -122,6 +125,7 @@ public:
 		: m_pReadBuffer(nullptr)
 		, m_nReadBufferSize(0)
 		, m_nCurrentPos(0)
+		, m_bConstBuffer(false)
 	{
 		CreateBuffer(nMinsize);
 	}
@@ -133,20 +137,28 @@ public:
 		: m_pReadBuffer(pBuffer)
 		, m_nReadBufferSize(nBufferSize)
 		, m_nCurrentPos(0)
-	{
-	}
+		, m_bConstBuffer(true)
+	{}
 	
 	~CReadBuffer(void) 
 	{
-		if (m_pReadBuffer != nullptr)
+		if (m_pReadBuffer != nullptr
+			&& m_bConstBuffer == false) // is attached?
 		{
 			delete m_pReadBuffer;
 		}
+		m_pReadBuffer = nullptr; // clear in any case
 	}
 
 	// allocate or grow if necessary
 	void PrepareBuffer(const size_t nMinSize, bool bKeepData = true)
 	{
+		if (m_bConstBuffer == true)
+		{
+			// do nothing
+			return;
+		}
+		
 		if (m_pReadBuffer == nullptr
 			|| m_nReadBufferSize == 0)
 		{
@@ -261,6 +273,12 @@ public:
 	// reserve additional space
 	bool Reserve(const size_t nSize)
 	{
+		if (m_bConstBuffer == true)
+		{
+			// do nothing
+			return false;
+		}
+	
 		if (nSize <= (m_nReadBufferSize - m_nCurrentPos))
 		{
 			// already enough unused space
@@ -275,6 +293,12 @@ public:
 	// copy given, start at current
 	bool Append(const unsigned char *pData, const size_t nSize)
 	{
+		if (m_bConstBuffer == true)
+		{
+			// do nothing
+			return false;
+		}
+	
 	/* if explicit reserve is needed..
 #ifdef _DEBUG
 		if ((m_nCurrentPos + nSize) > m_nReadBufferSize)
@@ -324,6 +348,12 @@ public:
 	// move buffer contents to beginning
 	bool MoveToBegin(const size_t nStartOffset)
 	{
+		if (m_bConstBuffer == true)
+		{
+			// do nothing
+			return false;
+		}
+	
 		// should support overlapped IO..
 		::memmove(GetBegin(), 
 				GetAt(nStartOffset), 
