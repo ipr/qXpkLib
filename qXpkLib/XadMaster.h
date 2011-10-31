@@ -17,6 +17,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QList>
+#include <QByteArray>
+#include <QLibrary>
 
 // use typedefs from parent
 #include "qxpklib.h"
@@ -36,10 +39,16 @@ class CXadMaster : public QObject
 	Q_OBJECT
 	
 protected:
+	// wrapper for loading/unloading
+	QLibrary m_SubLib; 
 
+	// base-pointer (virtual) 
+	// -> load proper by archive type
 	xadLibraryBase *m_pSubLibrary;
 	
 	//QString m_archive;
+
+	void release();
 	
 public:
     CXadMaster(QObject *parent = 0);

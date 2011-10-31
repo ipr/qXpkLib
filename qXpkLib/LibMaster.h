@@ -51,8 +51,6 @@ class CLibMaster : public QObject
     Q_OBJECT
     
 private:
-	size_t m_nInputFileSize;
-	
 	// for multi-file extraction
 	QString m_outputPath;
 
@@ -63,15 +61,17 @@ private:
 	CIoContext m_Output;
 	
 	// wrapper for loading/unloading
-	QLibrary m_SubLib;
+	//QLibrary m_SubLib;
 
 	// temp, determine later if suitable way..
 	CXpkMaster *m_pXpkMaster;
 	CXfdMaster *m_pXfdMaster;
 	CXadMaster *m_pXadMaster;
+	
+	CFileType m_fileType;
 
 	// might keep necessary information already here per archive..?
-	//QXpkLib::CArchiveInfo m_info;
+	QXpkLib::CArchiveInfo m_info;
 
 	// status (display also or just internal?)
 	XpkProgress *m_pProgress;

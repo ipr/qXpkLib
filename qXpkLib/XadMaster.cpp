@@ -17,22 +17,33 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+//////// protected methods
+
+// destroy decruncher when necessary
+void CXadMaster::release()
+{
+	if (m_pSubLibrary != nullptr)
+	{
+		// only close for now,
+		// expecting static-instance from sub-lib now..
+		// change later
+		//delete m_pSubLibrary;
+		m_pSubLibrary = nullptr;
+	}
+}
 
 ////////// public methods
 
 CXadMaster::CXadMaster(QObject *parent)
 	: QObject(parent)
+    , m_SubLib(parent)
 	, m_pSubLibrary(nullptr)
 {
 }
 
 CXadMaster::~CXadMaster(void)
 {
-	if (m_pSubLibrary != nullptr)
-	{
-		delete m_pSubLibrary;
-		m_pSubLibrary = nullptr;
-	}
+	release();
 }
 
 bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
@@ -112,6 +123,7 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 		//throw ArcException("Unsupported archive type", subType);
 		return false; // don't throw here, trying to determine if supported..
 	}
+	//return m_pSubLibrary->isSupported(pInputBuffer);
 	return true;
 }
 

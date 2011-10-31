@@ -14,6 +14,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QList>
+#include <QByteArray>
+#include <QLibrary>
 
 // use typedefs from parent
 #include "qxpklib.h"
@@ -39,25 +42,13 @@ class CXfdMaster : public QObject
 
 protected:
 
-	// need better way of sharing code..
-	/*
-	uint32_t MakeTag(const unsigned char *buf) const
-    {
-        uint32_t tmp = 0;
-        tmp |= (((uint32_t)(buf[3])) << 24);
-        tmp |= (((uint32_t)(buf[2])) << 16);
-        tmp |= (((uint32_t)(buf[1])) << 8);
-        tmp |= ((uint32_t)(buf[0]));
-        return tmp;
-    }
-    */
+	// wrapper for loading/unloading
+	QLibrary m_SubLib; 
 
-	// TODO: determine inheritance to use here..
-    XfdSlave *m_pXfdSlave; // TODO: move to a library?
+	// base-pointer (virtual) 
+	// -> load proper by archive type
     xfdLibraryBase *m_pSubLibrary;
     
-    XfdSlave *loadDecruncher(CReadBuffer *pInputBuffer);
-
 	void release();
 	
 public:

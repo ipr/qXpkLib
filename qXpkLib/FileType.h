@@ -224,6 +224,19 @@ public:
 			
     ~CFileType()
 	{}
+	
+	CFileType& operator = (const CFileType &type)
+	{
+		if (&type == this)
+		{
+			// avoid self-assignment
+			return *this;
+		}
+	
+		m_enFileType = type.m_enFileType;
+		m_enFileCategory = type.m_enFileCategory;
+		return *this;
+	}
 
 	tHeaderType FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t ulLength) const;
 	tHeaderCategory FileCategoryByType(const tHeaderType enType) const;

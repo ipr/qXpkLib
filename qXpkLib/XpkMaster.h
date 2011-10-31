@@ -40,10 +40,10 @@ class CXpkMaster : public QObject
 {
 	Q_OBJECT
 
-private:
+protected:
 
 	// wrapper for loading/unloading
-	QLibrary m_SubLib; // (parent should have this..)
+	QLibrary m_SubLib; 
 
 	// base-pointer (virtual) 
 	// -> load proper by file/packer type
@@ -52,6 +52,7 @@ private:
 	// temp for testing
 	XpkTags m_Tags;
 	
+	void release();
 
 public:
     CXpkMaster(QObject *parent = 0);

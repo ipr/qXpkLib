@@ -21,11 +21,12 @@ CLibMaster::CLibMaster(QObject *parent)
 	: QObject(parent)
     , m_Input()
     , m_Output()
-    , m_SubLib(parent)
+    //, m_SubLib(parent)
     , m_pXpkMaster(nullptr)
     , m_pXfdMaster(nullptr)
     , m_pXadMaster(nullptr)
-    , m_nInputFileSize(0)
+    , m_fileType()
+    , m_info()
     , m_pProgress(nullptr)
 {
 	// temp, check handling later..
@@ -77,16 +78,20 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// - unpacked size -> need sub-library to determine
 	// - what else?
 
+	// try determine file datatype by header information
+	// (TODO: keep somewhere to reduce repeated needs)
+	m_fileType = CFileType(m_Input.GetBuffer()->GetBegin(), m_Input.GetBuffer()->GetSize());
+
 	bool bSupported = false;
-	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXadMaster->archiveInfo(info);
 	}
-	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXfdMaster->archiveInfo(info);
 	}
-	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXpkMaster->archiveInfo(info);
 	}
@@ -102,41 +107,37 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 //
 bool CLibMaster::archiveUnpack()
 {
-	// just read it all to buffer, change later..
-	m_Input.Read();
-
-	m_nInputFileSize = m_Input.GetFile()->GetSize();
-	pProgress->xp_WholePackedFileSize = m_Input.GetFile()->GetSize(); // info to decruncher
-	
-	// try determine file datatype by header information
-	CFileType type(m_Input.GetBuffer()->GetBegin(), m_Input.GetBuffer()->GetSize());
-
-	// setup info for decrunch
-	pProgress->pInputBuffer = m_Input.GetBuffer();
-	pProgress->pOutputBuffer = m_Output.GetBuffer();
-	
 	// just decrunch all at once, write file when done
 	bool bRet = false;
-	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		// in this case, library should manage loading of data
 		// per each file-entry being decrunched (possibly many)
 		// and format is "alien" (only library might know..)
+		
+		// we (currently) expect xad-libraries to handle IO,
+		// change later if necessary (various issues to solve there..)
 	
 		m_pXadMaster->setExtractPath(m_outputPath);
 		bRet = m_pXadMaster->decrunch(pProgress);
 	}
-	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		// in this case, we need to load whole file before decrunching
 		// as format is "alien" (only cruncher might know..)
+
+		// just read it all to buffer, change later..
+		m_Input.Read();
 	
 		bRet = m_pXfdMaster->decrunch(pProgress);
 	}
-	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
 	{
 		// this case is common XPK-style chunk-based format
 		// -> we can handle loading chunks as needed
+
+		// just read it all to buffer, change later..
+		m_Input.Read();
 		
 		bRet = m_pXpkMaster->decrunch(pProgress);
 	}
@@ -188,35 +189,25 @@ bool CLibMaster::setInputFile(QString &szFile)
 	{
 		delete m_pProgress;
 	}
-	m_pProgress = new XpkProgress();
 	
+	// setup info for decrunch later
+	m_pProgress = new XpkProgress();
 	m_pProgress->pInputIo = &m_Input;
 	m_pProgress->pOutputIo = &m_Output;
+	m_pProgress->pInputBuffer = m_Input.GetBuffer();
+	m_pProgress->pOutputBuffer = m_Output.GetBuffer();
 
 	m_Input.setName(szFile);
 	m_Input.Read(1024);
 	
-	// just read it all to buffer, change later if wanted..
-	m_nInputFileSize = m_Input.GetFile()->GetSize();
-	
-	// try determine file datatype by header information
-	CFileType type(m_Input.GetBuffer()->GetBegin(), nReadSize);
-	
-	// TODO : keep info on which handling is needed
-	// for later
-	
-	bool bIsSupported = false;
-	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), type) == true)
+	m_pProgress->xp_WholePackedFileSize = m_Input.GetFile()->GetSize(); // info to decruncher
+
+	// check if file is supported
+	bool isSupported = archiveInfo(m_info);
+	if (isSupported == false)
 	{
-		bIsSupported = true;
+		// cleanup?
 	}
-	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), type) == true)
-	{
-		bIsSupported = true;
-	}
-	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), type) == true)
-	{
-		bIsSupported = true;
-	}
-	return bIsSupported;
+	return isSupported;
 }
+

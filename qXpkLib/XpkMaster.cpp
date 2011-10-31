@@ -24,20 +24,34 @@
 #include "XpkLibrarian.h"
 
 
+//////// protected methods
+
+// destroy decruncher when necessary
+void CXpkMaster::release()
+{
+	if (m_pSubLibrary != nullptr)
+	{
+		// don't delete for now, 
+		// static instance given in libraries..
+		// change later
+		//delete m_pSubLibrary;
+		m_pSubLibrary = nullptr;
+	}
+}
+
+
 ///////// public
 
 CXpkMaster::CXpkMaster(QObject *parent)
 	: QObject(parent)
     , m_SubLib(parent)
-    , m_InputName()
-    , m_nInputFileSize(0)
-    , m_InputBuffer(1024)
     , m_pSubLibrary(nullptr)
 {
 }
 
 CXpkMaster::~CXpkMaster(void)
 {
+	release();
 }
 
 bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
@@ -108,43 +122,10 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 
 bool CXpkMaster::decrunch(XpkProgress *pProgress)
 {
-	// TODO: use from parent instead..
-	//m_Input.GetBuffer()
-	
-	CAnsiFile InFile;
-	if (InFile.Open(m_InputName.toStdString()) == false)
-	{
-		throw ArcException("Failed to open input", m_InputName.toStdString());
-	}
-
-	// just read it all to buffer, change later if wanted..
-	pProgress->xp_WholePackedFileSize = InFile.GetSize();
-	pProgress->pInputBuffer->PrepareBuffer(pProgress->xp_WholePackedFileSize, false);
-	if (InFile.Read(m_InputBuffer.GetBegin(), pProgress->xp_WholePackedFileSize) == false)
-	{
-		throw IOException("Failed reading file data");
-	}
-	
-	InFile.Close(); // not needed any more
-	
-	// determine file type from header, try to load decruncher for it:
-	// throws exception on failure
-	//
-	// TODO: don't read entire file before this,
-	// only after it is known to be supported..
-	//
-	PrepareUnpacker(getCruncherType(&m_InputBuffer));
-
-	// TODO: if XFD-cruncher is needed, switch handling to suitable class..
-	
-	// setup info for decrunch
-	pProgress->pInputBuffer = &m_InputBuffer;
-	pProgress->pOutputBuffer = m_Output.GetBuffer();
-	
 	// just decrunch all at once, write file when done
 	// XPK-container, process into tags
 	// and chunk-nodes
-	m_Tags.ParseChunks(m_InputBuffer);
+	m_Tags.ParseChunks(*(pProgress->pInputBuffer));
 	
 	// result unpacked size
 	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_ULen;
