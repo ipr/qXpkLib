@@ -39,6 +39,10 @@ protected:
 	// this would not be needed in buffer-to-buffer decrunch..
 	CAnsiFile m_File;
 	
+	// TODO: memory-mapped file would be simpler 
+	// and generally better choice..
+	// -> switch later..
+	
 	size_t m_nFileOffset; 
 	
 public:
@@ -52,16 +56,19 @@ public:
 	    : m_Name()
 	    , m_Buffer(nBufferSize)
 	    , m_File()
+	    , m_nFileOffset(0)
 	{}
     CIoContext(QString &Name, size_t nBufferSize = 1024)
 	    : m_Name(Name)
 	    , m_Buffer(nBufferSize)
 	    , m_File()
+	    , m_nFileOffset(0)
 	{}
     CIoContext(const unsigned char *pBuf, const size_t nSize)
 	    : m_Name()
 	    , m_Buffer(nSize)
 	    , m_File()
+	    , m_nFileOffset(0)
 	{
 		m_Buffer.Append(pBuf, nSize);
 	}
@@ -83,35 +90,61 @@ public:
 	}
 
 	//bool Read(XpkProgress *pProgress, size_t nMaxRead = 0)
-	bool Read(size_t nMaxRead = 0)
+	
+	void Read() // whole file
 	{
-		if (m_File.Open(m_Name.toStdString()) == false)
+		if (m_File.IsOpen() == false)
 		{
-			throw ArcException("Failed to open input", m_Name.toStdString());
+			if (m_File.Open(m_Name.toStdString()) == false)
+			{
+				throw ArcException("Failed to open input", m_Name.toStdString());
+			}
 		}
-		//pProgress->xp_WholePackedFileSize = m_File.GetSize();
+		long lPos = 0;
+		if (m_File.Tell(lPos) == false)
+		{
+			throw ArcException("Failed to tell positions", m_Name.toStdString());
+		}
+		if (lPos != 0)
+		{
+			if (m_File.Seek(0, SEEK_SET) == false)
+			{
+				throw ArcException("Failed to seek position", m_Name.toStdString());
+			}
+		}
+		m_Buffer.PrepareBuffer(InFile.GetSize(), false);
+		if (m_File.Read(m_Buffer.GetBegin(), InFile.GetSize()) == false)
+		{
+			throw IOException("Failed reading file data");
+		}
+		m_nFileOffset = InFile.GetSize();
+	}
+	
+	void Read(const size_t nMaxRead) // chunk of data
+	{
+		if (m_File.IsOpen() == false)
+		{
+			if (m_File.Open(m_Name.toStdString()) == false)
+			{
+				throw ArcException("Failed to open input", m_Name.toStdString());
+			}
+		}
 		
-		if (nMaxRead == 0)
+		size_t remaining = 0;
+		if (m_File.GetSize() > m_nFileOffset)
 		{
-			m_Buffer.PrepareBuffer(InFile.GetSize(), false);
-			if (m_File.Read(m_Buffer.GetBegin(), InFile.GetSize()) == false)
-			{
-				throw IOException("Failed reading file data");
-			}
-			m_nFileOffset = InFile.GetSize();
+			remaining = m_File.GetSize() - m_nFileOffset;
 		}
-		else
+		
+		// TODO: better control over reading.. this just for testing
+		size_t nReadSize = (nMaxRead < remaining) ? nMaxRead : remaining;
+		
+		m_Buffer.PrepareBuffer(nReadSize, false);
+		if (m_File.Read(m_Buffer.GetBegin(), nReadSize) == false)
 		{
-			// TODO: better control over reading.. this just for testing
-			size_t nReadSize = (nMaxRead < InFile.GetSize()) ? nMaxRead : InFile.GetSize();
-			m_Buffer.PrepareBuffer(nReadSize, false);
-			if (m_File.Read(m_Buffer.GetBegin(), nReadSize) == false)
-			{
-				throw IOException("Failed reading file data");
-			}
-			m_nFileOffset += nReadSize;
+			throw IOException("Failed reading file data");
 		}
-		return true;
+		m_nFileOffset += nReadSize;
 	}
 	
 	// write output to file

@@ -117,13 +117,23 @@ public:
 	{
 		CreateBuffer(INITIAL_READ_BUFFER_SIZE);
 	}
-	
+
 	CReadBuffer(const size_t nMinsize) 
 		: m_pReadBuffer(nullptr)
 		, m_nReadBufferSize(0)
 		, m_nCurrentPos(0)
 	{
 		CreateBuffer(nMinsize);
+	}
+
+	// "attach" to given buffer or memory-mapped file
+	// so same interface can be used
+	// TODO: disallow reallocation/growing when attached..
+	CReadBuffer(unsigned char *pBuffer, const size_t nBufferSize) 
+		: m_pReadBuffer(pBuffer)
+		, m_nReadBufferSize(nBufferSize)
+		, m_nCurrentPos(0)
+	{
 	}
 	
 	~CReadBuffer(void) 
@@ -404,6 +414,16 @@ public:
 			fclose(m_pFile);
 			m_pFile = NULL;
 		}
+	}
+	
+	// user may want to check..?
+	bool IsOpen()
+	{
+		if (m_pFile != NULL)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	size_t GetSize()

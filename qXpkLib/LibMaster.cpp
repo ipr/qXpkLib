@@ -19,9 +19,8 @@
 
 CLibMaster::CLibMaster(QObject *parent)
 	: QObject(parent)
-    , m_Input()
-    , m_Output()
-    //, m_SubLib(parent)
+    , m_pInput(nullptr)
+    , m_pOutput(nullptr)
     , m_pXpkMaster(nullptr)
     , m_pXfdMaster(nullptr)
     , m_pXadMaster(nullptr)
@@ -32,9 +31,9 @@ CLibMaster::CLibMaster(QObject *parent)
 	// temp, check handling later..
 	// create when selected archive changed?
 	//
-	m_pXpkMaster = new CXpkMaster();
-	m_pXfdMaster = new CXfdMaster();
-	m_pXadMaster = new CXadMaster();
+	m_pXpkMaster = new CXpkMaster(this);
+	m_pXfdMaster = new CXfdMaster(this);
+	m_pXadMaster = new CXadMaster(this);
 
 	// non-critical information via signals,
 	// critical errors in exceptions (catch in library interface)
@@ -80,18 +79,18 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 
 	// try determine file datatype by header information
 	// (TODO: keep somewhere to reduce repeated needs)
-	m_fileType = CFileType(m_Input.GetBuffer()->GetBegin(), m_Input.GetBuffer()->GetSize());
+	m_fileType = CFileType(m_pInput->GetBuffer()->GetBegin(), m_pInput->GetBuffer()->GetSize());
 
 	bool bSupported = false;
-	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	if (m_pXadMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXadMaster->archiveInfo(info);
 	}
-	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	else if (m_pXfdMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXfdMaster->archiveInfo(info);
 	}
-	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	else if (m_pXpkMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		bSupported = m_pXpkMaster->archiveInfo(info);
 	}
@@ -109,7 +108,7 @@ bool CLibMaster::archiveUnpack()
 {
 	// just decrunch all at once, write file when done
 	bool bRet = false;
-	if (m_pXadMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	if (m_pXadMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		// in this case, library should manage loading of data
 		// per each file-entry being decrunched (possibly many)
@@ -121,34 +120,34 @@ bool CLibMaster::archiveUnpack()
 		m_pXadMaster->setExtractPath(m_outputPath);
 		bRet = m_pXadMaster->decrunch(pProgress);
 	}
-	else if (m_pXfdMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	else if (m_pXfdMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		// in this case, we need to load whole file before decrunching
 		// as format is "alien" (only cruncher might know..)
 
 		// just read it all to buffer, change later..
-		m_Input.Read();
+		m_pInput->Read();
 	
 		bRet = m_pXfdMaster->decrunch(pProgress);
 	}
-	else if (m_pXpkMaster->isSupported(m_Input.GetBuffer(), m_fileType) == true)
+	else if (m_pXpkMaster->isSupported(m_pInput->GetBuffer(), m_fileType) == true)
 	{
 		// this case is common XPK-style chunk-based format
 		// -> we can handle loading chunks as needed
 
 		// just read it all to buffer, change later..
-		m_Input.Read();
+		m_pInput->Read();
 		
 		bRet = m_pXpkMaster->decrunch(pProgress);
 	}
 	
 	if (bRet == false)
 	{
-		throw ArcException("Decrunching failed", m_Input.getName().toStdString());
+		throw ArcException("Decrunching failed", m_pInput->getName().toStdString());
 	}
 
 	// buffer-output? (no out-file given)
-	if (m_Output.getName().length() == 0)
+	if (m_pOutput->getName().length() == 0)
 	{
 		// no output-file -> done
 		// (user wants buffer-only?)
@@ -156,11 +155,11 @@ bool CLibMaster::archiveUnpack()
 	}
 	
 	// overwrite existing file?
-	if (m_Input.getName() == m_Output.getName())
+	if (m_pInput->getName() == m_pOutput->getName())
 	{
-		InFile.Close();
+		m_pInput->Close();
 	}
-	m_Output.WriteFile(pProgress);
+	m_pOutput->WriteFile(pProgress);
 		
 	return true;
 }
@@ -171,13 +170,6 @@ bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 {
 	// TODO: buffer as input:
 	//m_Input->setInput(buffer);
-	return false;
-}
-
-bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
-{
-	// TODO: buffer as output?
-	//m_Output->setInput(buffer);
 	return false;
 }
 
@@ -192,15 +184,15 @@ bool CLibMaster::setInputFile(QString &szFile)
 	
 	// setup info for decrunch later
 	m_pProgress = new XpkProgress();
-	m_pProgress->pInputIo = &m_Input;
-	m_pProgress->pOutputIo = &m_Output;
-	m_pProgress->pInputBuffer = m_Input.GetBuffer();
-	m_pProgress->pOutputBuffer = m_Output.GetBuffer();
+	m_pProgress->pInputIo = m_pInput;
+	m_pProgress->pOutputIo = m_pOutput;
+	m_pProgress->pInputBuffer = m_pInput->GetBuffer();
+	m_pProgress->pOutputBuffer = m_pOutput->GetBuffer();
 
-	m_Input.setName(szFile);
-	m_Input.Read(1024);
+	m_pInput->setName(szFile);
+	m_pInput->Read(1024);
 	
-	m_pProgress->xp_WholePackedFileSize = m_Input.GetFile()->GetSize(); // info to decruncher
+	m_pProgress->xp_WholePackedFileSize = m_pInput->GetFile()->GetSize(); // info to decruncher
 
 	// check if file is supported
 	bool isSupported = archiveInfo(m_info);
@@ -211,3 +203,21 @@ bool CLibMaster::setInputFile(QString &szFile)
 	return isSupported;
 }
 
+// TODO: check what to do with these, might not be slots..
+bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
+{
+	// TODO: buffer as output?
+	//m_Output->setInput(buffer);
+	return false;
+}
+void CLibMaster::setOutputFile(QString &szFile)
+{
+	if (m_pOutput != nullptr)
+	{
+		m_pOutput.setName(szFile);
+	}
+}
+void CLibMaster::setOutputPath(QString &szPath)
+{
+	m_outputPath = szPath;
+}

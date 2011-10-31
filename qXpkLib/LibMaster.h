@@ -55,14 +55,11 @@ private:
 	QString m_outputPath;
 
 	// TODO: change to support user-given buffer..?
-	CIoContext m_Input;
+	CIoContext *m_pInput;
 	
 	// change to use path and determine name automagically?
-	CIoContext m_Output;
+	CIoContext *m_pOutput;
 	
-	// wrapper for loading/unloading
-	//QLibrary m_SubLib;
-
 	// temp, determine later if suitable way..
 	CXpkMaster *m_pXpkMaster;
 	CXfdMaster *m_pXfdMaster;
@@ -87,24 +84,21 @@ public:
 	// get unpacked result to user-buffer as-is
 	CReadBuffer *getResult()
 	{
-		return m_Output.GetBuffer();
+		if (m_pOutput != nullptr)
+		{
+			return m_pOutput->GetBuffer();
+		}
+		return nullptr;
 	}
 
 public slots:
 	bool setInputBuffer(CReadBuffer *buffer);
-	bool setOutputBuffer(CReadBuffer *buffer);
-
 	bool setInputFile(QString &szFile);
 	
 	// TODO: check what to do with these..
-	void setOutputFile(QString &szFile) 
-	{
-		m_Output.setName(szFile);
-	}
-	void setOutputPath(QString &szPath) 
-	{
-		m_outputPath = szPath;
-	}
+	bool setOutputBuffer(CReadBuffer *buffer);
+	void setOutputFile(QString &szFile);
+	void setOutputPath(QString &szPath);
 	
 signals:
 	// errors with exceptions, other with messages
