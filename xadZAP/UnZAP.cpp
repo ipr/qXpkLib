@@ -170,7 +170,7 @@ int32_t ZAP_GetInfo(xadArchiveInfo *ai)
   int32_t err = XADERR_OK;
   uint32_t tfsize;
 
-  ALLOCOBJ(struct xadDiskInfo *, xdi, XADOBJ_DISKINFO, NULL);
+  xdi = new xadDiskInfo();
   ai->xai_DiskInfo = xdi;
   xdi->xdi_EntryNumber  = 1;
   xdi->xdi_SectorSize   = 512;
@@ -191,14 +191,16 @@ int32_t ZAP_GetInfo(xadArchiveInfo *ai)
   xdi->xdi_DataPos = ai->xai_InPos + tfsize;
 
   if (tfsize) {
-    ALLOCOBJ(struct xadTextInfo *, ti, XADOBJ_TEXTINFO, NULL);
+    ti = new xadTextInfo();
     xdi->xdi_TextInfo = ti;
 
-    ALLOC(UBYTE *, textin, tfsize);
+	textin = malloc(tfsize);
     READ(textin, tfsize);
     ti->xti_Size = EndGetM32(textin+tfsize-4);
-    ALLOC(STRPTR, ti->xti_Text, ti->xti_Size+1);
-    if ((err = ZAP_decrunch(textin, ti->xti_Text, tfsize))) goto exit_handler;
+    ti->xti_Text = malloc(ti->xti_Size+1);
+    if ((err = ZAP_decrunch(textin, ti->xti_Text, tfsize))) 
+		// -> throw
+		goto exit_handler;
     ti->xti_Text[ti->xti_Size] = '\0';
   }
   else {
@@ -230,14 +232,15 @@ struct ZAPstate
 
 int32_t ZAP_UnArchive(xadArchiveInfo *ai)
 {
-  struct ZAPstate *zs;
+  ZAPstate *zs;
   uint8_t buffer[4], cyl, block;
   int32_t err = XADERR_OK;
   uint32_t crlen;
 
-  if (!(zs = (struct ZAPstate *) ai->xai_PrivateClient)) {
-    ALLOC(struct ZAPstate *, zs, sizeof(struct ZAPstate));
-    ai->xai_PrivateClient = (APTR) zs;
+  if (!(zs = (struct ZAPstate *) ai->xai_PrivateClient)) 
+  {
+	zs = new ZAPstate();
+    ai->xai_PrivateClient = (void*) zs;
     zs->block = 99; /* sentinel value */
   }
   
@@ -276,7 +279,5 @@ int32_t ZAP_UnArchive(xadArchiveInfo *ai)
 exit_handler:
   return err;
 }
-
-
 
 

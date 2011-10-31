@@ -14,7 +14,8 @@ class CUnZAP
 {
 private:
 
-	std::string m_fileName;
+	std::string m_sourceFile; // temp, see changes planned to parent-library
+	std::string m_destFile; // temp, see changes planned to parent-library
 	size_t m_nFileSize; // filesize of archive in bytes
 
 	CReadBuffer m_ReadBuffer;
@@ -22,7 +23,8 @@ private:
 	
 public:
     CUnZAP()
-		: m_fileName()
+		: m_sourceFile()
+		, m_destFile()
 		, m_nFileSize(0)
 		, m_ReadBuffer() 
 		, m_DecrunchBuffer() 
@@ -39,6 +41,34 @@ public:
 		}
 		return false;
     }
+    
+	// TODO: allow to/from buffer/file unpacking..
+	// implement necessary details..
+	// better way to pass IOcontext from master to here
+	// as planned, just need to determine interface..
+
+	// file as source
+	void setSourceFile(const std::string &szDms)
+	{
+		m_sourceFile = szDms;
+	}
+	// file as dest
+	void setDestFile(const std::string &szDms)
+	{
+		m_destFile = szDms;
+	}
+	
+	/*
+	// TODO:
+	// client-buffer as source..
+	void setSourceBuffer(CReadBuffer *pIn)
+	{}
+	// client-buffer as dest..
+	void setDestBuffer(CReadBuffer *pOut)
+	{}
+	*/
+
+	bool unpack();
 };
 
 #endif // UNZAP_H

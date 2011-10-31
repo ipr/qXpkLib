@@ -1441,7 +1441,7 @@ XADGETINFO(LhSFX)
 
 XADUNARCHIVE(LhSFX)
 {
-  xadSTRPTR buf;
+  char *buf;
   int32_t err;
 
   if(!(err = DoDecrunch(&buf, ai->xai_CurFile->xfi_CrunchSize,
@@ -1552,6 +1552,4 @@ XADFIRSTCLIENT(Zoom) {
 
 #undef XADNEXTCLIENT
 #define XADNEXTCLIENT XADNEXTCLIENTNAME(Zoom)
-
-
 
