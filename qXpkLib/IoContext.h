@@ -14,6 +14,8 @@
 #define IOCONTEXT_H
 
 #include <QObject>
+#include <QString>
+#include <QFile>
 
 #include "AnsiFile.h"
 //#include "MemoryMappedFile.h"
@@ -27,6 +29,8 @@
 // this should be generic so that "sub-master" instances
 // and extension libraries don't need to repeat same stuff..
 // Also try to reduce re-opening files etc.
+//
+// TODO: change to pure virtual (abstract) interface only
 // 
 class CIoContext
 {
@@ -171,5 +175,45 @@ public:
 		return true;
 	}
 };
+
+// refactoring
+
+class CMemoryMappedIO : public CIoContext
+{
+protected:
+	QFile *m_file;
+	QString m_Name; // in/out name
+
+public:
+	CMemoryMappedIO()
+		: CIoContext()
+	{}
+	
+};
+
+class CBufferIO : public CIoContext, public CReadBuffer
+{
+public:
+	CBufferIO()
+		: CIoContext()
+	{}
+	
+};
+
+class CBufferedFileIO : public CIoContext
+{
+protected:
+	CReadBuffer m_Buffer;
+	CAnsiFile m_File;
+	
+	QString m_Name; // in/out name
+
+public:
+	CBufferedFileIO()
+		: CIoContext()
+	{}
+	
+};
+
 
 #endif // IOCONTEXT_H

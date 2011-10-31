@@ -133,11 +133,11 @@ public:
 	// "attach" to given buffer or memory-mapped file
 	// so same interface can be used
 	// TODO: disallow reallocation/growing when attached..
-	CReadBuffer(unsigned char *pBuffer, const size_t nBufferSize) 
+	CReadBuffer(unsigned char *pBuffer, const size_t nBufferSize, bool bKeepConst = true) 
 		: m_pReadBuffer(pBuffer)
 		, m_nReadBufferSize(nBufferSize)
 		, m_nCurrentPos(0)
-		, m_bConstBuffer(true)
+		, m_bConstBuffer(bKeepConst)
 	{}
 	
 	~CReadBuffer(void) 
