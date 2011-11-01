@@ -351,6 +351,9 @@ public:
 		if (m_bConstBuffer == true)
 		{
 			// do nothing
+			// or just adjust pointer?
+			// (when attached, we don't need to destroy it..)
+			//m_pReadBuffer = GetAt(nStartOffset);
 			return false;
 		}
 	

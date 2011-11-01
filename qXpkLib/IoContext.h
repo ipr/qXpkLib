@@ -42,6 +42,12 @@ public:
 	    : m_nFileOffset(0)
 	{}
 	
+	virtual size_t getFullSize() = 0;
+
+	// give same access to data always
+	virtual CReadBuffer *getBuffer() = 0;
+
+	virtual QString getName() = 0;
 };
 
 // refactoring
@@ -112,15 +118,20 @@ public:
 	{
 		clear();
 	}
-	QString getName() const
+
+	virtual size_t getFullSize()
 	{
-		return m_Name;
+		return m_fileSize;
 	}
-	// give same access to data always
-	CReadBuffer *GetBuffer()
+	virtual CReadBuffer *getBuffer()
 	{
 		return m_pAttach;
 	}
+	virtual QString getName()
+	{
+		return m_Name;
+	}
+	
 	void Read() // whole file
 	{
 		m_nFileOffset = m_fileSize;
@@ -150,14 +161,19 @@ public:
 		: CIoContext()
 		, m_pBuffer(buffer)
 	{}
-	QString getName() const
+	
+	virtual size_t getFullSize()
+	{
+		return m_pBuffer->GetSize();
+	}
+	virtual CReadBuffer *getBuffer()
+	{
+		return m_pBuffer;
+	}
+	virtual QString getName()
 	{
 		// unnamed
 		return "";
-	}
-	CReadBuffer *GetBuffer()
-	{
-		return m_pBuffer;
 	}
 	
 };
@@ -178,17 +194,23 @@ public:
 	    , m_File()
 	    , m_nFileOffset(0)
 	{}
-	CReadBuffer *GetBuffer()
+	
+	virtual size_t getFullSize()
+	{
+		return m_File.GetSize();
+	}
+	virtual CReadBuffer *getBuffer()
 	{
 		return &m_Buffer;
 	}
-	CAnsiFile *GetFile()
-	{
-		return &m_File;
-	}
-	QString getName() const
+	virtual QString getName()
 	{
 		return m_Name;
+	}
+	
+	CAnsiFile *GetFile() // should not need this
+	{
+		return &m_File;
 	}
 
 	void Read() // whole file

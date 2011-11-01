@@ -13,25 +13,22 @@
 class CReadBuffer;
 class CIoContext;
 
-struct XpkProgress 
+class XpkProgress 
 {
+public:
 	// constructor
-	XpkProgress()
-	{
-		pInputIo = nullptr;
-		pOutputIo = nullptr;
-		
-		pInputBuffer = nullptr;
-		pOutputBuffer = nullptr;
-
-		xp_chunkIn = 0;
-		xp_chunkOut = 0;
-		
-		xp_WholePackedFileSize = 0;
-		xp_PackedProcessed = 0;
-		xp_UnpackedProcessed = 0;
-		xp_UnpackedSize = 0;
-	}
+	XpkProgress(CIoContext *pInput, CIoContext *pOutput = nullptr)
+		: pInputIo(pInput)
+		, pOutputIo(pOutput)
+		, pInputBuffer(nullptr)
+		, pOutputBuffer(nullptr)
+		, xp_chunkIn(0)
+		, xp_chunkOut(0)
+		, xp_WholePackedFileSize(0)
+		, xp_PackedProcessed(0)
+		, xp_UnpackedProcessed(0)
+		, xp_UnpackedSize(0)
+	{}
 
 	// TODO: replace buffers by context:
 	// this way can wrap in/out to/from file/buffer..
