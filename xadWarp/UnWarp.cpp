@@ -1,4 +1,6 @@
 /*
+	Amiga Warp disk-image unpacking code.
+
 	Original by Dirk Stoecker:
 	http://libxad.cvs.sourceforge.net/libxad/libxad/portable/clients/
 	
@@ -8,15 +10,10 @@
 	Modifications to use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include "UnWarp.h"
 
-#include "sysconfig.h"
-#include "sysdeps.h"
-#include "zfile.h"
-#include "crc32.h"
+
+#include <time.h>
 
 /* based on http://libxad.cvs.sourceforge.net/libxad/libxad/portable/clients/ by Dirk Stoecker */
 
@@ -24,48 +21,52 @@
 #define XADERR_DECRUNCH 2
 #define XADERR_NOMEMORY 3
 
-struct rledata {
-	uae_u32 rledatav;
-};
-
-struct fout {
-	struct zfile *zf;
-	int xio_BitNum;
-	int xio_BitBuf;
-	int err;
-};
-
-
-static void putrle (uae_u8 data, struct zfile *out, struct rledata *rled)
+typedef uint32_t rledata;
+/*
+struct rledata 
 {
-	int num;
-	uae_u32 a;
+	uint32_t rledatav;
+};
+*/
 
-	if (!rled) {
-		zfile_putc (data, out);
-		return;
-	}
-	a = rled->rledatav;
+void putrle(uint8_t data, CReadBuffer *out, rledata &rled)
+{
+	int num = 0;
+
+	uint32_t a = rled;
 	if (a & 0x100) /* was RLE mode */
 	{
-		if (!data || (data == 1 && (a & 0x80000000))) {
-			a = 0x90; num = 1;
-		} else {
-			a &= 0xFF; num = data - 1;
+		if (data == 0 || (data == 1 && (a & 0x80000000))) 
+		{
+			a = 0x90; 
+			num = 1;
+		} 
+		else 
+		{
+			a &= 0xFF; 
+			num = data - 1;
 		}
-	} else if (data == 0x90) {
+	} 
+	else if (data == 0x90) 
+	{
 		num = 0; a |= 0x100;
-	} else {
+	} 
+	else 
+	{
 		num = 1; a = data;
 	}
-	rled->rledatav = a;
+	rled = a; // update back
 	while (num--)
-		zfile_putc (a, out);
+	{
+		out->SetNextByte(a);
+	}
 }
 
-static uae_u32 xadIOGetBitsLow(struct fout *io, uae_u8 bits)
+
+
+uint32_t xadIOGetBitsLow(struct fout *io, uint8_t bits)
 {
-	uae_u32 x;
+	uint32_t x;
 
 	io->err = 0;
 	while(io->xio_BitNum < bits)
@@ -87,11 +88,11 @@ static uae_u32 xadIOGetBitsLow(struct fout *io, uae_u8 bits)
 #define ARCSQSPEOF   256                /* special endfile token */
 #define ARCSQNUMVALS 257                /* 256 data values plus SPEOF */
 
-static uae_s32 ARCunsqueeze(struct zfile *in, struct zfile *out, struct rledata *rled)
+static int32_t ARCunsqueeze(struct zfile *in, struct zfile *out, struct rledata *rled)
 {
-	uae_s32 err = 0;
-	uae_s32 i, numnodes;
-	uae_s16 *node;
+	int32_t err = 0;
+	int32_t i, numnodes;
+	int16_t *node;
 	struct fout io;
 
 	io.zf = in;
@@ -99,7 +100,7 @@ static uae_s32 ARCunsqueeze(struct zfile *in, struct zfile *out, struct rledata 
 	io.xio_BitNum = 0;
 	io.err = 0;
 
-	if((node = (uae_s16 *) xcalloc(uae_s16, 2*ARCSQNUMVALS)))
+	if((node = (int16_t *) xcalloc(int16_t, 2*ARCSQNUMVALS)))
 	{
 		numnodes = xadIOGetBitsLow(&io, 16);
 
@@ -140,7 +141,7 @@ static uae_s32 ARCunsqueeze(struct zfile *in, struct zfile *out, struct rledata 
 
 
 
-#define UCOMPMAXCODE(n) (((uae_u32) 1 << (n)) - 1)
+#define UCOMPMAXCODE(n) (((uint32_t) 1 << (n)) - 1)
 #define UCOMPBITS          16
 #define UCOMPSTACKSIZE   8000
 #define UCOMPFIRST        257           /* first free entry */
@@ -149,29 +150,73 @@ static uae_s32 ARCunsqueeze(struct zfile *in, struct zfile *out, struct rledata 
 #define UCOMPBIT_MASK    0x1f
 #define UCOMPBLOCK_MASK  0x80
 
-struct UCompData {
-	uae_s16   clear_flg;
-	uae_u16   n_bits;                 /* number of bits/code */
-	uae_u16   maxbits;                /* user settable max # bits/code */
-	uae_u32   maxcode;                /* maximum code, given n_bits */
-	uae_u32   maxmaxcode;
-	uae_s32   free_ent;
-	uae_s32   offset;
-	uae_s32   size;
-	uae_u16  *tab_prefixof;
-	uae_u8   *tab_suffixof;
-	uae_u8    stack[UCOMPSTACKSIZE];
-	uae_u8    buf[UCOMPBITS];
+// is this really needed here..?
+// same decompression already exists elsewhere..
+//
+struct UCompData 
+{
+	int16_t   clear_flg;
+	uint16_t   n_bits;                 /* number of bits/code */
+	uint16_t   maxbits;                /* user settable max # bits/code */
+	uint32_t   maxcode;                /* maximum code, given n_bits */
+	uint32_t   maxmaxcode;
+	int32_t   free_ent;
+	int32_t   offset;
+	int32_t   size;
+	uint16_t  *tab_prefixof;
+	uint8_t   *tab_suffixof;
+	uint8_t    stack[UCOMPSTACKSIZE];
+	uint8_t    buf[UCOMPBITS];
 	int	    insize;
-	struct    rledata *rled;
+	//struct    rledata *rled;
+	rledata rled;
+	
+	// constructor
+	UCompData()
+	 : tab_prefixof(NULL)
+	 , tab_suffixof(NULL)
+	{
+	}
+	// destructor
+	~UCompData()
+	{
+		if (tab_prefixof != NULL)
+		{
+			::free(tab_prefixof);
+		}
+		if (tab_suffixof != NULL)
+		{
+			::free(tab_suffixof);
+		}
+	}
+	
+	bool init()
+	{
+		tab_prefixof = ::malloc(sizeof(uint16_t)*maxmaxcode);
+		if (tab_prefixof == NULL)
+		{
+			return false;
+		}
+		tab_suffixof = ::malloc(sizeof(uint8_t)*maxmaxcode);
+		if (tab_suffixof == NULL)
+		{
+			return false;
+		}
+		/* Initialize the first 256 entries in the table. */
+		for(code = 255; code >= 0; code--)
+		{
+			tab_suffixof[code] = code;
+		}
+		return true;
+	}
 };
 
 
 /* Read one code from input. If EOF, return -1. */
-static uae_s32 UCompgetcode(struct zfile *in, struct UCompData *cd)
+static int32_t UCompgetcode(struct zfile *in, struct UCompData *cd)
 {
-	uae_s32 code, r_off, bits;
-	uae_u8 *bp = cd->buf;
+	int32_t code, r_off, bits;
+	uint8_t *bp = cd->buf;
 
 	if(cd->clear_flg > 0 || cd->offset >= cd->size || cd->free_ent > cd->maxcode)
 	{
@@ -240,42 +285,38 @@ static uae_s32 UCompgetcode(struct zfile *in, struct UCompData *cd)
 	return code;
 }
 
-static uae_u32 xadIO_Compress(struct zfile *in, struct zfile *out, int insize, struct rledata *rled, uae_u8 bitinfo)
+// could remove this and use XFD-client to decompress it..
+//
+static uint32_t xadIO_UnCompress(struct zfile *in, struct zfile *out, int insize, rledata &rled, uint8_t bitinfo)
 {
 	int err = 0;
-	struct UCompData *cd;
 
 	if((bitinfo & UCOMPBIT_MASK) < UCOMPINIT_BITS)
-		return XADERR_ILLEGALDATA;
+		throw XADERR_ILLEGALDATA;
 
-	if((cd = xcalloc(struct UCompData, 1)))
-	{
+		UCompData cd;
 		int finchar, code, oldcode, incode, blockcomp;
-		uae_u8 *stackp, *stack, *stackend;
+		uint8_t *stackp, *stack, *stackend;
 
-		stackp = stack = cd->stack;
+		// Z ?
+		stackp = stack = cd.stack;
 		stackend = stack + UCOMPSTACKSIZE;
-		cd->maxbits = bitinfo & UCOMPBIT_MASK;
+		cd.maxbits = bitinfo & UCOMPBIT_MASK;
 		blockcomp = bitinfo & UCOMPBLOCK_MASK;
-		cd->maxmaxcode = 1 << cd->maxbits;
-		cd->maxcode = UCOMPMAXCODE(cd->n_bits = UCOMPINIT_BITS);
-		cd->free_ent = blockcomp ? UCOMPFIRST : 256;
-		cd->insize = insize;
-		cd->rled = rled;
+		cd.maxmaxcode = 1 << cd.maxbits;
+		cd.maxcode = UCOMPMAXCODE(cd.n_bits = UCOMPINIT_BITS);
+		cd.free_ent = blockcomp ? UCOMPFIRST : 256;
+		cd.insize = insize;
+		cd.rled = rled;
 
-		if((cd->tab_prefixof = xcalloc(uae_u16, cd->maxmaxcode)))
+		if (cd.init() == false)
 		{
-			if((cd->tab_suffixof = xcalloc(uae_u8, cd->maxmaxcode)))
-			{
-				/* Initialize the first 256 entries in the table. */
-				for(code = 255; code >= 0; code--)
-					cd->tab_suffixof[code] = code;
-
+			throw IOException("Failed to init uncompress data");
+		}
 				if((finchar = oldcode = UCompgetcode(in, cd)) == -1)
-					err = XADERR_DECRUNCH;
-				else
-				{
-					putrle (finchar, out, cd->rled); /* first code must be 8 bits = uae_u8 */
+					return XADERR_DECRUNCH;
+					
+					putrle (finchar, out, cd->rled); /* first code must be 8 bits = uint8_t */
 
 					while((code = UCompgetcode(in, cd)) > -1)
 					{
@@ -324,86 +365,36 @@ static uae_u32 xadIO_Compress(struct zfile *in, struct zfile *out, int insize, s
 						/* Generate the new entry. */
 						if((code = cd->free_ent) < cd->maxmaxcode)
 						{
-							cd->tab_prefixof[code] = (uae_u16) oldcode;
+							cd->tab_prefixof[code] = (uint16_t) oldcode;
 							cd->tab_suffixof[code] = finchar;
 							cd->free_ent = code+1;
 						}
 						/* Remember previous code. */
 						oldcode = incode;
 					}
-				}
-				xfree (cd->tab_suffixof);
-			}
-			else
-				err = XADERR_NOMEMORY;
-			xfree(cd->tab_prefixof);
-		}
-		else
-			err = XADERR_NOMEMORY;
-		xfree(cd);
-	}
-	else
-		err = XADERR_NOMEMORY;
-
 	return err;
 }
 
-static void MakeCRC16(uae_u16 *buf, uae_u16 ID)
-{
-	uae_u16 i, j, k;
-
-	for(i = 0; i < 256; ++i)
-	{
-		k = i;
-
-		for(j = 0; j < 8; ++j)
-		{
-			if(k & 1)
-				k = (k >> 1) ^ ID;
-			else
-				k >>= 1;
-		}
-		buf[i] = k;
-	}
-}
-
-static uae_u16 wrpcrc16 (uae_u16 *tab, uae_u8 *buf, int len)
-{
-	uae_u16 crc = 0;
-	while (len-- > 0)
-		crc = tab[(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
-	return crc;
-}
-
-static int iswrp (uae_u8 *data)
-{
-	if(data[0] == 'W' && data[1] == 'a' && data[2] == 'r' && data[3] == 'p'
-		&& data[4] == ' ' && data[5] == 'v' && data[6] == '1' && data[7] == '.'
-		&& data[8] == '1' && !data[9] && !data[18] && data[19] <= 3)
-		return 1;
-	return 0;
-}
 
 #define COMPBUF 30000
 
 struct zfile *unwarp(struct zfile *zf)
 {
 	int err = 0;
-	uae_u8 buf[26] = { 0 };
+	uint8_t buf[26] = { 0 };
 	int algo, side, track;
 	int pos, dstpos, olddstpos;
-	uae_u16 crc;
-	uae_u32 size;
+	uint32_t size;
 	struct zfile *nf = NULL, *tmpf = NULL;
-	uae_u8 *zero, *data;
+	uint8_t *data;
 	int outsize = 11 * 512;
 	int outsize2 = 11 * (512 + 16);
-	struct rledata rled;
-	uae_u16 wrpcrc16table[256];
+	int emptysize = 1760 * 512;
+	//struct rledata rled;
+	
 
-	MakeCRC16 (wrpcrc16table, 0xa001);
-
-	zero = xcalloc (uae_u8, outsize2);
+	uint8_t *zero = ::malloc(sizeof(uint8_t)*outsize2);
+	//::memset(zero, 0, sizeof(uint8_t)*outsize2);
 	olddstpos = 0;
 	for (;;) {
 		if (zfile_fread (buf, sizeof buf, 1, zf) == 0)
@@ -411,7 +402,7 @@ struct zfile *unwarp(struct zfile *zf)
 		if (!iswrp (buf))
 			break;
 		if (!nf) {
-			nf = zfile_fopen_empty (zf, L"zipped.wrp", 1760 * 512);
+			nf = zfile_fopen_empty (zf, L"zipped.wrp", emptysize);
 			tmpf = zfile_fopen_empty (zf, L"tmp", outsize2);
 		}
 		track = (buf[10] << 8) | buf[11];
@@ -421,56 +412,66 @@ struct zfile *unwarp(struct zfile *zf)
 			side = 1;
 		if (!memcmp (buf + 12, "TOP\0", 4))
 			side = 0;
-		crc = (buf[20] << 8) | buf[21];
+		uint16_t crc = (buf[20] << 8) | buf[21];
 		pos = zfile_ftell (zf);
 		dstpos = -1;
+		size = (buf[22] << 24) | (buf[23] << 16) | (buf[24] << 8) | buf[25];
 		if (side >= 0 && track >= 0 && track <= 79)
 			dstpos = track * 22 * 512 + (side * 11 * 512);
-		zfile_fseek (tmpf, 0, SEEK_SET);
-		zfile_fwrite (zero, outsize2, 1, tmpf);
-		zfile_fseek (tmpf, 0, SEEK_SET);
-		size = (buf[22] << 24) | (buf[23] << 16) | (buf[24] << 8) | buf[25];
+			
+		// write from temp-file to dest-file ?
+		zfile_fseek (tmpf, 0, SEEK_SET); 
+		zfile_fwrite (zero, outsize2, 1, tmpf); // 
+		zfile_fseek (tmpf, 0, SEEK_SET); // 
+		
 		err = 0;
-		memset (&rled, 0, sizeof rled);
+		
+		rledata rled = 0;
+		//memset (&rled, 0, sizeof rled);
 
 		switch (algo)
 		{
 		case 1:
-			if (zfile_getc (zf) != 12)
+			if (zfile_getc (zf) != 12) // offset 26 ?
 				err = XADERR_ILLEGALDATA;
 			else
-				err = xadIO_Compress (zf, tmpf, size - 1, &rled, 12 | UCOMPBLOCK_MASK);
+				err = xadIO_UnCompress (zf, tmpf, size - 1, rled, 12 | UCOMPBLOCK_MASK);
 			break;
 		case 2:
-			err = ARCunsqueeze (zf, tmpf, &rled);
+			err = ARCunsqueeze (zf, tmpf, rled);
 			break;
 		case 0:
 		case 3:
 			{
-				int i;
-				for (i = 0; i < size; i++) {
-					uae_u8 v = zfile_getc (zf);
-					putrle (v, tmpf, algo == 3 ? &rled : NULL);
+				for (int i = 0; i < size; i++) 
+				{
+					uint8_t v = zfile_getc (zf);
+					putrle (v, tmpf, algo == 3 ? rled : NULL);
 				}
 			}
 			break;
 		default:
-			write_log (L"WRP unknown compression method %d, track=%d,size=%d\n", algo, track, side);
-			goto end;
+			throw IOException("WRP unknown compression method"); //%d, track=%d,size=%d\n", algo, track, side);
+			//goto end;
 			break;
 		}
-		if (err) {
-			write_log (L"WRP corrupt data, track=%d,side=%d,err=%d\n", track, side, err);
-		} else {
-			uae_u16 crc2;
-			int os = zfile_ftell (tmpf);
-			data = zfile_getdata (tmpf, 0, os);
-			crc2 = wrpcrc16 (wrpcrc16table, data, os);
+		if (err) 
+		{
+			throw IOException("WRP corrupt data"); //, track=%d,side=%d,err=%d\n", track, side, err);
+		} 
+		else 
+		{
+			int offset = zfile_ftell (tmpf);
+			data = zfile_getdata (tmpf, 0, offset);
+			uint16_t crc2 = m_crc16.wrpcrc16(data, offset);
 			if (crc != crc2)
-				write_log (L"WRP crc error %04x<>%04x, track=%d,side=%d\n", crc, crc2, track, side);
+			{
+				throw IOException("WRP crc error"); // %04x<>%04x, track=%d,side=%d\n", crc, crc2, track, side);
+			}
 			xfree (data);
 		}
-		if (dstpos >= 0) {
+		if (dstpos >= 0) 
+		{
 			zfile_fseek (nf, dstpos, SEEK_SET);
 			data = zfile_getdata (tmpf, 0, outsize);
 			zfile_fwrite (data, outsize, 1, nf);
@@ -488,8 +489,154 @@ end:
 }
 
 
-#include "UnWarp.h"
-
-CUnWarp::CUnWarp()
+void CUnWarp::decrunchRle(WarpDiskInfo *info)
 {
+	// just check once, before looping
+	if (info->algo == ALGO_RLE2) 
+	{
+		rledata rled = 0;
+		for (uint32_t i = 0; i < info->size; i++) 
+		{
+			uint8_t v = m_ReadBuffer.GetNextByte();
+			putrle(v, &m_DecrunchBuffer, rled);
+		}
+	}
+	else
+	{
+		for (uint32_t i = 0; i < info->size; i++) 
+		{
+			uint8_t v = m_ReadBuffer.GetNextByte();
+			putrle(v, &m_DecrunchBuffer, NULL); <- fix this
+		}
+	}
 }
+
+void CUnWarp::unsqueezeArc(WarpDiskInfo *info)
+{
+	// TODO:
+}
+
+void CUnWarp::uncompress(WarpDiskInfo *info)
+{
+	// TODO:
+	if (m_ReadBuffer.GetNextByte() != 12) // some kinda marker in there?
+	{
+	}
+}
+
+bool CUnWarp::unpack()
+{
+	// for now, just file-input (buffer later)
+	if (m_sourceFile.length() == 0)
+	{
+		throw IOException("Input was not given");
+	}
+	// for now, just file-input (buffer later)
+	if (m_destFile.length() == 0)
+	{
+		throw IOException("Output was not given");
+	}
+
+	// just read it to buffer, should not be too large..
+	// TODO: should check type before reading entirely..?
+	if (m_sourceFile.length() > 0)
+	{
+		CAnsiFile archive(m_sourceFile);
+		if (archive.IsOk() == false)
+		{
+			throw ArcException("Failed opening file", m_sourceFile);
+		}
+		m_nFileSize = archive.GetSize();
+		m_ReadBuffer.PrepareBuffer(m_nFileSize, false);
+		if (archive.Read(m_ReadBuffer.GetBegin(), m_nFileSize) == false)
+		{
+			throw ArcException("Failed reading file", m_sourceFile);
+		}
+		archive.Close(); // destructor should close already..
+	}
+	// otherwise just use buffer as input
+	if (isSupported(m_ReadBuffer.GetBegin()) == false)
+	{
+		throw IOException("Unsupported file");
+	}
+	m_ReadBuffer.SetCurrentPos(0); // update later..
+
+	// prepare for entire disk image for decrunching,
+	// less than 1MB anyway..
+	m_DecrunchBuffer.PrepareBuffer(max_imagesize, false);
+	
+	// temp, keep somewhere
+	// TODO: loop this for each track?
+	//while info.nDestPos >= 0 ??
+	
+	WarpDiskInfo info;
+	info.parseBuf(m_ReadBuffer.GetAtCurrent());
+	info.nOffset = 26;
+	info.setDestOffset();
+	
+	if (info.algo < 0 || info.algo > 3)
+	{
+		throw IOException("Unknown packing method");
+	}
+	
+	m_ReadBuffer.SetCurrentPos(26); // after identifier and other skipped data
+	
+	size_t nDecrPos = m_DecrunchBuffer.GetCurrentPos(); // keep pos for crc-check
+	
+	switch (info.algo)
+	{
+	case ALGO_RLE1:
+	case ALGO_RLE2:
+		decrunchRle(&info);
+		break;
+	case ALGO_Z:
+		uncompress(&info);
+		break;
+	case ALGO_RLE2:
+		unsqueezeArc(&info);
+		break;
+	default:
+		// silence GCC (we checked already)
+		break;
+	}
+
+	// check crc on decrunched data
+	// (which was added to decrunch-buffer)
+	uint16_t crc = m_crc16.wrpcrc16(m_DecrunchBuffer.GetAt(nDecrPos), 
+									m_DecrunchBuffer.GetCurrentPos() - nDecrPos);
+	if (crc != info.crc)
+	{
+		throw IOException("WRP crc error");
+	}
+	
+	if (info.nDestPos >= 0) 
+	{
+		m_ReadBuffer.SetCurrentPos(info.nDestPos);
+		//zfile_fseek (nf, dstpos, SEEK_SET);
+		//data = zfile_getdata (tmpf, 0, outsize);
+		//zfile_fwrite (data, outsize, 1, nf);
+	}
+	// loop ends here, continue on next track?
+
+	// finally, output: write all at once when ready (less IO)
+	if (m_destFile.length() > 0)
+	{
+		CAnsiFile output(m_destFile, true);
+		if (output.IsOk() == false)
+		{
+			throw ArcException("Failed opening file", m_destFile);
+		}
+		// check where to keep actual used size in bytes..
+		// (buffer may be larger for overrun)
+		if (output.Write(m_DecrunchBuffer.GetBegin(), m_DecrunchBuffer.GetSize()) == false)
+		{
+			throw ArcException("Failed writing file", m_destFile);
+		}
+		output.Flush();
+		output.Close();
+	}
+	// otherwise just expect user to access the buffer..
+
+	return true;
+}
+

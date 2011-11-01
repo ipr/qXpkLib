@@ -19,7 +19,9 @@ SOURCES += xadWarp.cpp \
 
 HEADERS += xadWarp.h\
         xadWarp_global.h \
-    UnWarp.h
+    UnWarp.h \
+    Crc16.h
+
 
 
 
