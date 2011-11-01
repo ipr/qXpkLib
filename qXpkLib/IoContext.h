@@ -49,17 +49,92 @@ public:
 class CMemoryMappedIO : public CIoContext
 {
 protected:
-	QFile *m_file;
 	QString m_Name; // in/out name
+	QFile *m_pFile;
+	qint64 m_fileSize; // total size of file
+	uchar *m_pView; // mapped view
+	
+	// for "attaching" to buffer:
+	// give same helper-interface to sub-libs always
+	CReadBuffer *m_pAttach;
+	
+	bool init()
+	{
+		m_pFile = new QFile(m_Name);
+		if (m_pFile->open(QIODevice::ReadOnly) == false)
+		{
+			// failed opening file
+			return false;
+		}
+		m_fileSize = m_pFile->size();
+		m_pView = m_pFile->map(0, m_fileSize);
+		if (m_pView == NULL) // map() uses old-style defs
+		{
+			// failed mapping view
+			return false;
+		}
+		m_pAttach = new CReadBuffer(m_pView, m_fileSize, true);
+		return true;
+	}
+	void clear()
+	{
+		if (m_pAttach != nullptr)
+		{
+			delete m_pAttach;
+			m_pAttach = nullptr;
+		}
+		if (m_pFile != nullptr)
+		{
+			m_pFile->close();
+			delete m_pFile;
+			m_pFile = nullptr;
+		}
+		m_fileSize = 0;
+		m_pView = nullptr;
+	}
 
 public:
     CMemoryMappedIO(QString &Name)
 	    : CIoContext()
 	    , m_Name(Name)
-	{}
+	    , m_pFile(nullptr)
+	    , m_fileSize(0)
+	    , m_pView(nullptr)
+	    , m_pAttach(nullptr)
+	{
+		if (init() == false)
+		{
+			// detect if could not init
+			clear();
+		}
+	}
+	~CMemoryMappedIO()
+	{
+		clear();
+	}
 	QString getName() const
 	{
 		return m_Name;
+	}
+	// give same access to data always
+	CReadBuffer *GetBuffer()
+	{
+		return m_pAttach;
+	}
+	void Read() // whole file
+	{
+		m_nFileOffset = m_fileSize;
+	}
+	void Read(const size_t nMaxRead) // chunk of data
+	{
+		size_t remaining = 0;
+		if (m_fileSize > m_nFileOffset)
+		{
+			remaining = m_fileSize - m_nFileOffset;
+		}
+		size_t nReadSize = (nMaxRead < remaining) ? nMaxRead : remaining;
+		m_nFileOffset += nReadSize;
+		m_pAttach->SetCurrentPos(m_nFileOffset);
 	}
 	
 };
@@ -70,10 +145,20 @@ protected:
 	CReadBuffer *m_pBuffer;
 
 public:
+	// "attach" only
 	CBufferIO(CReadBuffer *buffer)
 		: CIoContext()
 		, m_pBuffer(buffer)
 	{}
+	QString getName() const
+	{
+		// unnamed
+		return "";
+	}
+	CReadBuffer *GetBuffer()
+	{
+		return m_pBuffer;
+	}
 	
 };
 
