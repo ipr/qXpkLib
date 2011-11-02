@@ -149,6 +149,8 @@ bool CXadMaster::decrunch(XpkProgress *pProgress)
 	pProgress->pOutputBuffer = nullptr;
 	
 	// TODO: for multi-volume cases, need multiple input-files..
+	// allow library to ask for different input from lib-master?
+	//pProgress->parent = (CLibMaster*)this->parent();
 	//
 	// TODO: needs multiple outputs in case of extracting to files..
 	// could always just extract to buffer and write file here?
