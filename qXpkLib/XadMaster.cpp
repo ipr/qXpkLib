@@ -144,9 +144,10 @@ bool CXadMaster::decrunch(XpkProgress *pProgress)
 	//pProgress->pInputBuffer = pIn->getBuffer();
 	
 	// let sub-library access buffer from IO-context
-	// if it so wants to do	
-	pProgress->pInputBuffer = nullptr;
-	pProgress->pOutputBuffer = nullptr;
+	// if it so wants to do	?
+	// -> better simplify generic cases, setup here already..
+	pProgress->pInputBuffer = pProgress->pInputIo->getBuffer();
+	pProgress->pOutputBuffer = pProgress->pOutputIo->getBuffer();
 	
 	// TODO: for multi-volume cases, need multiple input-files..
 	// allow library to ask for different input from lib-master?
