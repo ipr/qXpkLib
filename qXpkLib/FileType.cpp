@@ -399,7 +399,8 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	else if (::memcmp(pBuffer, "ZOOM", 4) == 0
 		|| ::memcmp(pBuffer, "ZOM5", 4) == 0)
 	{
-		// Zoom disk archiver
+		// 0x5A4F4F4D
+		// Amiga Zoom disk archiver
 		return HEADERTYPE_ZOOM_DISK;
 	}
 	else if (::memcmp(pBuffer, "LZX", 3) == 0)
@@ -459,7 +460,7 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
     }
 	else if (::memcmp(pBuffer, "DOS", 3) == 0)
 	{
-		// AmigaDOS-disk?
+		// AmigaDOS-disk? (ADF: raw image of disk)
 		enFileType = HEADERTYPE_ADFDOS_DISK;
 		/*
 		if (pBuffer[3] == 0)
@@ -588,12 +589,6 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	{
 		// "DImp", disk-imploder (packed floppy image)
 		return HEADERTYPE_DISK_IMPLODER;
-	}
-	else if (ulFirstFour == 0x5A4F4F4D)
-	{
-		// TODO: check, is this correct? also with 9-char string after this?
-		// Amiga ZAP disk-image (packed floppy image)
-		return HEADERTYPE_ZAP_DISK;
 	}
 	else if (ulFirstFour == 0x504B0304)
 	{
