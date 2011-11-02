@@ -19,7 +19,9 @@ SOURCES += xadZoom.cpp \
 
 HEADERS += xadZoom.h\
         xadZoom_global.h \
-    UnZoom.h
+    UnZoom.h \
+    Crc16.h
+
 
 
 

@@ -48,12 +48,6 @@
 #define WRITE(buffer,length) if ((err = xadHookAccess(XADAC_WRITE, \
   (ULONG)(length), (APTR)(buffer), ai))) goto exit_handler
 
-#define ERROR(error) do { err = XADERR_##error; goto exit_handler; } while(0)
-#define ALLOC(t,v,l) \
-  if (!((v) = (t) xadAllocVec((l),0x10000))) ERROR(NOMEMORY)
-#define ALLOCOBJ(t,v,kind,tags) \
-  if (!((v) = (t) xadAllocObjectA((kind),(tags)))) ERROR(NOMEMORY)
-#define FREE(obj) xadFreeObjectA((APTR)(obj),NULL)
 
 #define READLONG(var) do { READ(&buffer,4); (var)=EndGetM32(buffer);} while(0)
 
@@ -156,31 +150,13 @@ static void ZAP_rledecode(uint8_t *in, uint8_t *out) {
 }
 
 
-bool ZAP_RecogData(uint32_t size, uint8_t *data) 
-{
-  return (strncmp("ZAP V1.41", data+4, 9) == 0);
-}
-
-
 int32_t ZAP_GetInfo(xadArchiveInfo *ai)
 {
   uint8_t buffer[4], *textin = NULL;
-  struct xadDiskInfo *xdi = NULL;
   struct xadTextInfo *ti;
   int32_t err = XADERR_OK;
   uint32_t tfsize;
 
-  xdi = new xadDiskInfo();
-  ai->xai_DiskInfo = xdi;
-  xdi->xdi_EntryNumber  = 1;
-  xdi->xdi_SectorSize   = 512;
-  xdi->xdi_TotalSectors = 80 * 22;
-  xdi->xdi_Cylinders    = 80;
-  xdi->xdi_CylSectors   = 22;
-  xdi->xdi_Heads        = 2;
-  xdi->xdi_TrackSectors = 11;
-  xdi->xdi_LowCyl       = 0;
-  xdi->xdi_HighCyl      = 79;
 
   /* read and skip header ID text */
   READLONG(tfsize); 
@@ -258,7 +234,9 @@ int32_t ZAP_UnArchive(xadArchiveInfo *ai)
 
       /* read (possibly crunched) block into block buffer */
       READLONG(crlen);
-      if (crlen > ZAP_BLOCKSIZE) ERROR(INPUT);
+      if (crlen > ZAP_BLOCKSIZE) 
+		throw "crunched block too large";
+		
       READ(zs->data, crlen);
 
       /* if the block is crunched */
@@ -280,4 +258,83 @@ exit_handler:
   return err;
 }
 
+
+// constant format information basically?
+// file is just "raw" data without metadata?
+//
+struct ZapDiskInfo
+{
+  const uint16_t xdi_EntryNumber  = 1;
+  const uint16_t xdi_SectorSize   = 512;
+  const uint16_t xdi_TotalSectors = 80 * 22;
+  const uint16_t xdi_Cylinders    = 80;
+  const uint16_t xdi_CylSectors   = 22;
+  const uint16_t xdi_Heads        = 2;
+  const uint16_t xdi_TrackSectors = 11;
+  const uint16_t xdi_LowCyl       = 0;
+  const uint16_t xdi_HighCyl      = 79;
+};
+
+bool CUnZAP::unpack()
+{
+	// for now, just file-input (buffer later)
+	if (m_sourceFile.length() == 0)
+	{
+		throw IOException("Input was not given");
+	}
+	// for now, just file-input (buffer later)
+	if (m_destFile.length() == 0)
+	{
+		throw IOException("Output was not given");
+	}
+
+	// just read it to buffer, should not be too large..
+	// TODO: should check type before reading entirely..?
+	if (m_sourceFile.length() > 0)
+	{
+		CAnsiFile archive(m_sourceFile);
+		if (archive.IsOk() == false)
+		{
+			throw ArcException("Failed opening file", m_sourceFile);
+		}
+		m_nFileSize = archive.GetSize();
+		m_ReadBuffer.PrepareBuffer(m_nFileSize, false);
+		if (archive.Read(m_ReadBuffer.GetBegin(), m_nFileSize) == false)
+		{
+			throw ArcException("Failed reading file", m_sourceFile);
+		}
+		archive.Close(); // destructor should close already..
+	}
+	// otherwise just use buffer as input
+	if (isSupported(m_ReadBuffer.GetBegin()) == false)
+	{
+		throw IOException("Unsupported file");
+	}
+	m_ReadBuffer.SetCurrentPos(0); // update later..
+
+
+
+
+	
+	
+	
+	// finally, output: write all at once when ready (less IO)
+	if (m_destFile.length() > 0)
+	{
+		CAnsiFile output(m_destFile, true);
+		if (output.IsOk() == false)
+		{
+			throw ArcException("Failed opening file", m_destFile);
+		}
+		// check where to keep actual used size in bytes..
+		// (buffer may be larger for overrun)
+		if (output.Write(m_DecrunchBuffer.GetBegin(), m_DecrunchBuffer.GetSize()) == false)
+		{
+			throw ArcException("Failed writing file", m_destFile);
+		}
+		output.Flush();
+		output.Close();
+	}
+	// otherwise just expect user to access the buffer..
+}
 

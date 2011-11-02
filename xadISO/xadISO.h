@@ -27,9 +27,6 @@
 
 #include "qxpklib.h"
 
-// fwd. decl.
-class QFile;
-
 class XADISOSHARED_EXPORT xadISO : public xadLibraryBase
 {
 public:
@@ -50,9 +47,6 @@ public:
 	
 private:
 	QString m_destPath;
-	QString m_filename;
-	
-	QFile *m_pFile;
 	
 	uchar *findDescriptorIdentifier(uchar *pos, const uchar *end, const char *identifier);
 	

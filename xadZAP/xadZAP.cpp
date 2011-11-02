@@ -22,9 +22,12 @@ xadZAP::~xadZAP()
 // unpack/decompress
 bool xadZAP::Decrunch(XpkProgress *pProgress)
 {
-
+	CUnZAP unZap(pProgress->pInputBuffer, pProgress->pOutputBuffer);
 	try
 	{
+		// TODO: set final output size to progress
+		// for writing correct amount..
+		return unZap.unpack();
 	}
 	catch (std::exception &exp) // catch by base-type
 	{

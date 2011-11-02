@@ -30,9 +30,12 @@ xadZoom::~xadZoom()
 // unpack/decompress
 bool xadZoom::Decrunch(XpkProgress *pProgress)
 {
-
+	CUnZoom unZoom(pProgress->pInputBuffer, pProgress->pOutputBuffer);
 	try
 	{
+		// TODO: set final output size to progress
+		// for writing correct amount..
+		return unZoom.unpack();
 	}
 	catch (std::exception &exp) // catch by base-type
 	{

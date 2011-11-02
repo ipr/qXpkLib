@@ -130,13 +130,15 @@ const int16_t ExtractVersion = 111; // minimum version to extract
 
 const size_t BUFFERSIZE = 16000; // medium&deep packing modes
 
+// max uncompressed image size (80 tracks):
+// 1760 blocks * 512 bytes in block = 901120 bytes
+//
+//const int32_t max_imagesize = 1760 * 512;
+
 class CUnDMS
 {
 private:
-
-	std::string m_sourceFile; // temp, see changes planned to parent-library
-	std::string m_destFile; // temp, see changes planned to parent-library
-	size_t m_nFileSize; // filesize of archive in bytes
+	//size_t m_nFileSize; // filesize of archive in bytes
 
 	Archive_Header m_header;
 	Track_Header *m_tracks;
@@ -144,26 +146,25 @@ private:
 	// see m_header.hightrack
 
 	// to replace old arrays..?
+	// TODO: could use output-buffer directly instead..?
 	CReadBuffer m_DecrunchBuffer;
 
 	// TODO: as ptr for parent-instances instead?
-	CReadBuffer m_ReadBuffer;
-	//CReadBuffer m_WriteBuffer;
+	CReadBuffer *m_pInputBuffer;
+	CReadBuffer *m_pOutputBuffer;
 	
 protected:
 
 	uint8_t *decrunch(const Track_Header *track, uint8_t *pack_buffer);
 
 public:
-    CUnDMS()
-		: m_sourceFile()
-		, m_destFile()
-		, m_nFileSize(0)
+    CUnDMS(CReadBuffer *pIn, CReadBuffer *pOut)
+		: m_pInputBuffer(pIn)
+		, m_pOutputBuffer(pOut)
+		//, m_nFileSize(0)
 		, m_header()
 		, m_tracks(nullptr)
 		, m_DecrunchBuffer(BUFFERSIZE+384) 
-		, m_ReadBuffer() 
-		//, m_WriteBuffer()
 	{}
     ~CUnDMS()
 	{
@@ -184,34 +185,7 @@ public:
 		return false;
     }
 
-	// TODO: allow to/from buffer/file unpacking..
-	// implement necessary details..
-	// better way to pass IOcontext from master to here
-	// as planned, just need to determine interface..
-
-	// file as source
-	void setSourceFile(const std::string &szDms)
-	{
-		m_sourceFile = szDms;
-	}
-	// file as dest
-	void setDestFile(const std::string &szDms)
-	{
-		m_destFile = szDms;
-	}
-	
-	/*
-	// TODO:
-	// client-buffer as source..
-	void setSourceBuffer(CReadBuffer *pIn)
-	{}
-	// client-buffer as dest..
-	void setDestBuffer(CReadBuffer *pOut)
-	{}
-	*/
-
 	bool unpack();
-	
 };
 
 #endif // UNDMS_H

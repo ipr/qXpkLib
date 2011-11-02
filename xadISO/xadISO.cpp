@@ -19,8 +19,6 @@
 // use standard typedefs whenever possible
 #include <stdint.h>
 
-#include <QFile>
-
 /*
  ISO 9660 volume structure definitions from freely available documentation in:
  http://users.telenet.be/it3.consultants.bvba/handouts/ISO9960.html
@@ -246,28 +244,15 @@ bool xadISO::testArchive()
 	return false;
 }
 
-// unpack/decompress
+// unpack/decompress files
 bool xadISO::Decrunch(XpkProgress *pProgress)
 {
-	if (m_pFile != nullptr)
-	{
-		delete m_pFile;
-	}
-
-	m_pFile = new QFile(m_filename);
-	if (m_pFile->open(QIODevice::ReadOnly) == false)
-	{
-		return false;
-	}
-	
-	// memory-map the file, easy&efficient for large files
-	qint64 fileSize = m_pFile->size();
-	uchar *pView = m_pFile->map(0, fileSize);
-	if (pView == NULL)
-	{
-		// failed mapping view
-		return false;
-	}
+	// we likely have memory-mapped file in master
+	// -> use it
+	CIoContext *pIn = pProgress->pInputIo;
+	CReadBuffer *pData = pIn->getBuffer(); // access data via wrapper
+	uint8_t *pView = pData->GetBegin();
+	size_t fileSize = pData->GetSize();
 	
 	// seek first primary volume descriptor in file
 	// (skip boot record if any)

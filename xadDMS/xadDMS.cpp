@@ -2,6 +2,10 @@
 
 #include "UnDMS.h"
 
+// from master-project (fulfill fwd. decl.)
+#include "XpkProgress.h"
+#include "IoContext.h"
+
 // (see header)
 xadDMS g_Instance;
 xadLibraryBase *GetXpkInstance(void)
@@ -34,9 +38,12 @@ xadDMS::~xadDMS()
 // unpack/decompress
 bool xadDMS::Decrunch(XpkProgress *pProgress)
 {
-
+	CUnDMS unDms(pProgress->pInputBuffer, pProgress->pOutputBuffer);
 	try
 	{
+		// TODO: set final output size to progress
+		// for writing correct amount..
+		return unDms.unpack();
 	}
 	catch (std::exception &exp) // catch by base-type
 	{

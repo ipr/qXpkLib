@@ -845,44 +845,15 @@ uint8_t *CUnDMS::decrunch(const Track_Header *track, uint8_t *pack_buffer)
 
 bool CUnDMS::unpack()
 {
-	// for now, just file-input (buffer later)
-	if (m_sourceFile.length() == 0)
-	{
-		throw IOException("Input was not given");
-	}
-	// for now, just file-input (buffer later)
-	if (m_destFile.length() == 0)
-	{
-		throw IOException("Output was not given");
-	}
-
-	// just read it to buffer, should not be too large..
-	// TODO: should check type before reading entirely..?
-	if (m_sourceFile.length() > 0)
-	{
-		CAnsiFile archive(m_sourceFile);
-		if (archive.IsOk() == false)
-		{
-			throw ArcException("Failed opening file", m_sourceFile);
-		}
-		m_nFileSize = archive.GetSize();
-		m_ReadBuffer.PrepareBuffer(m_nFileSize, false);
-		if (archive.Read(m_ReadBuffer.GetBegin(), m_nFileSize) == false)
-		{
-			throw ArcException("Failed reading file", m_sourceFile);
-		}
-		archive.Close(); // destructor should close already..
-	}
-	
 	// otherwise just use buffer as input
-	if (isSupported(m_ReadBuffer.GetBegin()) == false)
+	if (isSupported(m_pInputBuffer->GetBegin()) == false)
 	{
 		throw IOException("Unsupported file");
 	}
-	m_ReadBuffer.SetCurrentPos(4); // after identifier
+	m_pInputBuffer->SetCurrentPos(4); // after identifier
 	
 	// just access directly until checking done
-	uint8_t *archive_header = m_ReadBuffer.GetNext(52);
+	uint8_t *archive_header = m_pInputBuffer->GetNext(52);
 	m_header.parseBuf(archive_header);
 	
 	if (mycrc(archive_header, 50) != m_header.header_sum) /* header_sum */
@@ -895,10 +866,13 @@ bool CUnDMS::unpack()
 	}
 	
 	// DMS/ADF disk-images should be less than 1MB when unpacked,
-	// we should have that much RAM -> simplify checks
+	// we should have that much RAM -> simplify checks, allow overrun
+	// 
 	const int32_t max_image_size = (1*1024*1024);
-	
-	m_DecrunchBuffer.PrepareBuffer(max_image_size, false);
+
+	// this should use max track size..
+	//m_DecrunchBuffer.PrepareBuffer(max_image_size, false);
+	m_pOutputBuffer->SetCurrentPos(0); // set output to start
 	
 	// max 80 tracks allowed/supported
 	high_track = (m_header.hightrack > 80) ? 80 : m_header.hightrack;
@@ -915,7 +889,7 @@ bool CUnDMS::unpack()
 		Track_Header *track = &m_tracks[i];
 
 		// use until checking done
-		uint8_t *track_header = m_ReadBuffer.GetNext(20);
+		uint8_t *track_header = m_pInputBuffer->GetNext(20);
 		if (track->isTR(track_header) == false)
 		{
 			throw IOException("Invalid track count");
@@ -935,17 +909,19 @@ bool CUnDMS::unpack()
 		{
 			throw IOException("Invalid CRC (track header)");
 		}
-		
-		if (mycrc(m_ReadBuffer.GetAtCurrent(), track->pack_size) != track->data_sum) /* data_sum */
+		if (mycrc(m_pInputBuffer->GetAtCurrent(), track->pack_size) != track->data_sum) /* data_sum */
 		{
 			throw IOException("Invalid CRC (pack buffer)");
 		}
 		
 		// check we still have enough space (if invalid guess before..)
-		m_DecrunchBuffer.Reserve(track->unpack_size);
+		// just reserve single track size to decrunch buffer ?
+		//m_DecrunchBuffer.Reserve(track->unpack_size);
+		m_DecrunchBuffer.PrepareBuffer(track->unpack_size, false);
+		m_DecrunchBuffer.SetCurrentPos(0);
 	
 		// decrunch etc.
-		uint8_t *decrbuf = decrunch(track, m_ReadBuffer.GetNext(track->pack_size));
+		uint8_t *decrbuf = decrunch(track, m_pInputBuffer->GetNext(track->pack_size));
 		if (!decrbuf)
 		{
 			throw IOException("Extract failed");
@@ -954,6 +930,9 @@ bool CUnDMS::unpack()
 		{
 			throw IOException("CRC error (unpack data)");
 		}
+		
+		// copy from decrunch to output
+		m_pOutputBuffer->Append(m_DecrunchBuffer.GetBegin(), track->unpack_size);
 		
 		if ((track->current_track < 1000) && (track->unpack_size >= 8192)) /* try and skip illegal tracks */
 		{
@@ -984,26 +963,6 @@ bool CUnDMS::unpack()
 			//qDebug() << "illegal track"
 		}
 	}
-	
-	// finally, output
-	// (TODO: IOcontext later)
-	if (m_destFile.length() > 0)
-	{
-		CAnsiFile output(m_destFile, true);
-		if (output.IsOk() == false)
-		{
-			throw ArcException("Failed opening file", m_destFile);
-		}
-		// check where to keep actual used size in bytes..
-		// (buffer may be larger for overrun)
-		if (output.Write(m_DecrunchBuffer.GetBegin(), m_DecrunchBuffer.GetSize()) == false)
-		{
-			throw ArcException("Failed writing file", m_destFile);
-		}
-		output.Flush();
-		output.Close();
-	}
-	// otherwise just expect user to access the buffer..
 
 	return true;	
 }

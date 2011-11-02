@@ -87,12 +87,11 @@ class CUnWarp
 {
 private:
 
-	std::string m_sourceFile; // temp, see changes planned to parent-library
-	std::string m_destFile; // temp, see changes planned to parent-library
-	size_t m_nFileSize; // filesize of archive in bytes
-
-	CReadBuffer m_ReadBuffer;
 	CReadBuffer m_DecrunchBuffer;
+
+	// TODO: as ptr for parent-instances instead?
+	CReadBuffer *m_pInputBuffer;
+	CReadBuffer *m_pOutputBuffer;
 	
 protected:
 	Crc16 m_crc16;
@@ -102,11 +101,9 @@ protected:
 	void uncompress(WarpDiskInfo *info);
 
 public:
-    CUnWarp()
-		: m_sourceFile()
-		, m_destFile()
-		, m_nFileSize(0)
-		, m_ReadBuffer() 
+    CUnWarp(CReadBuffer *pIn, CReadBuffer *pOut)
+		: m_pInputBuffer(pIn)
+		, m_pOutputBuffer(pOut)
 		, m_DecrunchBuffer() 
 		, m_crc16()
 	{}
@@ -124,32 +121,6 @@ public:
 		}
 		return false;
     }
-
-	// TODO: allow to/from buffer/file unpacking..
-	// implement necessary details..
-	// better way to pass IOcontext from master to here
-	// as planned, just need to determine interface..
-
-	// file as source
-	void setSourceFile(const std::string &szDms)
-	{
-		m_sourceFile = szDms;
-	}
-	// file as dest
-	void setDestFile(const std::string &szDms)
-	{
-		m_destFile = szDms;
-	}
-	
-	/*
-	// TODO:
-	// client-buffer as source..
-	void setSourceBuffer(CReadBuffer *pIn)
-	{}
-	// client-buffer as dest..
-	void setDestBuffer(CReadBuffer *pOut)
-	{}
-	*/
 
 	bool unpack();
 };

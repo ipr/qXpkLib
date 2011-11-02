@@ -30,9 +30,12 @@ xadWarp::~xadWarp()
 // unpack/decompress
 bool xadWarp::Decrunch(XpkProgress *pProgress)
 {
-
+	CUnWarp unWarp(pProgress->pInputBuffer, pProgress->pOutputBuffer);
 	try
 	{
+		// TODO: set final output size to progress
+		// for writing correct amount..
+		return unWarp.unpack();
 	}
 	catch (std::exception &exp) // catch by base-type
 	{
