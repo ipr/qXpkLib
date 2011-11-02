@@ -128,7 +128,17 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 			return HEADERTYPE_ACE;
         }
     }
-    
+    if (ulLength >= 13)
+    {
+        char *pData = (char*)(pBuffer + 4);
+        if (::memcmp(pData, "ZAP V1.41", 9) == 0)
+        {
+			// TODO: check, also with 4-byte ID at start?
+			// Amiga ZAP disk-image
+			return HEADERTYPE_ZAP_DISK;
+        }
+    }
+
     // LhA, Lzh variations..
     if (ulLength >= 8)
     {
@@ -173,6 +183,11 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
         // Amiga TFMX module
         return HEADERTYPE_TFMX;
     }
+	else if (::memcmp(pBuffer, "Warp v1.1", 9) == 0)
+	{
+		// Amiga Warp disk-image
+		return HEADERTYPE_WARP_DISK;
+	}
     else if (::memcmp(pBuffer, "OKTASONG", 8) == 0)
     {
         // Amiga Oktalyzer tracker module
@@ -576,7 +591,8 @@ tHeaderType CFileType::FileTypeFromHeader(const uint8_t *pBuffer, const uint32_t
 	}
 	else if (ulFirstFour == 0x5A4F4F4D)
 	{
-		// ZAP disk-image (packed floppy image)
+		// TODO: check, is this correct? also with 9-char string after this?
+		// Amiga ZAP disk-image (packed floppy image)
 		return HEADERTYPE_ZAP_DISK;
 	}
 	else if (ulFirstFour == 0x504B0304)

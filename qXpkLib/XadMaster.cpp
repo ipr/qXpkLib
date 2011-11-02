@@ -17,6 +17,9 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+#include "IoContext.h"
+
+
 //////// protected methods
 
 // destroy decruncher when necessary
@@ -96,11 +99,7 @@ bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	// MSCAB
 	
 	*/
-	
-	
-	// TODO: also try loading sub-library 
-	// before we know that we can unpack it?
-	
+
 	
 	if (subType.length() == 0)
 	{
@@ -139,6 +138,15 @@ void CXadMaster::setExtractPath(QString &szPath)
 
 bool CXadMaster::decrunch(XpkProgress *pProgress)
 {
+	CIoContext *pIn = pProgress->pInputIo;
+
+	// get simple accessor for whole archive,
+	// sub-library may or might not want to use it..
+	pProgress->pInputBuffer = pIn->getBuffer();
+
+	// TODO: needs multiple outputs in case of extracting to files..
+	// could always just extract to buffer and write file here?
+
 	return m_pSubLibrary->Decrunch(pProgress);
 }
 

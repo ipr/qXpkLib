@@ -16,6 +16,8 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+#include "IoContext.h"
+
 
 //////// protected methods
 
@@ -105,6 +107,17 @@ bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 
 bool CXfdMaster::decrunch(XpkProgress *pProgress)
 {
-	return m_pSubLibrary->Decrunch(pProgress);
+	CIoContext *pIn = pProgress->pInputIo;
+	CIoContext *pOut = pProgress->pOutputIo;
+
+	// get simple accessor for whole file to be processed
+	pProgress->pInputBuffer = pIn->getBuffer();
+
+	if (m_pSubLibrary->Decrunch(pProgress) == false)
+	{
+		throw ArcException("Decrunching failed", m_InputName.toStdString());
+	}
+	pOut->write(pProgress->xp_chunkOut); // amount decrunched (whole file)
+	return true;
 }
 

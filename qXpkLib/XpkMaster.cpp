@@ -23,6 +23,8 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+#include "IoContext.h"
+
 
 //////// protected methods
 
@@ -122,6 +124,9 @@ bool CXpkMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return true;
 }
 
+// XPK-container format in file:
+// process chunks in file
+// and pass to sub-library for decrunching
 bool CXpkMaster::decrunch(XpkProgress *pProgress)
 {
 	// just decrunch all at once, write file when done
@@ -131,12 +136,9 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 	
 	// result unpacked size
 	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_UnpackedLen;
-
-	// XPK-container format in file:
-	// we need to process XPK-tags in file
-	// and pass chunks to sub-library for decrunching
-	// -> not done yet..
-	// temp, testing
+	
+	CIoContext *pIn = pProgress->pInputIo;
+	CIoContext *pOut = pProgress->pOutputIo;
 	
 	XpkChunk *pChunk = m_Tags.getFirst();
 	while (pChunk != nullptr)
@@ -149,8 +151,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 		{
 			// unpacked raw data:
 			// direct copy to output
-			pProgress->pOutputBuffer->Append(
-						pProgress->pInputBuffer->GetAt(pChunk->m_nDataOffset), 
+			pOut->getBuffer()->Append(
+						pIn->getBuffer()->GetAt(pChunk->m_nDataOffset), 
 						pChunk->m_ChunkLength);
 						
 			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
@@ -166,12 +168,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			pProgress->xp_chunkIn = pChunk->m_ChunkLength;
 			pProgress->xp_chunkOut = pChunk->m_UnLen;
 		
-			// locate data of chunk,
-			// currently we have entire file in buffer
-			// so move data to beginning for simplicity in sub-library..
-			//pProgress->pInputBuffer->SetCurrentPos(pChunk->m_nDataOffset);
-			pProgress->pInputBuffer->MoveToBegin(pChunk->m_nDataOffset);
-			pProgress->pInputBuffer->SetCurrentPos(0);
+			// get simple accessor for chunk-part of file wanted to be processed
+			pProgress->pInputBuffer = pIn->getBufferOffset(pChunk->m_nDataOffset);
 			
 			// prepare space for uncompressed data
 			if (pChunk->m_UnLen > 0)
@@ -183,7 +181,7 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			if (m_pSubLibrary->Decrunch(pProgress) == false)
 			{
 				// .. or throw exception now
-				throw ArcException("Decrunching failed", m_InputName.toStdString());
+				throw ArcException("Decrunching failed", pIn->getName().toStdString());
 				//return false;
 			}
 			
@@ -191,6 +189,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
 			{
 			}
+			pOut->write(pProgress->xp_chunkOut); // amount decrunched
+			delete pProgress->pInputBuffer; // destroy old accesssor
 
 			// keep accounting in master,
 			// no need to bother sub-libraries with it			

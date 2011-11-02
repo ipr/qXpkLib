@@ -34,12 +34,8 @@
 //
 class CIoContext
 {
-protected:
-	size_t m_nFileOffset; 
-	
 public:
     CIoContext(void)
-	    : m_nFileOffset(0)
 	{}
 	
 	virtual size_t getFullSize() = 0;
@@ -47,11 +43,23 @@ public:
 	// give same access to data always
 	virtual CReadBuffer *getBuffer() = 0;
 
+	// access specific part (get "view of segment" on "view of file"),
+	// this might need improvements later..
+	virtual CReadBuffer *getBufferOffset(const size_t nOffset) = 0;
+
 	virtual QString getName() = 0;
+	
+	// on chunk/file decrunching, write to destination (if suitable)
+	virtual void write(const size_t chunkSize) {}
 };
 
-// refactoring
+////////////
 
+// memory-mapping, file as memory-region:
+// - OS handles buffering, reads page of file on pagefault (access to region)
+// - requires virtual memory/pagefault support, without you're screwed:
+// what OS does _not_ support it nowadays?? it's simple MMU-stuff basically..
+//
 class CMemoryMappedIO : public CIoContext
 {
 protected:
@@ -127,29 +135,30 @@ public:
 	{
 		return m_pAttach;
 	}
+	
+	virtual CReadBuffer *getBufferOffset(const size_t nOffset)
+	{
+		// create accessor for caller (wrap part of mapped file..)
+		return new CReadBuffer(m_pAttach->GetAt(nOffset), m_pAttach->GetSize()-nOffset, true);
+	}
+	
 	virtual QString getName()
 	{
 		return m_Name;
 	}
 	
-	void Read() // whole file
+	virtual void write(const size_t chunkSize)
 	{
-		m_nFileOffset = m_fileSize;
-	}
-	void Read(const size_t nMaxRead) // chunk of data
-	{
-		size_t remaining = 0;
-		if (m_fileSize > m_nFileOffset)
-		{
-			remaining = m_fileSize - m_nFileOffset;
-		}
-		size_t nReadSize = (nMaxRead < remaining) ? nMaxRead : remaining;
-		m_nFileOffset += nReadSize;
-		m_pAttach->SetCurrentPos(m_nFileOffset);
+		// read-only for now -> do nothing yet
 	}
 	
 };
 
+////////////
+
+// decrunching to/from user-given buffer only 
+// (no actual file read/write)
+//
 class CBufferIO : public CIoContext
 {
 protected:
@@ -170,6 +179,13 @@ public:
 	{
 		return m_pBuffer;
 	}
+	
+	virtual CReadBuffer *getBufferOffset(const size_t nOffset)
+	{
+		// create accessor for caller (wrap part of buffer..)
+		return new CReadBuffer(m_pBuffer->GetAt(nOffset), m_pBuffer->GetSize()-nOffset, true);
+	}
+	
 	virtual QString getName()
 	{
 		// unnamed
@@ -178,6 +194,10 @@ public:
 	
 };
 
+////////////
+
+/* meh, drop this, too much bother to finish..
+just use memory-mapped IO or buffer and get it done
 class CBufferedFileIO : public CIoContext
 {
 protected:
@@ -292,8 +312,7 @@ public:
 		m_File.Close();
 		return true;
 	}
-	
 };
-
+*/
 
 #endif // IOCONTEXT_H

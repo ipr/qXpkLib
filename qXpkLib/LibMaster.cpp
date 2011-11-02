@@ -83,11 +83,6 @@ CLibMaster::~CLibMaster(void)
 
 bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
-	// TODO: get info to caller..
-	// - compressor (SQSH, NUKE... PP20, IMPL..)
-	// - unpacked size -> need sub-library to determine
-	// - what else?
-
 	// try determine file datatype by header information
 	// (TODO: keep somewhere to reduce repeated needs)
 	m_fileType = CFileType(m_pInput->getBuffer()->GetBegin(), m_pInput->getBuffer()->GetSize());
@@ -117,9 +112,6 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 //
 bool CLibMaster::archiveUnpack()
 {
-	m_pProgress->pInputBuffer = m_pInput->getBuffer();
-	m_pProgress->pOutputBuffer = m_pOutput->getBuffer();
-
 	// just decrunch all at once, write file when done
 	bool bRet = false;
 	if (m_pXadMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
@@ -139,9 +131,6 @@ bool CLibMaster::archiveUnpack()
 		// in this case, we need to load whole file before decrunching
 		// as format is "alien" (only cruncher might know..)
 
-		// just read it all to buffer, change later..
-		m_pInput->Read();
-	
 		bRet = m_pXfdMaster->decrunch(pProgress);
 	}
 	else if (m_pXpkMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
@@ -149,9 +138,6 @@ bool CLibMaster::archiveUnpack()
 		// this case is common XPK-style chunk-based format
 		// -> we can handle loading chunks as needed
 
-		// just read it all to buffer, change later..
-		m_pInput->Read();
-		
 		bRet = m_pXpkMaster->decrunch(pProgress);
 	}
 	
@@ -173,8 +159,7 @@ bool CLibMaster::archiveUnpack()
 	{
 		m_pInput->Close();
 	}
-	m_pOutput->WriteFile(pProgress);
-		
+	
 	return true;
 }
 
@@ -188,6 +173,7 @@ bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 	{
 		delete m_pInput;
 	}
+	
 	m_pInput = CBufferIO(buffer);
 	
 	if (m_pProgress != nullptr)
@@ -208,7 +194,7 @@ bool CLibMaster::setInputFile(QString &szFile)
 	{
 		delete m_pInput;
 	}
-	m_pInput = new CBufferedFileIO(szFile);
+	m_pInput = new CMemoryMappedIO(szFile);
 
 	if (m_pProgress != nullptr)
 	{
@@ -218,7 +204,6 @@ bool CLibMaster::setInputFile(QString &szFile)
 	// setup info for decrunch later
 	m_pProgress = new XpkProgress(m_pInput);
 
-	m_pInput->Read(1024);
 	m_pProgress->xp_WholePackedFileSize = m_pInput->getFullSize(); // info to decruncher
 
 	// check if file is supported
@@ -250,11 +235,13 @@ void CLibMaster::setOutputFile(QString &szFile)
 	{
 		delete m_pOutput;
 	}
+	/*
 	m_pOutput = new CBufferedFileIO(szFile);
 	if (m_pProgress != nullptr)
 	{
 		m_pProgress->pOutputIo = m_pOutput;
 	}
+	*/
 }
 
 void CLibMaster::setOutputPath(QString &szPath)

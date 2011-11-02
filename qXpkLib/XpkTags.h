@@ -141,7 +141,7 @@ class XpkTags
 private:
 	XpkStreamHeader m_streamHeader;
 	XpkFormat m_formatType;
-
+	
 	// size of extended header (if exists in file)	
 	size_t m_extHeaderLen;
 	
