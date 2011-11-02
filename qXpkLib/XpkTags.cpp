@@ -149,7 +149,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 //  - actually version required of sub-library..
 // - 1 byte for major version of cruncher/library ?
 //
-bool XpkTags::ReadFileInfo(CReadBuffer &Buffer)
+bool XpkTags::ReadStreamHeader(CReadBuffer &Buffer)
 {
 	// should have enough data to actually parse file header
 	if (Buffer.GetSize() < sizeof(XpkStreamHeader))
@@ -314,7 +314,7 @@ bool XpkTags::isXpkFile(const uint8_t *buffer) const
 bool XpkTags::ParseHeader(CReadBuffer *pBuffer)
 {
 	// read&parse file header 
-	return ReadFileInfo(*pBuffer);
+	return ReadStreamHeader(*pBuffer);
 }
 
 // parse information,
@@ -325,7 +325,7 @@ bool XpkTags::ParseChunks(CReadBuffer *pBuffer)
 	Clear(); // should make new instance of this instead..
 
 	// read&parse file header 
-	if (ReadFileInfo(*pBuffer) == false)
+	if (ReadStreamHeader(*pBuffer) == false)
 	{
 		return false;
 	}

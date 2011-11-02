@@ -138,14 +138,21 @@ void CXadMaster::setExtractPath(QString &szPath)
 
 bool CXadMaster::decrunch(XpkProgress *pProgress)
 {
-	CIoContext *pIn = pProgress->pInputIo;
-
 	// get simple accessor for whole archive,
 	// sub-library may or might not want to use it..
-	pProgress->pInputBuffer = pIn->getBuffer();
-
+	//CIoContext *pIn = pProgress->pInputIo;
+	//pProgress->pInputBuffer = pIn->getBuffer();
+	
+	// let sub-library access buffer from IO-context
+	// if it so wants to do	
+	pProgress->pInputBuffer = nullptr;
+	pProgress->pOutputBuffer = nullptr;
+	
+	// TODO: for multi-volume cases, need multiple input-files..
+	//
 	// TODO: needs multiple outputs in case of extracting to files..
 	// could always just extract to buffer and write file here?
+	// -> need way to tell back where to write (name of entry)..
 
 	return m_pSubLibrary->Decrunch(pProgress);
 }

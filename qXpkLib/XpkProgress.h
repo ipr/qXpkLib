@@ -40,9 +40,12 @@ public:
 	CReadBuffer *pInputBuffer;
 	CReadBuffer *pOutputBuffer;
 
-	// TODO:? simplify by this?
-	// (current chunk and related data..)
-	//XpkChunk *pChunk;
+	// TODO: 
+	// multi-file and multi-volume archives 
+	// may want multiple outputs and multiple inputs
+	// -> give master-instance to library
+	// for necessary IO-helping 
+	//CLibMaster *parent; 
 
 
 	/* size of compressed chunk to decruncher */

@@ -110,8 +110,11 @@ bool CXfdMaster::decrunch(XpkProgress *pProgress)
 	CIoContext *pIn = pProgress->pInputIo;
 	CIoContext *pOut = pProgress->pOutputIo;
 
-	// get simple accessor for whole file to be processed
+	// get simple accessor for whole file to be processed:
+	// XFD wants whole file access usually and outputs whole file decrunched
 	pProgress->pInputBuffer = pIn->getBuffer();
+	pProgress->pOutputBuffer = pOut->getBuffer();
+	pProgress->xp_chunkIn = pProgress->xp_WholePackedFileSize;
 
 	if (m_pSubLibrary->Decrunch(pProgress) == false)
 	{

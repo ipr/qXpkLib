@@ -97,7 +97,7 @@ public slots:
 	
 	// TODO: check what to do with these..
 	bool setOutputBuffer(CReadBuffer *buffer);
-	void setOutputFile(QString &szFile);
+	bool setOutputFile(QString &szFile);
 	void setOutputPath(QString &szPath);
 	
 signals:

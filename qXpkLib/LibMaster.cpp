@@ -229,19 +229,21 @@ bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
 	}
 	return true;
 }
-void CLibMaster::setOutputFile(QString &szFile)
+
+// TODO: might need access to this from sub-library
+// for multi-file archives..
+bool CLibMaster::setOutputFile(QString &szFile)
 {
 	if (m_pOutput != nullptr)
 	{
 		delete m_pOutput;
 	}
-	/*
 	m_pOutput = new CBufferedFileIO(szFile);
 	if (m_pProgress != nullptr)
 	{
 		m_pProgress->pOutputIo = m_pOutput;
 	}
-	*/
+	return true;
 }
 
 void CLibMaster::setOutputPath(QString &szPath)

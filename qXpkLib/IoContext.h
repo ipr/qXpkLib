@@ -196,8 +196,11 @@ public:
 
 ////////////
 
-/* meh, drop this, too much bother to finish..
-just use memory-mapped IO or buffer and get it done
+// need to use buffered-IO for output,
+// libraries may need very small output
+// and it's generally better to use larger chunks anyway..
+// MMIO isn't best choice in this case.
+//
 class CBufferedFileIO : public CIoContext
 {
 protected:
@@ -210,9 +213,8 @@ public:
     CBufferedFileIO(QString &Name, size_t nBufferSize = 1024)
 	    : CIoContext()
 	    , m_Name(Name)
-	    , m_Buffer(nBufferSize)
+	    , m_Buffer(nBufferSize) // prepare minimum, grow when needed
 	    , m_File()
-	    , m_nFileOffset(0)
 	{}
 	
 	virtual size_t getFullSize()
@@ -228,70 +230,11 @@ public:
 		return m_Name;
 	}
 	
-	CAnsiFile *GetFile() // should not need this
-	{
-		return &m_File;
-	}
-
-	void Read() // whole file
-	{
-		if (m_File.IsOpen() == false)
-		{
-			if (m_File.Open(m_Name.toStdString()) == false)
-			{
-				throw ArcException("Failed to open input", m_Name.toStdString());
-			}
-		}
-		long lPos = 0;
-		if (m_File.Tell(lPos) == false)
-		{
-			throw ArcException("Failed to tell positions", m_Name.toStdString());
-		}
-		if (lPos != 0)
-		{
-			if (m_File.Seek(0, SEEK_SET) == false)
-			{
-				throw ArcException("Failed to seek position", m_Name.toStdString());
-			}
-		}
-		m_Buffer.PrepareBuffer(InFile.GetSize(), false);
-		if (m_File.Read(m_Buffer.GetBegin(), InFile.GetSize()) == false)
-		{
-			throw IOException("Failed reading file data");
-		}
-		m_nFileOffset = InFile.GetSize();
-	}
-	
-	void Read(const size_t nMaxRead) // chunk of data
-	{
-		if (m_File.IsOpen() == false)
-		{
-			if (m_File.Open(m_Name.toStdString()) == false)
-			{
-				throw ArcException("Failed to open input", m_Name.toStdString());
-			}
-		}
-		
-		size_t remaining = 0;
-		if (m_File.GetSize() > m_nFileOffset)
-		{
-			remaining = m_File.GetSize() - m_nFileOffset;
-		}
-		
-		// TODO: better control over reading.. this just for testing
-		size_t nReadSize = (nMaxRead < remaining) ? nMaxRead : remaining;
-		
-		m_Buffer.PrepareBuffer(nReadSize, false);
-		if (m_File.Read(m_Buffer.GetBegin(), nReadSize) == false)
-		{
-			throw IOException("Failed reading file data");
-		}
-		m_nFileOffset += nReadSize;
-	}
-	
-	// write output to file
-	//bool WriteFile(XpkProgress *pProgress)
-	bool WriteFile()
+	// write output to file as single buffered chunk of data
+	// after decrunching.
+	// TODO: multiple chunks for very large files,
+	// 
+	bool WriteFile(size_t nFinalSize = 0)
 	{
 		if (m_File.Open(m_Name.toStdString(), true) == false)
 		{
@@ -300,7 +243,16 @@ public:
 		
 		// buffer may be larger than actual output: write only actual data
 		//
-		if (m_File.Write(m_Buffer.GetBegin(), m_Buffer.GetCurrentPos()) == false)
+		bool bRes = false;
+		if (nFinalSize == 0)
+		{
+			bRes = m_File.Write(m_Buffer.GetBegin(), m_Buffer.GetCurrentPos());
+		}
+		else
+		{
+			bRes = m_File.Write(m_Buffer.GetBegin(), nFinalSize);
+		}
+		if (bRes == false)
 		{
 			throw ArcException("Failed to write output", m_Name.toStdString());
 		}
@@ -313,6 +265,5 @@ public:
 		return true;
 	}
 };
-*/
 
 #endif // IOCONTEXT_H

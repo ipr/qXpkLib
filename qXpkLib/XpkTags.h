@@ -189,7 +189,7 @@ protected:
 
 	void ReadChunks(CReadBuffer &Buffer);
 
-	bool ReadFileInfo(CReadBuffer &Buffer);
+	bool ReadStreamHeader(CReadBuffer &Buffer);
 	
 	void Clear();
 	
