@@ -24,26 +24,23 @@
 
 uint8_t hchecksum(uint8_t *ptr, uint32_t count)
 {
-  uint8_t sum = 0;
-
-  while(count-- > 0)
-  {
-	sum ^= *ptr++;
-  }
-
-  return sum;
+	uint8_t sum = 0;
+	while(count-- > 0)
+	{
+		sum ^= *ptr++;
+	}
+	return sum;
 }
 
+// note: expects actually value-count instead of byte-count here?
 uint16_t cchecksum(uint32_t *ptr, uint32_t count)
 {
-  uint32_t sum = 0;
-
-  while(count-- > 0)
-  {
-    sum ^= *ptr++;
-  }
-
-  return (uint16_t)(sum ^ (sum >> 16));
+	uint32_t sum = 0;
+	while(count-- > 0)
+	{
+		sum ^= *ptr++;
+	}
+	return (uint16_t)(sum ^ (sum >> 16));
 }
 
 #endif /* XPKMASTER_CHECKSUM_H */

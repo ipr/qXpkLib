@@ -41,12 +41,13 @@ public:
 	virtual size_t getFullSize() = 0;
 
 	// give same access to data always
-	virtual CReadBuffer *getBuffer() = 0;
+	virtual CIOBuffer *getBuffer() = 0;
 
 	// access specific part (get "view of segment" on "view of file"),
 	// this might need improvements later..
-	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset) = 0;
+	virtual CIOBuffer *getBufferAtOffset(const size_t nOffset) = 0;
 
+	// associated name (if any)
 	virtual QString getName() = 0;
 	
 	// on chunk/file decrunching, write to destination (if suitable)
@@ -70,7 +71,7 @@ protected:
 	
 	// for "attaching" to buffer:
 	// give same helper-interface to sub-libs always
-	CReadBuffer *m_pAttach;
+	CIOBuffer *m_pAttach;
 	
 	bool init()
 	{
@@ -87,7 +88,7 @@ protected:
 			// failed mapping view
 			return false;
 		}
-		m_pAttach = new CReadBuffer(m_pView, m_fileSize, true);
+		m_pAttach = new CIOBuffer(m_pView, m_fileSize, true);
 		return true;
 	}
 	void clear()
@@ -131,16 +132,16 @@ public:
 	{
 		return m_fileSize;
 	}
-	virtual CReadBuffer *getBuffer()
+	virtual CIOBuffer *getBuffer()
 	{
 		m_pAttach->SetCurrentPos(0); // always reset on access?
 		return m_pAttach;
 	}
 	
-	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset)
+	virtual CIOBuffer *getBufferAtOffset(const size_t nOffset)
 	{
 		// create accessor for caller (wrap part of mapped file..)
-		return new CReadBuffer(m_pAttach->GetAt(nOffset), m_pAttach->GetSize()-nOffset, true);
+		return new CIOBuffer(m_pAttach->GetAt(nOffset), m_pAttach->GetSize()-nOffset, true);
 	}
 	
 	virtual QString getName()
@@ -163,11 +164,11 @@ public:
 class CBufferIO : public CIoContext
 {
 protected:
-	CReadBuffer *m_pBuffer;
+	CIOBuffer *m_pBuffer;
 
 public:
 	// "attach" only
-	CBufferIO(CReadBuffer *buffer)
+	CBufferIO(CIOBuffer *buffer)
 		: CIoContext()
 		, m_pBuffer(buffer)
 	{}
@@ -176,16 +177,16 @@ public:
 	{
 		return m_pBuffer->GetSize();
 	}
-	virtual CReadBuffer *getBuffer()
+	virtual CIOBuffer *getBuffer()
 	{
 		//m_pBuffer->SetCurrentPos(0); // always reset on access?
 		return m_pBuffer;
 	}
 	
-	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset)
+	virtual CIOBuffer *getBufferAtOffset(const size_t nOffset)
 	{
 		// create accessor for caller (wrap part of buffer..)
-		return new CReadBuffer(m_pBuffer->GetAt(nOffset), m_pBuffer->GetSize()-nOffset, true);
+		return new CIOBuffer(m_pBuffer->GetAt(nOffset), m_pBuffer->GetSize()-nOffset, true);
 	}
 	
 	virtual QString getName()
@@ -210,7 +211,7 @@ public:
 class CBufferedFileIO : public CIoContext
 {
 protected:
-	CReadBuffer m_Buffer;
+	CIOBuffer m_Buffer;
 	CAnsiFile m_File;
 	
 	QString m_Name; // in/out name
@@ -231,10 +232,15 @@ public:
 	{
 		return m_File.GetSize();
 	}
-	virtual CReadBuffer *getBuffer()
+	virtual CIOBuffer *getBuffer()
 	{
 		//m_Buffer.SetCurrentPos(0); // always reset on access?
 		return &m_Buffer;
+	}
+	virtual CIOBuffer *getBufferAtOffset(const size_t nOffset)
+	{
+		// also allow user to modify existing buffer via this "view" ?
+		return new CIOBuffer(m_Buffer.GetAt(nOffset), m_Buffer.GetSize()-nOffset, false);
 	}
 	virtual QString getName()
 	{
@@ -245,7 +251,7 @@ public:
 	// after decrunching.
 	// TODO: multiple chunks for very large files,
 	// 
-	virtual bool write(const size_t chunkSize)
+	virtual void write(const size_t chunkSize)
 	{
 		size_t writeSize = chunkSize;
 		if (m_File.IsOpen() == false)
@@ -272,8 +278,22 @@ public:
 		{
 			throw ArcException("Failed to flush output", m_Name.toStdString());
 		}
-		return true;
 	}
 };
+
+// TODO: something like this for multi-file/multi-volume IO ?
+/*
+class CVolumeIO : public CIoContext
+{
+public:
+	QString m_Path; // or file pattern?
+	
+	std::vector<CIoContext*> m_IO;
+	
+	CIoContext *addIO();
+	CIoContext *getIO();
+
+};
+*/
 
 #endif // IOCONTEXT_H

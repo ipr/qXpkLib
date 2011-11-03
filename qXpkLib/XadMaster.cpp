@@ -49,7 +49,7 @@ CXadMaster::~CXadMaster(void)
 	release();
 }
 
-bool CXadMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
+bool CXadMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 {
 	std::string szSubType;
 

@@ -49,7 +49,7 @@ public:
 
 	// for detailed checking if format is supported..
 	// some formats can be a pain to check in a generic way
-    virtual bool isSupported(CReadBuffer *pInputBuffer)=0;
+    virtual bool isSupported(CIOBuffer *pInputBuffer)=0;
 
 	// list compressed file information..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;

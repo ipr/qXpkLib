@@ -56,7 +56,7 @@ CXpkMaster::~CXpkMaster(void)
 	release();
 }
 
-bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
+bool CXpkMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 {
 	/*	
 	if (type.m_enFileType == HEADERTYPE_XPK_GENERIC)
@@ -113,7 +113,7 @@ bool CXpkMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	
 	// get XPK-archive descriptor (file-header)
 	// 
-	XpkStreamHeader *pHead = m_Tags.getHeader();
+	const XpkStreamHeader *pHead = m_Tags.getHeader();
 	
 	info.m_bIsMultifile = false;
 	info.m_bIsMultiVolume = false;

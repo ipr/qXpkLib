@@ -61,6 +61,7 @@ private:
 	CIoContext *m_pOutput;
 	
 	// temp, determine later if suitable way..
+	// might use some common interface..?
 	CXpkMaster *m_pXpkMaster;
 	CXfdMaster *m_pXfdMaster;
 	CXadMaster *m_pXadMaster;
@@ -82,7 +83,7 @@ public:
 	bool archiveUnpack();
 
 	// get unpacked result to user-buffer as-is
-	CReadBuffer *getResult()
+	CIOBuffer *getResult()
 	{
 		if (m_pOutput != nullptr)
 		{
@@ -92,11 +93,11 @@ public:
 	}
 
 public slots:
-	bool setInputBuffer(CReadBuffer *buffer);
+	bool setInputBuffer(CIOBuffer *buffer);
 	bool setInputFile(QString &szFile);
 	
 	// TODO: check what to do with these..
-	bool setOutputBuffer(CReadBuffer *buffer);
+	bool setOutputBuffer(CIOBuffer *buffer);
 	bool setOutputFile(QString &szFile);
 	void setOutputPath(QString &szPath);
 	

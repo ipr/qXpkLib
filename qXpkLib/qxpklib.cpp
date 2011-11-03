@@ -108,7 +108,7 @@ bool QXpkLib::xpkUnpack()
 // if user wants result to buffer?
 void QXpkLib::getToBuffer(QByteArray &Array)
 {
-	CReadBuffer *pOut = m_pMaster->getResult();
+	CIOBuffer *pOut = m_pMaster->getResult();
 	
 	// reserve out-buffer and copy what we have
 	Array.resize(pOut->GetCurrentPos());

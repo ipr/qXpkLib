@@ -46,7 +46,7 @@ public:
 };
 
 
-class CReadBuffer
+class CIOBuffer
 {
 private:
 	enum tSizes
@@ -112,7 +112,7 @@ protected:
 	//size_t m_nUsedSize;
 
 public:
-	CReadBuffer(void) 
+	CIOBuffer(void) 
 		: m_pReadBuffer(nullptr)
 		, m_nReadBufferSize(0)
 		, m_nCurrentPos(0)
@@ -121,7 +121,7 @@ public:
 		CreateBuffer(INITIAL_READ_BUFFER_SIZE);
 	}
 
-	CReadBuffer(const size_t nMinsize) 
+	CIOBuffer(const size_t nMinsize) 
 		: m_pReadBuffer(nullptr)
 		, m_nReadBufferSize(0)
 		, m_nCurrentPos(0)
@@ -133,14 +133,14 @@ public:
 	// "attach" to given buffer or memory-mapped file
 	// so same interface can be used
 	// TODO: disallow reallocation/growing when attached..
-	CReadBuffer(unsigned char *pBuffer, const size_t nBufferSize, bool bKeepConst = true) 
+	CIOBuffer(unsigned char *pBuffer, const size_t nBufferSize, bool bKeepConst = true) 
 		: m_pReadBuffer(pBuffer)
 		, m_nReadBufferSize(nBufferSize)
 		, m_nCurrentPos(0)
 		, m_bConstBuffer(bKeepConst)
 	{}
 	
-	~CReadBuffer(void) 
+	~CIOBuffer(void) 
 	{
 		if (m_pReadBuffer != nullptr
 			&& m_bConstBuffer == false) // is attached?
@@ -369,6 +369,9 @@ public:
 	}
 };
 
+// for backwards-compatibility until replaced
+class CReadBuffer : public CIOBuffer
+{};
 
 // ANSI-C style file-API helper
 class CAnsiFile
@@ -517,7 +520,7 @@ public:
 	}
 
 	/*
-	bool Read(CReadBuffer &Buffer)
+	bool Read(CIOBuffer &Buffer)
 	{
 		return Read(Buffer.GetBegin(), Buffer.GetSize());
 	}

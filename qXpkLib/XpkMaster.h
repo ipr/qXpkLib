@@ -19,6 +19,9 @@
 #include <QByteArray>
 #include <QLibrary>
 
+// use ISO-standard typedefs (platform-independency)
+#include <stdint.h>
+
 // use typedefs from parent
 #include "qxpklib.h"
 
@@ -31,12 +34,11 @@
 #include "xpkLibraryBase.h"
 #include "XpkProgress.h"
 
-// temp.. move here?
+// temp.. move this here?
 #include "XpkTags.h"
 
 
-
-class CXpkMaster : public QObject
+class CXpkMaster : public QObject //, protected XpkTags 
 {
 	Q_OBJECT
 
@@ -58,7 +60,7 @@ public:
     CXpkMaster(QObject *parent = 0);
 	virtual ~CXpkMaster(void);
 
-    bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
+    bool isSupported(CIOBuffer *pInputBuffer, CFileType &type);
     
 	// list compressed file information..
 	bool archiveInfo(QXpkLib::CArchiveInfo &info);

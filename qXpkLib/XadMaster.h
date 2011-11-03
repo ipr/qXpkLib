@@ -21,11 +21,11 @@
 #include <QByteArray>
 #include <QLibrary>
 
-// use typedefs from parent
-#include "qxpklib.h"
-
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
+
+// use typedefs from parent
+#include "qxpklib.h"
 
 #include "AnsiFile.h"
 #include "FileType.h"
@@ -54,7 +54,7 @@ public:
     CXadMaster(QObject *parent = 0);
     virtual ~CXadMaster(void);
 
-	bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
+	bool isSupported(CIOBuffer *pInputBuffer, CFileType &type);
     
 	// list compressed file information..
 	bool archiveInfo(QXpkLib::CArchiveInfo &info);

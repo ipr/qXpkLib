@@ -57,7 +57,7 @@ bool XpkTags::verifyHeaderWord(XpkChunkHdrWord *pChunkHeader)
 // according to flags (if "long" sizes are used for chunks).
 //
 //
-void XpkTags::ReadChunks(CReadBuffer &Buffer)
+void XpkTags::ReadChunks(CIOBuffer &Buffer)
 {
 	m_pFirst = new XpkChunk();
 	m_pFirst->m_nDataOffset = Buffer.GetCurrentPos();
@@ -149,7 +149,7 @@ void XpkTags::ReadChunks(CReadBuffer &Buffer)
 //  - actually version required of sub-library..
 // - 1 byte for major version of cruncher/library ?
 //
-bool XpkTags::ReadStreamHeader(CReadBuffer &Buffer)
+bool XpkTags::ReadStreamHeader(CIOBuffer &Buffer)
 {
 	// should have enough data to actually parse file header
 	if (Buffer.GetSize() < sizeof(XpkStreamHeader))
@@ -311,7 +311,7 @@ bool XpkTags::isXpkFile(const uint8_t *buffer) const
 // used to check and parse file metadata
 // to detect support file
 // -> don't throw exception if invalid file?
-bool XpkTags::ParseHeader(CReadBuffer *pBuffer)
+bool XpkTags::ParseHeader(CIOBuffer *pBuffer)
 {
 	// read&parse file header 
 	return ReadStreamHeader(*pBuffer);
@@ -320,7 +320,7 @@ bool XpkTags::ParseHeader(CReadBuffer *pBuffer)
 // parse information,
 // should throw exception on error? 
 // (cannot continue where expected to..)
-bool XpkTags::ParseChunks(CReadBuffer *pBuffer)
+bool XpkTags::ParseChunks(CIOBuffer *pBuffer)
 {
 	Clear(); // should make new instance of this instead..
 
@@ -338,7 +338,7 @@ bool XpkTags::ParseChunks(CReadBuffer *pBuffer)
 // TODO: add this so single-pass
 // can be done without loading entire file to memory
 /*
-XpkChunk *XpkTags::nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent)
+XpkChunk *XpkTags::nextChunk(CIOBuffer &Buffer, XpkChunk *pCurrent)
 {
 	if (pCurrent == nullptr)
 	{
@@ -354,10 +354,10 @@ XpkChunk *XpkTags::nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent)
 // verify checksum on chunk data
 // (after unpacking)
 //
-bool XpkTags::verifyChecksum(XpkChunk *pChunk, CReadBuffer *pOutBuffer)
+bool XpkTags::verifyChecksum(XpkChunk *pChunk, CIOBuffer *pOutBuffer)
 {
 	uint8_t *pBuf = pOutBuffer->GetAt(pOutBuffer->GetCurrentPos() - pChunk->m_UnLen);
-	uint16_t checksum = cchecksum(pBuf, pChunk->m_UnLen);
+	uint16_t checksum = cchecksum((uint32_t*)pBuf, pChunk->m_UnLen);
 	if (checksum == pChunk->m_ChunkChecksum)
 	{
 		return true;

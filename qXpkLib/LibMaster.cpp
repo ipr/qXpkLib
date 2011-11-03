@@ -167,7 +167,7 @@ bool CLibMaster::archiveUnpack()
 
 // buffer for stuff from user of library,
 // can we detect type of compression or do we need user info..?
-bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
+bool CLibMaster::setInputBuffer(CIOBuffer *buffer)
 {
 	// TODO: buffer as input:
 	//m_Input->setInput(buffer);
@@ -218,7 +218,7 @@ bool CLibMaster::setInputFile(QString &szFile)
 }
 
 // TODO: check what to do with these, might not be slots..
-bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
+bool CLibMaster::setOutputBuffer(CIOBuffer *buffer)
 {
 	if (m_pOutput != nullptr)
 	{
@@ -251,4 +251,7 @@ bool CLibMaster::setOutputFile(QString &szFile)
 void CLibMaster::setOutputPath(QString &szPath)
 {
 	m_outputPath = szPath;
+	
+	// TODO: ?
+	//m_pOutput = new CVolumeIO(szPath);
 }

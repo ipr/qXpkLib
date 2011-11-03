@@ -187,9 +187,9 @@ protected:
 	bool verifyHeaderLong(XpkChunkHdrLong *pChunkHeader);
 	bool verifyHeaderWord(XpkChunkHdrWord *pChunkHeader);
 
-	void ReadChunks(CReadBuffer &Buffer);
+	void ReadChunks(CIOBuffer &Buffer);
 
-	bool ReadStreamHeader(CReadBuffer &Buffer);
+	bool ReadStreamHeader(CIOBuffer &Buffer);
 	
 	void Clear();
 	
@@ -202,14 +202,14 @@ public:
 	// regardless of sub-type (packer)
 	bool isXpkFile(const uint8_t *buffer) const;
 	
-	bool ParseHeader(CReadBuffer *pBuffer);
-	bool ParseChunks(CReadBuffer *pBuffer);
+	bool ParseHeader(CIOBuffer *pBuffer);
+	bool ParseChunks(CIOBuffer *pBuffer);
 
 	// TODO: add this so single-pass
 	// can be done without loading entire file to memory
 	//XpkChunk *nextChunk(CReadBuffer &Buffer, XpkChunk *pCurrent = nullptr);
 	
-	bool verifyChecksum(XpkChunk *pChunk, CReadBuffer *pOutBuffer);
+	bool verifyChecksum(XpkChunk *pChunk, CIOBuffer *pOutBuffer);
 	
 	XpkFormat getFormat() const
 	{

@@ -18,22 +18,21 @@
 #include <QByteArray>
 #include <QLibrary>
 
-// use typedefs from parent
-#include "qxpklib.h"
-
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
 
+// use typedefs from parent
+#include "qxpklib.h"
+
 #include "AnsiFile.h"
 #include "FileType.h"
-
-#include "XfdSlave.h"
 
 // external XFD-decrunching library interface
 #include "xfdLibraryBase.h"
 
 // status information (caller and decruncher)
 #include "XpkProgress.h"
+
 
 
 class CXfdMaster : public QObject
@@ -55,7 +54,7 @@ public:
     CXfdMaster(QObject *parent = 0);
     virtual ~CXfdMaster(void);
     
-    bool isSupported(CReadBuffer *pInputBuffer, CFileType &type);
+    bool isSupported(CIOBuffer *pInputBuffer, CFileType &type);
 
 	// list compressed file information..
 	bool archiveInfo(QXpkLib::CArchiveInfo &info);

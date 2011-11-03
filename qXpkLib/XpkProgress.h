@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 // fwd. decl.
-class CReadBuffer;
+class CIOBuffer;
 class CIoContext;
 
 class XpkProgress 
@@ -37,8 +37,8 @@ public:
 	CIoContext *pOutputIo;
 
 	/* input and output buffers for sub-library (decruncher) */
-	CReadBuffer *pInputBuffer;
-	CReadBuffer *pOutputBuffer;
+	CIOBuffer *pInputBuffer;
+	CIOBuffer *pOutputBuffer;
 
 	// TODO: 
 	// multi-file and multi-volume archives 

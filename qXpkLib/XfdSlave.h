@@ -506,7 +506,7 @@ public:
 class XfdSlave
 {
 protected:
-	CReadBuffer *m_pIn;
+	CIOBuffer *m_pIn;
 
 	// need better way of sharing code..
 	uint32_t MakeTag(const char *buf) const
@@ -626,13 +626,13 @@ protected:
 	//statusreg sr;
 	ccreg ccr; // keep this at least?
 	
-    XfdSlave(CReadBuffer *pIn)
+    XfdSlave(CIOBuffer *pIn)
 		: m_pIn(pIn)
 		, D0(),D1(),D2(),D3(),D4(),D5(),D6(),D7()
 		, A0(),A1(),A2(),A3(),A4(),A5(),A6(),A7()
     {}
 public:
-    virtual bool decrunch(CReadBuffer *pOut) = 0;
+    virtual bool decrunch(CIOBuffer *pOut) = 0;
 };
 
 
