@@ -362,6 +362,7 @@ public:
 				GetAt(nStartOffset), 
 				m_nReadBufferSize - nStartOffset);
 		m_nCurrentPos -= nStartOffset;
+		
 		// TODO: we might want actual amount of buffer used
 		// in this but might not know it depending on how caller is using buffer..
 		return true;

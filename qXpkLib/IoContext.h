@@ -45,7 +45,7 @@ public:
 
 	// access specific part (get "view of segment" on "view of file"),
 	// this might need improvements later..
-	virtual CReadBuffer *getBufferOffset(const size_t nOffset) = 0;
+	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset) = 0;
 
 	virtual QString getName() = 0;
 	
@@ -133,10 +133,11 @@ public:
 	}
 	virtual CReadBuffer *getBuffer()
 	{
+		m_pAttach->SetCurrentPos(0); // always reset on access?
 		return m_pAttach;
 	}
 	
-	virtual CReadBuffer *getBufferOffset(const size_t nOffset)
+	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset)
 	{
 		// create accessor for caller (wrap part of mapped file..)
 		return new CReadBuffer(m_pAttach->GetAt(nOffset), m_pAttach->GetSize()-nOffset, true);
@@ -177,10 +178,11 @@ public:
 	}
 	virtual CReadBuffer *getBuffer()
 	{
+		//m_pBuffer->SetCurrentPos(0); // always reset on access?
 		return m_pBuffer;
 	}
 	
-	virtual CReadBuffer *getBufferOffset(const size_t nOffset)
+	virtual CReadBuffer *getBufferAtOffset(const size_t nOffset)
 	{
 		// create accessor for caller (wrap part of buffer..)
 		return new CReadBuffer(m_pBuffer->GetAt(nOffset), m_pBuffer->GetSize()-nOffset, true);
@@ -216,6 +218,10 @@ public:
 	    , m_Buffer(nBufferSize) // prepare minimum, grow when needed
 	    , m_File()
 	{}
+	~CBufferedFileIO()
+	{
+		m_File.Close();
+	}
 	
 	virtual size_t getFullSize()
 	{
@@ -223,6 +229,7 @@ public:
 	}
 	virtual CReadBuffer *getBuffer()
 	{
+		//m_Buffer.SetCurrentPos(0); // always reset on access?
 		return &m_Buffer;
 	}
 	virtual QString getName()
@@ -234,34 +241,32 @@ public:
 	// after decrunching.
 	// TODO: multiple chunks for very large files,
 	// 
-	bool WriteFile(size_t nFinalSize = 0)
+	bool WriteFile(size_t nWriteSize = 0)
 	{
-		if (m_File.Open(m_Name.toStdString(), true) == false)
+		if (m_File.IsOpen() == false)
 		{
-			throw ArcException("Failed to open output", m_Name.toStdString());
+			if (m_File.Open(m_Name.toStdString(), true) == false)
+			{
+				throw ArcException("Failed to open output", m_Name.toStdString());
+			}
 		}
 		
 		// buffer may be larger than actual output: write only actual data
-		//
-		bool bRes = false;
-		if (nFinalSize == 0)
+		if (nWriteSize == 0)
 		{
-			bRes = m_File.Write(m_Buffer.GetBegin(), m_Buffer.GetCurrentPos());
+			nWriteSize = m_Buffer.GetCurrentPos();
 		}
-		else
-		{
-			bRes = m_File.Write(m_Buffer.GetBegin(), nFinalSize);
-		}
-		if (bRes == false)
+		if (m_File.Write(m_Buffer.GetBegin(), nWriteSize) == false)
 		{
 			throw ArcException("Failed to write output", m_Name.toStdString());
 		}
-		
+
+		// for pre-chunk writing, prepare for next
+		m_Buffer.MoveToBegin(nWriteSize);
 		if (m_File.Flush() == false)
 		{
 			throw ArcException("Failed to flush output", m_Name.toStdString());
 		}
-		m_File.Close();
 		return true;
 	}
 };
