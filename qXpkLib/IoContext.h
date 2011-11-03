@@ -194,6 +194,10 @@ public:
 		return "";
 	}
 	
+	virtual void write(const size_t chunkSize)
+	{
+		// do nothing: collect into buffer only
+	}
 };
 
 ////////////
@@ -241,8 +245,9 @@ public:
 	// after decrunching.
 	// TODO: multiple chunks for very large files,
 	// 
-	bool WriteFile(size_t nWriteSize = 0)
+	virtual bool write(const size_t chunkSize)
 	{
+		size_t writeSize = chunkSize;
 		if (m_File.IsOpen() == false)
 		{
 			if (m_File.Open(m_Name.toStdString(), true) == false)
@@ -252,17 +257,17 @@ public:
 		}
 		
 		// buffer may be larger than actual output: write only actual data
-		if (nWriteSize == 0)
+		if (writeSize == 0)
 		{
-			nWriteSize = m_Buffer.GetCurrentPos();
+			writeSize = m_Buffer.GetCurrentPos();
 		}
-		if (m_File.Write(m_Buffer.GetBegin(), nWriteSize) == false)
+		if (m_File.Write(m_Buffer.GetBegin(), writeSize) == false)
 		{
 			throw ArcException("Failed to write output", m_Name.toStdString());
 		}
 
 		// for pre-chunk writing, prepare for next
-		m_Buffer.MoveToBegin(nWriteSize);
+		m_Buffer.MoveToBegin(writeSize);
 		if (m_File.Flush() == false)
 		{
 			throw ArcException("Failed to flush output", m_Name.toStdString());

@@ -216,12 +216,12 @@ public:
 		return m_formatType;
 	}
 	
-	XpkStreamHeader *getHeader() const
+	const XpkStreamHeader *getHeader() const
 	{
 		return &m_streamHeader;
 	}
 	
-	std::string& getTypename() const
+	const std::string& getTypename() const
 	{
 		return m_typeName;
 	}

@@ -386,9 +386,9 @@ struct addrreg
 	//
 	int8_t b(void) // with auto-increment
 	{
-		int8_t *p = src;
+		uint8_t *p = src;
 		src += 1;
-		return *p;
+		return (*p);
 	}
 	int8_t b(const size_t off) const
 	{
@@ -400,7 +400,7 @@ struct addrreg
 		//int16_t *p = (int16_t*)src;
 		//src += 2;
 		//return *p;
-		int8_t *p = src;
+		uint8_t *p = src;
 		src += 2;
 		return getW(p);
 	}
@@ -414,7 +414,7 @@ struct addrreg
 		//int32_t *p = (int32_t*)src;
 		//src += 4;
 		//return *p;
-		int8_t *p = src;
+		uint8_t *p = src;
 		src += 4;
 		return getL(p);
 	}
@@ -425,19 +425,19 @@ struct addrreg
 
 	int8_t bM(void) // with auto-decrement
 	{
-		int8_t *p = src;
+		uint8_t *p = src;
 		src -= 1;
-		return *p;
+		return (*p);
 	}
 	int16_t wM(void) // with auto-decrement
 	{
-		int8_t *p = src;
+		uint8_t *p = src;
 		src -= 2;
 		return getW(p);
 	}
 	int32_t lM(void) // with auto-decrement
 	{
-		int8_t *p = src;
+		uint8_t *p = src;
 		src -= 4;
 		return getL(p);
 	}

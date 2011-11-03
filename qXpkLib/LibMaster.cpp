@@ -112,7 +112,15 @@ bool CLibMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 //
 bool CLibMaster::archiveUnpack()
 {
-	// just decrunch all at once, write file when done
+	// overwrite existing file?
+	// -> 
+	if (m_pInput->getName() == m_pOutput->getName())
+	{
+		//m_pInput->Close();
+		// error for now..
+		throw ArcException("Output same as input", m_pInput->getName().toStdString());
+	}
+
 	bool bRet = false;
 	if (m_pXadMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
 	{
@@ -124,40 +132,34 @@ bool CLibMaster::archiveUnpack()
 		// change later if necessary (various issues to solve there..)
 	
 		m_pXadMaster->setExtractPath(m_outputPath);
-		bRet = m_pXadMaster->decrunch(pProgress);
+		bRet = m_pXadMaster->decrunch(m_pProgress);
 	}
 	else if (m_pXfdMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
 	{
 		// in this case, we need to load whole file before decrunching
 		// as format is "alien" (only cruncher might know..)
 
-		bRet = m_pXfdMaster->decrunch(pProgress);
+		bRet = m_pXfdMaster->decrunch(m_pProgress);
 	}
 	else if (m_pXpkMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
 	{
 		// this case is common XPK-style chunk-based format
 		// -> we can handle loading chunks as needed
 
-		bRet = m_pXpkMaster->decrunch(pProgress);
+		bRet = m_pXpkMaster->decrunch(m_pProgress);
 	}
 	
 	if (bRet == false)
 	{
 		throw ArcException("Decrunching failed", m_pInput->getName().toStdString());
 	}
-
-	// buffer-output? (no out-file given)
-	if (m_pOutput->getName().length() == 0)
-	{
-		// no output-file -> done
-		// (user wants buffer-only?)
-		return true;
-	}
 	
 	// overwrite existing file?
+	// -> 
 	if (m_pInput->getName() == m_pOutput->getName())
 	{
-		m_pInput->Close();
+		// close input before writing from output..
+		//m_pInput->Close();
 	}
 	
 	return true;
@@ -174,7 +176,7 @@ bool CLibMaster::setInputBuffer(CReadBuffer *buffer)
 		delete m_pInput;
 	}
 	
-	m_pInput = CBufferIO(buffer);
+	m_pInput = new CBufferIO(buffer);
 	
 	if (m_pProgress != nullptr)
 	{
@@ -222,7 +224,7 @@ bool CLibMaster::setOutputBuffer(CReadBuffer *buffer)
 	{
 		delete m_pOutput;
 	}
-	m_pOutput = CBufferIO(buffer);
+	m_pOutput = new CBufferIO(buffer);
 	if (m_pProgress != nullptr)
 	{
 		m_pProgress->pOutputIo = m_pOutput;

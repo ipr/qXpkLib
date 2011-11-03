@@ -94,7 +94,7 @@ bool CXpkMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	
 	// try to load suitable sub-library?
 	QString szLib = "xpk";
-	szLib.append(QString::fromStdString(subType));
+	szLib.append(QString::fromStdString(szSubType));
 	
 	m_pSubLibrary = CXpkLibrarian::getXpkInstance(szLib, m_SubLib);
 	if (m_pSubLibrary == nullptr)
@@ -133,12 +133,13 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 	// XPK-container, process into tags
 	// and chunk-nodes
 	m_Tags.ParseChunks(pProgress->pInputBuffer);
+
+	CIoContext *pIn = pProgress->pInputIo;
+	CIoContext *pOut = pProgress->pOutputIo;
 	
 	// result unpacked size
 	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_UnpackedLen;
-	
-	CIoContext *pIn = pProgress->pInputIo;
-	CIoContext *pOut = pProgress->pOutputIo;
+	pProgress->pOutputBuffer = pOut->getBuffer();
 	
 	XpkChunk *pChunk = m_Tags.getFirst();
 	while (pChunk != nullptr)
@@ -158,7 +159,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
 			{
 			}
-						
+			pOut->write(pChunk->m_ChunkLength);
+			
 			// accounting in master-library
 			pProgress->xp_PackedProcessed += pProgress->xp_chunkIn;
 			pProgress->xp_UnpackedProcessed += pProgress->xp_chunkOut;
@@ -169,7 +171,7 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			pProgress->xp_chunkOut = pChunk->m_UnLen;
 		
 			// get simple accessor for chunk-part of file wanted to be processed
-			pProgress->pInputBuffer = pIn->getBufferOffset(pChunk->m_nDataOffset);
+			pProgress->pInputBuffer = pIn->getBufferAtOffset(pChunk->m_nDataOffset);
 			
 			// prepare space for uncompressed data
 			if (pChunk->m_UnLen > 0)
@@ -189,7 +191,7 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 			if (m_Tags.verifyChecksum(pChunk, pProgress->pOutputBuffer) == false)
 			{
 			}
-			pOut->write(pProgress->xp_chunkOut); // amount decrunched
+			pOut->write(pChunk->m_ChunkLength); // amount decrunched
 			delete pProgress->pInputBuffer; // destroy old accesssor
 
 			// keep accounting in master,
@@ -209,8 +211,6 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 		// next chunk to process..	
 		pChunk = pChunk->m_pNext;
 	}
-	
-	// flush output now? (lib-parent does it?)
 	
 	return true;
 }

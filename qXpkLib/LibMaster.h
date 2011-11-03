@@ -86,7 +86,7 @@ public:
 	{
 		if (m_pOutput != nullptr)
 		{
-			return m_pOutput->GetBuffer();
+			return m_pOutput->getBuffer();
 		}
 		return nullptr;
 	}

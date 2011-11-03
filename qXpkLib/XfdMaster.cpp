@@ -95,7 +95,7 @@ bool CXfdMaster::isSupported(CReadBuffer *pInputBuffer, CFileType &type)
 	}
 	// try loading it
 	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getXadInstance(QString::fromStdString(subType), m_SubLib);
+	m_pSubLibrary = CXpkLibrarian::getXfdInstance(QString::fromStdString(subType), m_SubLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it
@@ -120,6 +120,7 @@ bool CXfdMaster::decrunch(XpkProgress *pProgress)
 	{
 		throw ArcException("Decrunching failed", m_InputName.toStdString());
 	}
+	
 	pOut->write(pProgress->xp_chunkOut); // amount decrunched (whole file)
 	return true;
 }
