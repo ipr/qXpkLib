@@ -111,7 +111,35 @@ public:
 class DecodeZoo
 {
 protected:
+	crcsum m_crc;
 	BitIo m_BitIo;
+
+	// prefer constexpr over preprocessor macros
+	//
+	const int32_t MAX_LIT         = 255;     /* maximal literal code            */
+	const int32_t MIN_LEN         = 3;       /* minimal length of match         */
+	const int32_t MAX_LEN         = 256;     /* maximal length of match         */
+	const int32_t MAX_CODE        = (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN);
+	const int32_t BITS_CODE       = 9;       /* 2^BITS_CODE > MAX_CODE (+1?)    */
+	const int32_t MAX_OFF         = 8192;    /* 13 bit sliding directory        */
+	const int32_t MAX_LOG         = 13;      /* maximal log_2 of offset         */
+	const int32_t BITS_LOG        = 4;       /* 2^BITS_LOG > MAX_LOG (+1?)      */
+	const int32_t MAX_PRE         = 18;      /* maximal pre code                */
+	const int32_t BITS_PRE        = 5;       /* 2^BITS_PRE > MAX_PRE (+1?)      */
+	
+	// use constants for buffer-sizes also where fixed-length
+	const int32_t c_TREE_SIZE = 2*MAX_CODE+1;
+	const int32_t c_TAB_CODE_SIZE = 4096;
+	
+	uint16_t  TreeLeft [c_TREE_SIZE];        /* tree for codes   (upper half)   */
+	uint16_t  TreeRight[c_TREE_SIZE];        /* and  for offsets (lower half)   */
+	uint16_t TabCode  [c_TAB_CODE_SIZE];     /* table for fast lookup of codes  */
+	uint8_t   LenCode  [MAX_CODE+1];         /* number of bits used for code    */
+	uint16_t  TabLog   [256];                /* table for fast lookup of logs   */
+	uint8_t   LenLog   [MAX_LOG+1];          /* number of bits used for logs    */
+	uint16_t  TabPre   [256];                /* table for fast lookup of pres   */
+	uint8_t   LenPre   [MAX_PRE+1];          /* number of bits used for pres    */
+
 
 	// simplify code, reusable method
 	void bufferSet(const uint16_t code, uint16_t *pBuf, const int count) const
@@ -123,9 +151,8 @@ protected:
 		}
 	}
 
-
 	// inline: compiler can avoid function call by replacing call with function body
-	inline int PEEK_BITS(const int N, const unsigned long bits, const unsigned long bitc) const
+	inline uint32_t PEEK_BITS(const int N, const uint32_t bits, const uint32_t bitc) const
 	{
 		return ((bits >> (bitc - N)) & ((1L << N)-1));
 	}
@@ -140,7 +167,7 @@ protected:
 
 	// inlining won't give any benefit since function call(s) are made anyway
 	// (old called at least two functions, we call one or two depending on inlining..)
-	void FLSH_BITS(const int N, unsigned long &bits, unsigned long &bitc) const
+	void FLSH_BITS(const int N, uint32_t &bits, uint32_t &bitc) const
 	{
 		if ( (bitc -= N) < 16 ) 
 		{
@@ -152,12 +179,12 @@ protected:
 		}
 	}
 
-
-	bool MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table);
+	bool MakeTablLzh(const int nchar, const uint8_t *bitlen, const int tablebits, uint16_t *table);
 
 public:
     DecodeZoo()
-     : m_BitIo()
+     : m_crc()
+     , m_BitIo()
     {}
     
 	bool DecodeLzh(ZooEntry *pEntry);

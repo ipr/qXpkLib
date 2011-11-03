@@ -68,7 +68,7 @@ class crcsum
 {
 public:
 
-	unsigned long m_Crc;
+	unsigned long m_Crc; // 16-bit should suffice..
 
 	unsigned long m_CrcTab[256];
 

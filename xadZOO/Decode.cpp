@@ -100,7 +100,7 @@
 // I think this should be replaced with code from Unix Lha instead
 // since it handles better different compilers etc.
 //
-bool DecodeZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const int tablebits, uint16_t *table)
+bool DecodeZoo::MakeTablLzh(const int nchar, const uint8_t *bitlen, const int tablebits, uint16_t *table)
 {
     uint16_t      count[17], weight[17], start[18];
     unsigned int  i = 0;
@@ -205,66 +205,42 @@ bool DecodeZoo::MakeTablLzh(const int nchar, const unsigned char *bitlen, const 
     return true;
 }
 
-// prefer constexpr over preprocessor macros
-//
-const int32_t MAX_LIT         = 255;     /* maximal literal code            */
-const int32_t MIN_LEN         = 3;       /* minimal length of match         */
-const int32_t MAX_LEN         = 256;     /* maximal length of match         */
-const int32_t MAX_CODE        = (MAX_LIT+1 + MAX_LEN+1 - MIN_LEN);
-const int32_t BITS_CODE       = 9;       /* 2^BITS_CODE > MAX_CODE (+1?)    */
-const int32_t MAX_OFF         = 8192;    /* 13 bit sliding directory        */
-const int32_t MAX_LOG         = 13;      /* maximal log_2 of offset         */
-const int32_t BITS_LOG        = 4;       /* 2^BITS_LOG > MAX_LOG (+1?)      */
-const int32_t MAX_PRE         = 18;      /* maximal pre code                */
-const int32_t BITS_PRE        = 5;       /* 2^BITS_PRE > MAX_PRE (+1?)      */
-
-// use constants for buffer-sizes also where fixed-length
-const int32_t c_TREE_SIZE = 2*MAX_CODE+1;
-const int32_t c_TAB_CODE_SIZE = 4096;
-
-uint16_t  TreeLeft [c_TREE_SIZE];        /* tree for codes   (upper half)   */
-uint16_t  TreeRight[c_TREE_SIZE];        /* and  for offsets (lower half)   */
-uint16_t TabCode  [c_TAB_CODE_SIZE];     /* table for fast lookup of codes  */
-uint8_t   LenCode  [MAX_CODE+1];         /* number of bits used for code    */
-uint16_t  TabLog   [256];                /* table for fast lookup of logs   */
-uint8_t   LenLog   [MAX_LOG+1];          /* number of bits used for logs    */
-uint16_t  TabPre   [256];                /* table for fast lookup of pres   */
-uint8_t   LenPre   [MAX_PRE+1];          /* number of bits used for pres    */
-
 // same stuff as in actual LhA/Lzh library,
 // are there differences to worry about?
 //
-bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFile)
+bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
 {
 	size_t size = pEntry->compressed_size;
 	
-    unsigned long       cnt;            /* number of codes in block        */
+    //unsigned long       cnt;            /* number of codes in block        */
     //unsigned long       cnt2;           /* number of stuff in pre code     */
     //unsigned long       code;           /* code from the Archive           */
     //unsigned long       len;            /* length of match                 */
     //unsigned long       log;            /* log_2 of offset of match        */
     //unsigned long       off;            /* offset of match                 */
     //unsigned long       pre;            /* pre code                        */
-    //char *              cur;            /* current position in BufFile     */
-    char *              pos;            /* position of match               */
-    //char *              end;            /* pointer to the end of BufFile   */
-    char *              stp;            /* stop pointer during copy        */
+    //char				*cur;            /* current position in BufFile     */
+    //char				*end;            /* pointer to the end of BufFile   */
+    //char				*pos;            /* position of match               */
+    //char				*stp;            /* stop pointer during copy        */
     //unsigned long       crc;            /* cyclic redundancy check value   */
     //unsigned long       i;              /* loop variable                   */
     //unsigned long       bits;           /* the bits we are looking at      */
     //unsigned long       bitc;           /* number of bits that are valid   */
 
+    //const char *BufFile = (char*)m_DecrunchBuffer->GetBegin();
+    //const char *BufFile = m_BitIo.m_pReadBuf->GetBegin();
+    //const char *BufFile = m_BitIo.m_pWriteBuf->GetBegin();
+    char *cur = BufFile; // is it in/out or both??
+    char *end = cur + size; //MAX_OFF;
+
     /* initialize bit source, output pointer, and crc                      */
     unsigned long bits = 0;  /* the bits we are looking at      */
     unsigned long bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
-    
-    const char *BufFile = (char*)m_DecrunchBuffer->GetBegin();
-    char *cur = BufFile;
-    char *end = cur + MAX_OFF;
 
     /* loop until all blocks have been read                                */
-    cnt = PEEK_BITS( 16, bits, bitc );  
+    uint32_t cnt = PEEK_BITS( 16, bits, bitc );  
     FLSH_BITS( 16, bits, bitc );
     while ( cnt != 0 ) 
     {
@@ -273,6 +249,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
         FLSH_BITS( BITS_PRE, bits, bitc );
         if ( pc_count == 0 ) 
         {
+			// pre code
             uint32_t pre = PEEK_BITS( BITS_PRE, bits, bitc );  
             FLSH_BITS( BITS_PRE, bits, bitc );
             
@@ -286,6 +263,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
             uint32_t i = 0;
             while ( i < pc_count ) 
             {
+				// len: length of match
                 uint32_t len = PEEK_BITS( 3, bits, bitc );  
                 FLSH_BITS( 3, bits, bitc );
                 if ( len == 7 ) {
@@ -322,6 +300,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
         FLSH_BITS( BITS_CODE, bits, bitc );
         if ( pc_count == 0 ) 
         {
+			// code from archive
             uint32_t code = PEEK_BITS( BITS_CODE, bits, bitc );  
             FLSH_BITS( BITS_CODE, bits, bitc );
             
@@ -396,6 +375,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
         FLSH_BITS( BITS_LOG, bits, bitc );
         if ( pc_count == 0 ) 
         {
+			// log: log_2 of offset of match
             uint32_t log = PEEK_BITS( BITS_LOG, bits, bitc );  
             FLSH_BITS( BITS_LOG, bits, bitc );
             
@@ -464,13 +444,15 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
 	            
                 *cur++ = code;
                 m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
+                
+                m_BitIo.m_pWriteBuf->SetNextByte(code);
                 if ( cur == end ) 
                 {
 				    if (outFile.Write(BufFile, cur-BufFile) == false)
                     {
 		                throw IOException("cannot write output file");
                     }
-                    cur = m_ReadBuffer->GetBegin();
+                    //cur = m_BitIo.m_pReadBuf->GetAtCurrent(); // should be output ??
                 }
             }
             else 
@@ -488,7 +470,8 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
                 else 
                 {
                     FLSH_BITS( 8, bits, bitc );
-                    do {
+                    do 
+                    {
                         if ( PEEK_BITS( 1, bits, bitc ) )  
                         {
 							log = TreeRight[log];
@@ -501,8 +484,8 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
                     } while ( MAX_LOG < log );
                 }
 
-                /* compute the offset                                      */
-                uint32_t off = 0;
+                /* compute the offset */
+                uint32_t off = 0; // offset of match
                 if ( log != 0 ) 
                 {
                     off = ((unsigned)1 << (log-1)) + PEEK_BITS( log-1, bits, bitc );
@@ -510,16 +493,20 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
                 }
 
                 /* copy the match (this accounts for ~ 50% of the time)    */
-                pos = BufFile + (((cur-BufFile) - off - 1) & (MAX_OFF - 1));
+                uint8_t *pos = BufFile + (((cur-BufFile) - off - 1) & (MAX_OFF - 1));
                 if ( cur < end-len && pos < end-len ) 
                 {
-                    stp = cur + len;
+					
+                    uint8_t *stp = cur + len;
                     do 
                     {
                         code = *pos++;
 		                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
                         *cur++ = code;
                     } while ( cur < stp );
+                    
+                    // replace loop here with:
+					//m_crc.m_Crc = m_crc.UpdateCrc(cur, len);
                 }
                 else 
                 {
@@ -549,10 +536,5 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry, CAnsiFile &archive, CAnsiFile &outFi
         FLSH_BITS( 16, bits, bitc );
     }
 
-    /* write out the rest of the buffer                                    */
-    if (outFile.Write(BufFile, cur-BufFile) == false)
-    {
-        throw IOException("cannot write output file");
-    }
     return true;
 }
