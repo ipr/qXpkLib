@@ -61,8 +61,6 @@ public:
 	// list compressed file information..
 	bool archiveInfo(QXpkLib::CArchiveInfo &info);
     
-	//void setArchive(QString &szArchive);
-	void setExtractPath(QString &szPath);
 	bool decrunch(XpkProgress *pProgress);
 	
 public slots:

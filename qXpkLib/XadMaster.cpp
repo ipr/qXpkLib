@@ -130,11 +130,6 @@ bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return m_pSubLibrary->archiveInfo(info);
 }
 
-void CXadMaster::setExtractPath(QString &szPath)
-{
-	m_pSubLibrary->setExtractPath(szPath);
-}
-
 bool CXadMaster::decrunch(XpkProgress *pProgress)
 {
 	// get simple accessor for whole archive,

@@ -131,7 +131,6 @@ bool CLibMaster::archiveUnpack()
 		// we (currently) expect xad-libraries to handle IO,
 		// change later if necessary (various issues to solve there..)
 	
-		m_pXadMaster->setExtractPath(m_outputPath);
 		bRet = m_pXadMaster->decrunch(m_pProgress);
 	}
 	else if (m_pXfdMaster->isSupported(m_pInput->getBuffer(), m_fileType) == true)
@@ -253,7 +252,7 @@ void CLibMaster::setOutputPath(QString &szPath)
 	m_outputPath = szPath;
 	if (m_pProgress != nullptr)
 	{
-		m_pProgress->m_extractPath = m_pOutput;
+		m_pProgress->m_extractPath = szPath;
 	}
 	
 	// TODO: ?
