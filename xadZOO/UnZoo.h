@@ -14,7 +14,7 @@
 *
 *  This file is in the Public Domain.
 *
-* Modified for use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
+* Rewrite for use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
 *
 */
 
@@ -39,7 +39,7 @@
 #include "Decode.h"
 
 
-typedef vector<ZooEntry*> tEntryList;
+typedef std::vector<ZooEntry*> tEntryList;
 
 class CUnZoo
 {
@@ -58,8 +58,8 @@ private:
 	std::string m_szExtractionPath;
 
 	// internal buffer for read information
-	CReadBuffer m_ReadBuffer;
-	CReadBuffer m_DecrunchBuffer;
+	CIOBuffer m_ReadBuffer;
+	CIOBuffer m_WriteBuffer;
 	
 	crcsum m_crc;
 
@@ -75,11 +75,7 @@ protected:
     {
 		// should have 20 bytes: "ZOO 2.10 Archive.<ctr>Z"
 		if (::memcmp(pBuffer, "ZOO ", 4) == 0
-			&& pBuffer[23] == 0xfd
-			&& pBuffer[22] == 0xc4
-			&& pBuffer[21] == 0xa7
-			&& pBuffer[20] == 0xdc
-			)
+			&& isSupportedEntry(pBuffer + 20) == true)
 		{
 			return true;
 		}
@@ -178,7 +174,7 @@ public:
 		, m_ulTotalFiles(0)
 		, m_szExtractionPath()
 		, m_ReadBuffer(16384) 
-		, m_DecrunchBuffer(16384*2) 
+		, m_WriteBuffer(16384*2) 
 		, m_crc()
 		, m_decode()
 		, m_archiveInfo()
@@ -192,6 +188,10 @@ public:
 	bool SetExtractPath(const std::string &szOutPath)
 	{
 		m_szExtractionPath = szOutPath;
+
+		// fix path-separator if still using msdos-shit..
+		fixPathname(m_szExtractionPath);
+		
 		if (m_szExtractionPath.at(m_szExtractionPath.length() -1) != '/')
 		{
 			m_szExtractionPath += "/";

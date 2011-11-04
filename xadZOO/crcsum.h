@@ -64,17 +64,19 @@
 #ifndef CRCSUM_H
 #define CRCSUM_H
 
+// use standard typedefs whenever possible
+#include <stdint.h>
+
 class crcsum
 {
 public:
 
-	unsigned long m_Crc; // 16-bit should suffice..
+	uint32_t m_Crc; // note: 16-bit should suffice..
+	uint32_t m_CrcTab[256]; // note: uint16_t should be enough
 
-	unsigned long m_CrcTab[256];
-
-	inline unsigned long CRC_BYTE(unsigned int crc, unsigned int byte)
+	inline unsigned long CRC_BYTE(const unsigned int crc, const unsigned int byte) const
 	{
-		return ((crc >> 8) ^ m_CrcTab[ ((crc)^(byte))&0xff ]);
+		return ((crc >> 8) ^ m_CrcTab[ (crc ^ byte)&0xff ]);
 	}
 
 	void InitCrc()
@@ -104,9 +106,14 @@ public:
     {
 		return m_Crc;
     }
-    unsigned long UpdateCrc(char *buf, unsigned long count)
+    unsigned long CrcByte(unsigned int byte)
     {
-        for ( i = 0; i < count; i++ )
+		m_Crc = CRC_BYTE(m_Crc, byte);
+        return m_Crc;
+    }
+    unsigned long UpdateCrc(const uint8_t *buf, const unsigned long count)
+    {
+        for ( unsigned long i = 0; i < count; i++ )
         {
             m_Crc = CRC_BYTE( m_Crc, buf[i] );
         }

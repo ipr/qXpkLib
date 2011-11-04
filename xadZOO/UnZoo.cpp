@@ -14,7 +14,7 @@
 *
 *  This file is in the Public Domain.
 *
-* Modified for use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
+* Rewrite for use in C++ library by Ilkka Prusi <ilkka.prusi@gmail.com>
 *
 */
 
@@ -151,9 +151,9 @@ bool CUnZoo::readArchiveEntryList(CAnsiFile &archive)
 			
 			// does this include size of length-field or just the rest?
 			// just the rest after these three fields?
-			pEntry->m_pVarDetails->variable_size = getUWord(m_ReadBuffer->GetNext(2));
+			pEntry->m_pVarDetails->variable_size = getUWord(m_ReadBuffer.GetNext(2));
 			pEntry->m_pVarDetails->timezone = m_ReadBuffer.GetNextByte();
-			pEntry->m_pVarDetails->entry_crc = getUWord(m_ReadBuffer->GetNext(2));
+			pEntry->m_pVarDetails->entry_crc = getUWord(m_ReadBuffer.GetNext(2));
 			
 			extendedRead = pEntry->m_pVarDetails->variable_size;
 			if (extendedRead > 0)
@@ -254,14 +254,8 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 		throw IOException("Failed to read header");
     }
     
-    // check text at start
+    // check text and ID at near start
     if (isSupportedArchive(m_ReadBuffer.GetBegin()) == false)
-    {
-		throw IOException("Unsupported file type");
-    }
-    
-    // check id-value
-    if (isSupported(m_ReadBuffer.GetAt(20)) == false)
     {
 		throw IOException("Unsupported file type");
     }
@@ -283,7 +277,7 @@ bool CUnZoo::readArchiveDescription(CAnsiFile &archive)
 	if (m_archiveInfo.first_entry_pos > 34)
 	{
 		// 8 bytes as optional information
-		if (archive.Read(m_ReadBuffer.GetCurrentPos(), 8) == false)
+		if (archive.Read(m_ReadBuffer.GetAtCurrent(), 8) == false)
 		{
 			throw IOException("Failed to read header extension");
 		}
@@ -347,26 +341,17 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 
 	if (pEntry->method == PackCopyOnly)
 	{
-		const size_t chunkSize = 8192;
-		m_ReadBuffer.PrepareBuffer(chunkSize, false);
-	
-		size_t size = pEntry->compressed_size;
-		while (size > 0)
+		m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
+		if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
 		{
-			size_t nToRead = (chunkSize < pEntry->compressed_size) ? chunkSize : pEntry->compressed_size;
-			if (archive.Read(m_ReadBuffer.GetBegin(), nToRead) == false)
-			{
-				throw ArcException("Failed reading compressed data for file", pEntry->fileName);
-			}
-			
-			m_crc.UpdateCrc(m_ReadBuffer.GetBegin(), nToRead);
-			
-			// uncompressed data: just write it directly to output
-			if (outFile.Write(m_ReadBuffer.GetBegin(), nToRead) == false)
-			{
-				throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
-			}
-			size -= nToRead;
+			throw ArcException("Failed reading compressed data for file", pEntry->fileName);
+		}
+		m_crc.UpdateCrc(m_ReadBuffer.GetBegin(), pEntry->compressed_size);
+
+		// uncompressed data: just write it directly to output
+		if (outFile.Write(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
+		{
+			throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
 		}
 		bRes = true;
 	}
@@ -375,18 +360,19 @@ bool CUnZoo::ExtractEntry(ZooEntry *pEntry, CAnsiFile &archive)
 		// just read entry to buffer.. 
 		
 		m_ReadBuffer.PrepareBuffer(pEntry->compressed_size, false);
-		m_DecrunchBuffer.PrepareBuffer(pEntry->original_size, false);
+		m_WriteBuffer.PrepareBuffer(pEntry->original_size, false);
 		
 		if (archive.Read(m_ReadBuffer.GetBegin(), pEntry->compressed_size) == false)
 		{
 			throw ArcException("Failed reading compressed data for file", pEntry->fileName);
 		}
-		m_decode.setup(pEntry, &m_ReadBuffer, &m_DecrunchBuffer);
+		m_decode.setup(pEntry, &m_ReadBuffer, &m_WriteBuffer);
 	
 		// this expects buffer to be ready for decoding now
 		bRes = m_decode.DecodeLzh(pEntry);
 		
-		if (outFile.Write(m_ReadBuffer.GetBegin(), pEntry->original_size) == false)
+		//m_crc.UpdateCrc(m_WriteBuffer.GetBegin(), pEntry->original_size);
+		if (outFile.Write(m_WriteBuffer.GetBegin(), pEntry->original_size) == false)
 		{
 			throw ArcException("Failed writing uncompressed data for file", pEntry->fileName);
 		}
@@ -493,14 +479,12 @@ bool CUnZoo::Extract()
         if (bRes == false)  
         {
 			// or just warning and skip to next?
-	        throw ArcException("Failed to extract file", outFilename);
+	        throw ArcException("Failed to extract file", pEntry->fileName);
 	    }
-		
 		++it;
 	}
-	
 
-	return ExtrArch(m_szArchive);
+	return true;
 }
 
 // with user selections

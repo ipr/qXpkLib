@@ -210,8 +210,6 @@ bool DecodeZoo::MakeTablLzh(const int nchar, const uint8_t *bitlen, const int ta
 //
 bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
 {
-	size_t size = pEntry->compressed_size;
-	
     //unsigned long       cnt;            /* number of codes in block        */
     //unsigned long       cnt2;           /* number of stuff in pre code     */
     //unsigned long       code;           /* code from the Archive           */
@@ -231,12 +229,15 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
     //const char *BufFile = (char*)m_DecrunchBuffer->GetBegin();
     //const char *BufFile = m_BitIo.m_pReadBuf->GetBegin();
     //const char *BufFile = m_BitIo.m_pWriteBuf->GetBegin();
-    char *cur = BufFile; // is it in/out or both??
-    char *end = cur + size; //MAX_OFF;
+    //char *cur = BufFile; // is it in/out or both??
+    //char *end = cur + size; //MAX_OFF;
+
+	//size_t size = pEntry->compressed_size;
+	m_crc.ClearCrc();
 
     /* initialize bit source, output pointer, and crc                      */
-    unsigned long bits = 0;  /* the bits we are looking at      */
-    unsigned long bitc = 0;  /* number of bits that are valid   */
+    uint32_t bits = 0;  /* the bits we are looking at      */
+    uint32_t bitc = 0;  /* number of bits that are valid   */
     FLSH_BITS(0, bits, bitc);
 
     /* loop until all blocks have been read                                */
@@ -441,11 +442,26 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
             if ( code <= MAX_LIT ) 
             {
 	            /* if the code is a literal, stuff it into the buffer          */
-	            
-                *cur++ = code;
-                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
+	            // -> most definetily output-buffer in this case then
+                //*cur++ = code;
+                m_crc.CrcByte(code);
+                m_DictBuf.SetNextByte(code);
+
+				if (m_DictBuf.IsEnd() == true)
+				{
+					size_t nDSize = m_DictBuf.GetCurrentPos();
+					m_BitIo.m_pWriteBuf->Append(m_DictBuf.GetBegin(), nDSize);
+				
+					// old continued at beginning of buffer?
+					// whaever, just increse buffer instead..
+					// keep existing data
+					//m_DictBuf.PrepareBuffer(m_DictBuf.GetSize()*2, true);
+					// or just move existing to beginning and continue
+					m_DictBuf.MoveToBegin(nDSize);
+				}
                 
-                m_BitIo.m_pWriteBuf->SetNextByte(code);
+                
+                /*
                 if ( cur == end ) 
                 {
 				    if (outFile.Write(BufFile, cur-BufFile) == false)
@@ -454,6 +470,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
                     }
                     //cur = m_BitIo.m_pReadBuf->GetAtCurrent(); // should be output ??
                 }
+                */
             }
             else 
             {
@@ -488,22 +505,36 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
                 uint32_t off = 0; // offset of match
                 if ( log != 0 ) 
                 {
-                    off = ((unsigned)1 << (log-1)) + PEEK_BITS( log-1, bits, bitc );
+                    off = ((uint32_t)1 << (log-1)) + PEEK_BITS( log-1, bits, bitc );
                     FLSH_BITS( log-1, bits, bitc );
                 }
 
                 /* copy the match (this accounts for ~ 50% of the time)    */
-                uint8_t *pos = BufFile + (((cur-BufFile) - off - 1) & (MAX_OFF - 1));
-                if ( cur < end-len && pos < end-len ) 
+                
+                // pos is source in same buffer?
+                size_t nCurPos = m_DictBuf.GetCurrentPos();
+                nCurPos = (nCurPos - off - 1);
+                size_t nPos = (nCurPos & (MAX_OFF - 1));
+                //uint8_t *pos = m_DictBuf.GetAt(nPos);
+                //uint8_t *pos = BufFile + (((cur-BufFile) - off - 1) & (MAX_OFF - 1));
+                //if ( cur < end-len && pos < end-len ) 
+                if (m_DictBuf.GetCurrentPos() < (m_DictBuf.GetSize() - len) && nPos < (m_DictBuf.GetSize() - len))
                 {
-					
-                    uint8_t *stp = cur + len;
+					// needs overlapped copy?
+					size_t nStop = m_DictBuf.GetCurrentPos() + len;
+					size_t nCount = 0;
+                    //uint8_t *stp = cur + len;
                     do 
                     {
-                        code = *pos++;
-		                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
-                        *cur++ = code;
-                    } while ( cur < stp );
+                        //code = *pos++;
+                        code = *(m_DictBuf.GetAt(nPos));
+                        nPos++;
+                        //*cur++ = code;
+		                m_crc.CrcByte(code);
+		                m_DictBuf.SetNextByte(code);
+		                nCount++;
+                    } while ( nCount < nStop );
+                    //} while ( cur < stp );
                     
                     // replace loop here with:
 					//m_crc.m_Crc = m_crc.UpdateCrc(cur, len);
@@ -512,9 +543,27 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
                 {
                     while ( 0 < len-- ) 
                     {
-                        code = *pos++;
-		                m_crc.m_Crc = m_crc.CRC_BYTE(m_crc.m_Crc, code );
-                        *cur++ = code;
+                        //code = *pos++;
+                        code = *(m_DictBuf.GetAt(nPos));
+                        nPos++;
+                        
+                        //*cur++ = code;
+		                m_crc.CrcByte(code);
+		                m_BitIo.m_pWriteBuf->SetNextByte(code);
+		                
+		                if (m_DictBuf.IsEnd() == true)
+		                {
+							size_t nDSize = m_DictBuf.GetCurrentPos();
+							m_BitIo.m_pWriteBuf->Append(m_DictBuf.GetBegin(), nDSize);
+						
+							// old continued at beginning of buffer?
+							// whaever, just increse buffer instead..
+							// keep existing data
+							//m_DictBuf.PrepareBuffer(m_DictBuf.GetSize()*2, true);
+							// or just move existing to beginning and continue
+							m_DictBuf.MoveToBegin(nDSize);
+		                }
+                        /*
                         if ( pos == end ) 
                         {
                             pos = BufFile;
@@ -527,6 +576,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
                             }
                             cur = BufFile;
                         }
+                        */
                     }
                 }
             }
@@ -536,5 +586,7 @@ bool DecodeZoo::DecodeLzh(ZooEntry *pEntry)
         FLSH_BITS( 16, bits, bitc );
     }
 
+	size_t nDSize = m_DictBuf.GetCurrentPos();
+	m_BitIo.m_pWriteBuf->Append(m_DictBuf.GetBegin(), nDSize);
     return true;
 }

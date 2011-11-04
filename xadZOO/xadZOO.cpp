@@ -83,13 +83,13 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 		// must make copy of information
 		// from internal format for eventual user..
 		//
-		ZooEntry *pEntry = it->second;
+		ZooEntry *pEntry = (*it);
 		
 		info.m_fileList.push_back(QXpkLib::CEntryInfo());
 		QXpkLib::CEntryInfo &entry = info.m_fileList.back();
 		
 		entry.m_fileName = QString::fromStdString(pEntry->getName());
-		entry.m_Stamp = pEntry->timestamp; // use time_t directly, converted already
+		entry.m_Stamp.setTime_t(pEntry->timestamp); // use time_t directly, converted already
 		entry.m_ulUnpackedSize = pEntry->original_size;
 		entry.m_ulPackedSize = pEntry->compressed_size;
 		
@@ -99,11 +99,11 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 		}
 		else if (pEntry->method == PackLzd)
 		{
-			entry.m_packing = "Lzd";
+			entry.m_packing = "LZD";
 		}
 		else if (pEntry->method == PackLzh)
 		{
-			entry.m_packing = "Lzh";
+			entry.m_packing = "LZH";
 		}
 
 		entry.m_szComment = QString::fromStdString(pEntry->comment);
