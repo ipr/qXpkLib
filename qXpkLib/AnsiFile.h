@@ -12,8 +12,6 @@
 #include <string>
 #include <exception>
 
-#include "PathHelper.h"
-
 // exception-classes for error cases
 class IOException : public std::exception
 {

@@ -71,14 +71,16 @@ public:
 	}
 
 	// should be given in XpkProgress-object?
-	virtual bool setArchive(QString &szArchive)=0;
+	// -> changed, included in IOContext
+	//virtual bool setArchive(QString &szArchive)=0;
 
 	// list files in archive, get other metadata also..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
 	
 	// set path to uncompress files to
 	// (optionally specific file name if only one output?)
-	virtual bool setExtractPath(QString &szPath)=0;
+	// -> changed, included in IOContext/pathname
+	//virtual bool setExtractPath(QString &szPath)=0;
 	
 	// test archive integrity
 	virtual bool testArchive()=0;

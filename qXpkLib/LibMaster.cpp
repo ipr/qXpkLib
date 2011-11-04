@@ -251,6 +251,10 @@ bool CLibMaster::setOutputFile(QString &szFile)
 void CLibMaster::setOutputPath(QString &szPath)
 {
 	m_outputPath = szPath;
+	if (m_pProgress != nullptr)
+	{
+		m_pProgress->m_extractPath = m_pOutput;
+	}
 	
 	// TODO: ?
 	//m_pOutput = new CVolumeIO(szPath);

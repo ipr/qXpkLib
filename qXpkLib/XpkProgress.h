@@ -12,6 +12,7 @@
 // fwd. decl.
 class CIOBuffer;
 class CIoContext;
+class QString;
 
 class XpkProgress 
 {
@@ -39,6 +40,9 @@ public:
 	/* input and output buffers for sub-library (decruncher) */
 	CIOBuffer *pInputBuffer;
 	CIOBuffer *pOutputBuffer;
+	
+	// for multi-file archives
+	QString m_extractPath;
 
 	// TODO: 
 	// multi-file and multi-volume archives 
@@ -46,6 +50,13 @@ public:
 	// -> give master-instance to library
 	// for necessary IO-helping 
 	//CLibMaster *parent; 
+	
+	// TODO: alternate:
+	/*
+	CIoContext *getOut(QString &filePath)
+	{
+	}
+	*/
 
 
 	/* size of compressed chunk to decruncher */
