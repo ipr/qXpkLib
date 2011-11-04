@@ -22,7 +22,8 @@ SOURCES += qxpklib.cpp \
     XfdSlave.cpp \
     XpkLibrarian.cpp \
     XadMaster.cpp \
-    LibMaster.cpp
+    LibMaster.cpp \
+    PathHelper.cpp
 
 HEADERS += qxpklib.h\
         qXpkLib_global.h \
@@ -41,7 +42,10 @@ HEADERS += qxpklib.h\
     xadLibraryBase.h \
     xfdLibraryBase.h \
     LibMaster.h \
-    XpkCapabilities.h
+    XpkCapabilities.h \
+    PathHelper.h
+
+
 
 
 

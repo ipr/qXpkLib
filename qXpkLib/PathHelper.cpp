@@ -1,16 +1,17 @@
 //////////////////////////////////////
 //
-// AnsiFile.cpp
+// CPathHelper : separated from AnsiFile for easier reuse
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
 
-#include "AnsiFile.h"
+#include "PathHelper.h"
 
 #include <direct.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 
 // expects path only without file name
 bool CPathHelper::MakePath(const std::string &szPath)

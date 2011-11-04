@@ -12,6 +12,8 @@
 #include <string>
 #include <exception>
 
+#include "PathHelper.h"
+
 // exception-classes for error cases
 class IOException : public std::exception
 {
@@ -546,12 +548,6 @@ public:
 	}
 };
 
-class CPathHelper
-{
-public:
-	static bool MakePath(const std::string &szPath);
-	static bool MakePathToFile(const std::string &szOutFile);
-};
 
 #endif // ifndef _ANSIFILE_H_
 
