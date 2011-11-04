@@ -30,6 +30,7 @@
 // use from master-library
 // to reuse file-handling code
 #include "AnsiFile.h"
+#include "PathHelper.h"
 
 // moved stuff to separate files for clarity
 #include "crcsum.h"
@@ -41,7 +42,7 @@
 
 typedef std::vector<ZooEntry*> tEntryList;
 
-class CUnZoo
+class CUnZoo : protected CPathHelper // reuse code defined in master-library
 {
 private:
 	std::string m_szArchive; // path and name of archive-file
@@ -167,7 +168,8 @@ protected:
 
 public:
     CUnZoo(const std::string &szArchive)
-		: m_szArchive(szArchive)
+		: CPathHelper()
+		, m_szArchive(szArchive)
 		, m_nFileSize(0)
 		, m_ulTotalUnpacked(0)
 		, m_ulTotalPacked(0)
