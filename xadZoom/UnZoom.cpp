@@ -372,7 +372,7 @@ void CryptKeyBlock(int8_t *Block, int32_t Length, int8_t *Key)
 }
 
 /* oldmode == 100, 101 means direct CRC check, 200 no check */
-int32_t CheckCRC(uint8_t *buf, uint32_t size, uint32_t oldmode, uint32_t CRC, xadArchiveInfo *ai)
+int32_t CheckCRC(uint8_t *buf, uint32_t size, uint32_t oldmode, uint32_t CRC)
 {
   int32_t err = 0;
 
@@ -391,7 +391,8 @@ int32_t CheckCRC(uint8_t *buf, uint32_t size, uint32_t oldmode, uint32_t CRC, xa
   else if(oldmode)
   {
     uint16_t a;
-    if(!(err = xadHookAccess(XADM XADAC_READ, 2, &a, ai)))
+    err = xadHookAccess(XADM XADAC_READ, 2, &a);
+    if(!err)
     {
       if(xadCRC_1021_2(buf, size) != a)
         throw XADERR_CHECKSUM;
@@ -400,7 +401,8 @@ int32_t CheckCRC(uint8_t *buf, uint32_t size, uint32_t oldmode, uint32_t CRC, xa
   else
   {
     uint32_t a;
-    if(!(err = xadHookAccess(XADM XADAC_READ, 4, &a, ai)))
+    err = xadHookAccess(XADM XADAC_READ, 4, &a);
+    if(!err)
     {
       if(xadCalcCRC32(XADM XADCRC32_ID1, 0, size, buf) != a)
         throw XADERR_CHECKSUM;
@@ -411,7 +413,7 @@ int32_t CheckCRC(uint8_t *buf, uint32_t size, uint32_t oldmode, uint32_t CRC, xa
 
 /* reads lh data from current input stream and stores a pointer to
 decrunched file in *str */
-int32_t DoDecrunch(int8_t **str, uint32_t insize, uint32_t ressize, uint32_t oldmode, xadArchiveInfo *ai, uint32_t CRC)
+int32_t DoDecrunch(int8_t **str, uint32_t insize, uint32_t ressize, uint32_t oldmode, uint32_t CRC)
 {
   int32_t err = XADERR_NOMEMORY;
 
@@ -424,11 +426,11 @@ int32_t DoDecrunch(int8_t **str, uint32_t insize, uint32_t ressize, uint32_t old
     {
       xadSTRPTR mem2;
 
-      if(!(err = CheckCRC(mem, insize, oldmode, CRC, ai, xadMasterBase)))
+      if(!(err = CheckCRC(mem, insize, oldmode, CRC)))
       {
         if((mem2 = (xadSTRPTR) xadAllocVec(XADM ressize+1, XADMEMF_PUBLIC|XADMEMF_CLEAR)))
         {
-          if((err = LhDecode(mem, insize, mem2, ressize, xadMasterBase)))
+          if((err = LhDecode(mem, insize, mem2, ressize)))
             xadFreeObjectA(XADM mem2, 0);
           else
             *str = mem2;
@@ -519,7 +521,7 @@ int32_t RunDecodeOld(int8_t *src, int8_t *dest, uint32_t size, uint32_t srcsize,
   return 0;
 }
 
-int32_t DoDecrunchZoom(int8_t **str, struct TrackHeader *th, uint32_t oldmode, int8_t *pwd, xadArchiveInfo *ai)
+int32_t DoDecrunchZoom(int8_t **str, struct TrackHeader *th, uint32_t oldmode, int8_t *pwd)
 {
   int32_t err = XADERR_NOMEMORY;
 
@@ -533,7 +535,7 @@ int32_t DoDecrunchZoom(int8_t **str, struct TrackHeader *th, uint32_t oldmode, i
   
     if(!(err = xadHookAccess(XADM XADAC_READ, th->Length, mem, ai)))
     {
-      if(!(err = CheckCRC(mem, th->Length, oldmode ? 101 : 100, th->CRC, ai, xadMasterBase)))
+      if(!(err = CheckCRC(mem, th->Length, oldmode ? 101 : 100, th->CRC)))
       {
         if(pwd)
           CryptKeyBlock(mem, th->Length, pwd);
@@ -617,46 +619,30 @@ void UnPackTrack(struct TrackHeader *th, int8_t *buf, int8_t *tmp, uint32_t pos)
 
 /**************************************************************************/
 
-XADRECOGDATA(Zoom5)
-{
-  if(data[0] == 'Z' && data[1] == 'O' && data[2] == 'M' && data[3] == '5'
-  && xadCalcCRC32(XADM XADCRC32_ID1, 0, sizeof(ZoomHeader), data) == (EndGetM32(data+72)))
-    return 1;
-  else
-    return 0;
-}
-
-XADRECOGDATA(Zoom)
-{
-  if(data[0] == 'Z' && data[1] == 'O' && data[2] == 'O' && data[3] == 'M' && data[6] >= 3 
-  && xadCRC_1021_2(data, sizeof(ZoomHeader)) == EndGetM16(data+72))
-    return 1;
-  else
-    return 0;
-}
 
 /**************************************************************************/
 
 XADGETINFO(Zoom)
 {
-  struct xadDiskInfo *di;
   int32_t ret = XADERR_NOMEMORY;
   int32_t oldmode = 0;
 
-  if((di = (struct xadDiskInfo *) xadAllocObject(XADM XADOBJ_DISKINFO,
-  XAD_OBJPRIVINFOSIZE, sizeof(struct ZoomHeader), TAG_DONE)))
+	xadDiskInfo *di = (xadDiskInfo *) xadAllocObject(XADM XADOBJ_DISKINFO,
+  XAD_OBJPRIVINFOSIZE, sizeof(ZoomHeader), TAG_DONE);
+  if(!di)
   {
-    struct ZoomHeader *zh;
+	throw XADERR_NOMEMORY;
+  }
 
     ai->xai_DiskInfo = di;
-    zh = (struct ZoomHeader *) di->xdi_PrivateInfo;
+    ZoomHeader *zh = (ZoomHeader *) di->xdi_PrivateInfo;
 
-    if(!(ret = xadHookAccess(XADM XADAC_READ, sizeof(struct ZoomHeader), zh, ai)))
+    if(!(ret = xadHookAccess(XADM XADAC_READ, sizeof(ZoomHeader), zh, ai)))
     {
       if(zh->HeaderID == 0x5A4F4F4D)
         oldmode = 1;
 
-      if(!(ret = CheckCRC(zh, sizeof(struct ZoomHeader), oldmode, 0, ai,
+      if(!(ret = CheckCRC(zh, sizeof(ZoomHeader), oldmode, 0, ai,
       xadMasterBase)))
       {
         if(zh->Encrypted)
@@ -707,13 +693,13 @@ XADGETINFO(Zoom)
 				throw XADERR_NOMEMORY;
 			  }
           
-              xadSTRPTR buf;
+              char *buf;
               if(di->xdi_TextInfo)
                 di->xdi_TextInfo->xti_Next = ti;
               else
                 di->xdi_TextInfo = ti;
 
-              if((buf = (xadSTRPTR) xadAllocVec(XADM 80+22, XADMEMF_CLEAR|XADMEMF_PUBLIC)))
+              if((buf = (char*)xadAllocVec(XADM 80+22, XADMEMF_CLEAR|XADMEMF_PUBLIC)))
               {
                 struct xadDate xd;
                 xadSTRPTR Block;
@@ -725,20 +711,23 @@ XADGETINFO(Zoom)
 
                 while(Length-- > 0)
                 {
-                  root = (((root * EndGetM32(zn.DateStamp+4)) & 0xFFFFFF)
-                  + EndGetM32(zn.DateStamp)) & 0xFFFFFF;
+                  root = (((root * EndGetM32(zn.DateStamp+4)) & 0xFFFFFF) + EndGetM32(zn.DateStamp)) & 0xFFFFFF;
                   Tmp = root % 256;
                   *Block++ ^= Tmp;
                 }
 
                 ti->xti_Text = buf;
                 ti->xti_Size = 80+21;
+                
                 xadConvertDates(XADM XAD_DATEDATESTAMP, &zn.DateStamp,
                 XAD_GETDATEXADDATE, &xd, TAG_DONE);
+                
+                /*
                 sprintf(buf, "%02ld.%02ld.%04ld %02ld:%02ld:%02ld\n\n",
                 (uint32_t)xd.xd_Day, (uint32_t)xd.xd_Month,
                 (uint32_t)xd.xd_Year, (uint32_t)xd.xd_Hour,
                 (uint32_t)xd.xd_Minute, (uint32_t)xd.xd_Second);
+                */
 
                 xadCopyMem(XADM (xadPTR) &zn.Note, buf+21, 80);
               }
@@ -892,21 +881,6 @@ struct LhPakHead {
   uint8_t              LengthComment;  /* 2B */
 };
 
-XADRECOGDATA(LhPak)
-{
-  if(((uint32_t *)data)[0] == 0x3F3 /* HUNK_HEADER */)
-  {
-    if(((uint32_t *)data)[10] == 0x4C534658 &&
-       ((uint32_t *)data)[12] == 0x2C790000 &&
-       ((uint32_t *)data)[14] == 0x01144AAA &&
-       ((uint32_t *)data)[15] == 0x00AC6600 &&
-       ((uint32_t *)data)[16] == 0x001841EA)
-    {
-      return 1;
-    }
-  }
-  return 0;
-}
 
 /* maybe there are some errors in that code, not tested yet */
 XADGETINFO(LhPak)
@@ -1048,27 +1022,6 @@ XADUNARCHIVE(LhPak)
 
 /**************************************************************************/
 
-XADRECOGDATA(PCompPACK)
-{
-  if(*((uint32_t *) data) == 0x5041434B)
-  {
-    uint32_t i;
-
-    for(i = 4; i < size; ++i)
-    {
-      if(data[i] == '\n')
-      {
-        if(++i < size && data[i]) /* too large file size */
-          return 0;
-        return 1;
-      }
-      else if((data[i] & 0x7F) < 32) /* printable ASCII name */
-        return 0;
-    }
-    return 1;
-  }
-  return 0;
-}
 
 XADGETINFO(PCompPACK)
 {
@@ -1173,21 +1126,6 @@ XADUNARCHIVE(PCompPACK)
 
 /**************************************************************************/
 
-XADRECOGDATA(SOmni)
-{
-  if(((uint32_t *)data)[0] == 0x3F3 /* HUNK_HEADER */)
-  {
-    if(((uint32_t *)data)[10] == 0x42ADFFF4 &&
-       ((uint32_t *)data)[12] == 0x00044EAE &&
-       ((uint32_t *)data)[14] == 0x4AAC00AC &&
-       ((uint32_t *)data)[15] == 0x67026014 &&
-       ((uint32_t *)data)[16] == 0x41EC005C)
-    {
-      return 1;
-    }
-  }
-  return 0;
-}
 
 XADGETINFO(SOmni)
 {
@@ -1286,21 +1224,6 @@ XADGETINFO(SOmni)
 
 /**************************************************************************/
 
-XADRECOGDATA(LhSFX)
-{
-  if(((uint32_t *)data)[0] == 0x3F3 /* HUNK_HEADER */)
-  {
-    if(((uint32_t *)data)[10] == 0x43F90000 &&
-       ((uint32_t *)data)[12] == 0x00000318 &&
-       ((uint32_t *)data)[14] == 0x02EC2C79 &&
-       ((uint32_t *)data)[15] == 0x00000004 &&
-       ((uint32_t *)data)[16] == 0x4EAEFDD8)
-    {
-      return 1;
-    }
-  }
-  return 0;
-}
 
 struct LhSFXData {
   uint32_t Size;
@@ -1385,162 +1308,89 @@ XADUNARCHIVE(LhSFX)
   return err;
 }
 
-XADCLIENT(LhSFX) {
-  XADNEXTCLIENT,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  SOMNI_VERSION,
-  SOMNI_REVISION,
-  100,
-  XADCF_FILEARCHIVER|XADCF_FREEFILEINFO,
-  XADCID_LHSFX,
-  "LhSFX",
-  XADRECOGDATAP(LhSFX),
-  XADGETINFOP(LhSFX),
-  XADUNARCHIVEP(LhSFX),
-  NULL
-};
 
-XADCLIENT(SOmni) {
-  (struct xadClient *) &LhSFX_Client,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  SOMNI_VERSION,
-  SOMNI_REVISION,
-  100,
-  XADCF_FILEARCHIVER|XADCF_FREEFILEINFO,
-  XADCID_SOMNI,
-  "S-Omni",
-  XADRECOGDATAP(SOmni),
-  XADGETINFOP(SOmni),
-  XADUNARCHIVEP(PCompPACK),
-  NULL
-};
 
-XADCLIENT(PCompPACK) {
-  (struct xadClient *) &SOmni_Client,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  PCOMP_VERSION,
-  PCOMP_REVISION,
-  50,
-  XADCF_FILEARCHIVER|XADCF_FREEFILEINFO,
-  XADCID_PCOMPARC,
-  "PCompress PACK",
-  XADRECOGDATAP(PCompPACK),
-  XADGETINFOP(PCompPACK),
-  XADUNARCHIVEP(PCompPACK),
-  NULL
-};
+ZoomType CUnZoom::getType(CReadBuffer *buf)
+{
+	uint8_t *buffer = buf->GetBegin();
+	if (buffer[0] == 'Z'
+		&& buffer[1] == 'O'
+		&& buffer[2] == 'M'
+		&& buffer[3] == '5')
+	{
+		return ZOOM5;
+	}
+	else if (buffer[0] == 'Z'
+		&& buffer[1] == 'O'
+		&& buffer[2] == 'O'
+		&& buffer[3] == 'M')
+	{
+		return ZOOM;
+	}
+	
+	// check for executable header -> self-extracting variations
+	if (getULong(buffer) == 0x3F3) /* HUNK_HEADER */
+	{
+		if (getULong(buffer+10*sizeof(uint32_t)) == 0x43F90000
+			&& getULong(buffer+12*sizeof(uint32_t)) == 0x00000318
+			&& getULong(buffer+14*sizeof(uint32_t)) == 0x02EC2C79
+			&& getULong(buffer+15*sizeof(uint32_t)) == 0x00000004
+			&& getULong(buffer+16*sizeof(uint32_t)) == 0x4EAEFDD8)
+		{
+			return LHSFX;
+		}
+		else if (getULong(buffer+10*sizeof(uint32_t)) == 0x42ADFFF4 
+			&& getULong(buffer+12*sizeof(uint32_t)) == 0x00044EAE 
+			&& getULong(buffer+14*sizeof(uint32_t)) == 0x4AAC00AC 
+			&& getULong(buffer+15*sizeof(uint32_t)) == 0x67026014 
+			&& getULong(buffer+16*sizeof(uint32_t)) == 0x41EC005C)
+		{
+			return SOMNI;
+		}
+		else if (getULong(buffer+10*sizeof(uint32_t)) == 0x4C534658 
+			&& getULong(buffer+12*sizeof(uint32_t)) == 0x2C790000 
+			&& getULong(buffer+14*sizeof(uint32_t)) == 0x01144AAA 
+			&& getULong(buffer+15*sizeof(uint32_t)) == 0x00AC6600 
+			&& getULong(buffer+16*sizeof(uint32_t)) == 0x001841EA)
+		{
+			return LHPAK;
+		}
+	}
+	
+	if (getULong(buffer) == 0x5041434B)
+	{
+		/*
+		uint32_t i = 4;
+	    for (; i < buf->GetSize(); ++i)
+	    {
+			if(data[i] == '\n')
+			{
+				if(++i < buf->GetSize() && data[i] != 0) // too large file size 
+					return 0;
+				return 1;
+			}
+			else if((data[i] & 0x7F) < 32) // printable ASCII name 
+				return 0;
+			}
+	    }
+	    */
+		return PCOMPPAK;
+	}
+	
+	return Unknown;
+}
 
-XADCLIENT(LhPak) {
-  (struct xadClient *) &PCompPACK_Client,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  LHPAK_VERSION,
-  LHPAK_REVISION,
-  100,
-  XADCF_FILEARCHIVER|XADCF_FREEFILEINFO,
-  XADCID_LHPAK,
-  "LhPak SFX",
-  XADRECOGDATAP(LhPak),
-  XADGETINFOP(LhPak),
-  XADUNARCHIVEP(LhPak),
-  NULL
-};
-
-XADCLIENT(Zoom5) {
-  (struct xadClient *) &LhPak_Client,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  ZOOM_VERSION,
-  ZOOM_REVISION,
-  76,
-  XADCF_DISKARCHIVER|XADCF_FREEDISKINFO|XADCF_FREETEXTINFO|XADCF_FREETEXTINFOTEXT,
-  XADCID_ZOOM5,
-  "Zoom 5",
-  XADRECOGDATAP(Zoom5),
-  XADGETINFOP(Zoom),
-  XADUNARCHIVEP(Zoom),
-  NULL
-};
-
-XADFIRSTCLIENT(Zoom) {
-  (struct xadClient *) &Zoom5_Client,
-  XADCLIENT_VERSION,
-  XADMASTERVERSION,
-  ZOOM_VERSION,
-  ZOOM_REVISION,
-  76,
-  XADCF_DISKARCHIVER|XADCF_FREEDISKINFO|XADCF_FREETEXTINFO|XADCF_FREETEXTINFOTEXT,
-  XADCID_ZOOM,
-  "Zoom",
-  XADRECOGDATAP(Zoom),
-  XADGETINFOP(Zoom),
-  XADUNARCHIVEP(Zoom),
-  NULL
-};
 
 bool CUnZoom::unpack()
 {
-	// for now, just file-input (buffer later)
-	if (m_sourceFile.length() == 0)
-	{
-		throw IOException("Input was not given");
-	}
-	// for now, just file-input (buffer later)
-	if (m_destFile.length() == 0)
-	{
-		throw IOException("Output was not given");
-	}
+	m_pInputBuffer.SetCurrentPos(0); // update later..
 
-	// just read it to buffer, should not be too large..
-	// TODO: should check type before reading entirely..?
-	if (m_sourceFile.length() > 0)
-	{
-		CAnsiFile archive(m_sourceFile);
-		if (archive.IsOk() == false)
-		{
-			throw ArcException("Failed opening file", m_sourceFile);
-		}
-		m_nFileSize = archive.GetSize();
-		m_ReadBuffer.PrepareBuffer(m_nFileSize, false);
-		if (archive.Read(m_ReadBuffer.GetBegin(), m_nFileSize) == false)
-		{
-			throw ArcException("Failed reading file", m_sourceFile);
-		}
-		archive.Close(); // destructor should close already..
-	}
-	// otherwise just use buffer as input
-	if (isSupported(m_ReadBuffer.GetBegin()) == false)
+	m_type = getType(m_pInputBuffer);
+	if (m_type == Unknown)
 	{
 		throw IOException("Unsupported file");
 	}
-	m_ReadBuffer.SetCurrentPos(0); // update later..
 
 
-
-
-	
-	
-	
-	// finally, output: write all at once when ready (less IO)
-	if (m_destFile.length() > 0)
-	{
-		CAnsiFile output(m_destFile, true);
-		if (output.IsOk() == false)
-		{
-			throw ArcException("Failed opening file", m_destFile);
-		}
-		// check where to keep actual used size in bytes..
-		// (buffer may be larger for overrun)
-		if (output.Write(m_DecrunchBuffer.GetBegin(), m_DecrunchBuffer.GetSize()) == false)
-		{
-			throw ArcException("Failed writing file", m_destFile);
-		}
-		output.Flush();
-		output.Close();
-	}
-	// otherwise just expect user to access the buffer..
 }
 
