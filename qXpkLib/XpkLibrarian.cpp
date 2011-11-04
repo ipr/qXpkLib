@@ -97,7 +97,35 @@ QString CXpkLibrarian::getLibName(QString &szLib, QString &szPath)
 
 }
 
+bool CXpkLibrarian::loadLib(QString &szLib)
+{
+	if (m_SubLib.isLoaded() == true)
+	{
+		m_SubLib.unload();
+	}
+
+	m_libName = getLibName(szLib, getLibPath());
+	m_SubLib.setFileName(m_libName);
+	if (m_SubLib.load() == false)
+	{
+		throw ArcException("Failed locating library", m_libName.toStdString());
+	}
+	return true;
+}
+
 ////////////// public methods
+
+CXpkLibrarian::CXpkLibrarian(QObject *parent)
+ : QObject(parent)
+ , m_SubLib(parent)
+ , m_libName()
+{
+}
+
+CXpkLibrarian::~CXpkLibrarian()
+{
+	m_SubLib.unload();
+}
 
 QList<QString> CXpkLibrarian::availableLibraries()
 {
@@ -109,55 +137,40 @@ QList<QString> CXpkLibrarian::availableLibraries()
 	return lstTypes;
 }
 
-xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib, QLibrary &lib)
+xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib)
 {
-	QString szLibName = getLibName(szLib, getLibPath());
-	lib.setFileName(szLibName);
-	if (lib.load() == false)
-	{
-		throw ArcException("Failed locating library", szLibName.toStdString());
-	}
+	loadLib(szLib);
 	
-	GetXpkInstance *pGetInstance = (GetXpkInstance*)lib.resolve("GetXpkInstance");
+	GetXpkInstance *pGetInstance = (GetXpkInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
-		QString szError = lib.errorString();
+		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
 	return (xpkLibraryBase*)(*pGetInstance)();
 }
 
-xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib, QLibrary &lib)
+xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib)
 {
-	QString szLibName = getLibName(szLib, getLibPath());
-	lib.setFileName(szLibName);
-	if (lib.load() == false)
-	{
-		throw ArcException("Failed locating library", szLibName.toStdString());
-	}
+	loadLib(szLib);
 	
-	GetXfdInstance *pGetInstance = (GetXfdInstance*)lib.resolve("GetXpkInstance");
+	GetXfdInstance *pGetInstance = (GetXfdInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
-		QString szError = lib.errorString();
+		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
 	return (xfdLibraryBase*)(*pGetInstance)();
 }
 
-xadLibraryBase *CXpkLibrarian::getXadInstance(QString &szLib, QLibrary &lib)
+xadLibraryBase *CXpkLibrarian::getXadInstance(QString &szLib)
 {
-	QString szLibName = getLibName(szLib, getLibPath());
-	lib.setFileName(szLibName);
-	if (lib.load() == false)
-	{
-		throw ArcException("Failed locating library", szLibName.toStdString());
-	}
+	loadLib(szLib);
 	
-	GetXadInstance *pGetInstance = (GetXadInstance*)lib.resolve("GetXpkInstance");
+	GetXadInstance *pGetInstance = (GetXadInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
-		QString szError = lib.errorString();
+		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
 	return (xadLibraryBase*)(*pGetInstance)();

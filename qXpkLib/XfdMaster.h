@@ -15,14 +15,16 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-#include <QByteArray>
-#include <QLibrary>
+//#include <QByteArray>
+//#include <QLibrary>
 
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
 
 // use typedefs from parent
 #include "qxpklib.h"
+
+#include "XpkLibrarian.h"
 
 #include "AnsiFile.h"
 #include "FileType.h"
@@ -42,7 +44,7 @@ class CXfdMaster : public QObject
 protected:
 
 	// wrapper for loading/unloading
-	QLibrary m_SubLib; 
+	CXpkLibrarian m_SubLib; 
 
 	// base-pointer (virtual) 
 	// -> load proper by archive type

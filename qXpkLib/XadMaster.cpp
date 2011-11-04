@@ -114,7 +114,7 @@ bool CXadMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 	}
 	
 	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getXadInstance(QString::fromStdString(szSubType), m_SubLib);
+	m_pSubLibrary = m_SubLib.getXadInstance(QString::fromStdString(szSubType));
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it

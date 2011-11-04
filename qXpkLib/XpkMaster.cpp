@@ -96,7 +96,7 @@ bool CXpkMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 	QString szLib = "xpk";
 	szLib.append(QString::fromStdString(szSubType));
 	
-	m_pSubLibrary = CXpkLibrarian::getXpkInstance(szLib, m_SubLib);
+	m_pSubLibrary = m_SubLib.getXpkInstance(szLib);
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it

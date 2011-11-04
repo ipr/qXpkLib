@@ -95,7 +95,7 @@ bool CXfdMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 	}
 	// try loading it
 	// load suitable sub-library?
-	m_pSubLibrary = CXpkLibrarian::getXfdInstance(QString::fromStdString(szSubType), m_SubLib);
+	m_pSubLibrary = m_SubLib.getXfdInstance(QString::fromStdString(szSubType));
 	if (m_pSubLibrary == nullptr)
 	{
 		// not supported/can't load -> can't decrunch it

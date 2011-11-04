@@ -38,15 +38,24 @@ protected:
 	typedef xfdLibraryBase *GetXfdInstance();
 	typedef xadLibraryBase *GetXadInstance();
 	
-	static QString getLibPath();
-	static QString getLibName(QString &szLib, QString &szPath);
+	// wrapper for loading/unloading
+	QLibrary m_SubLib; 
+	QString m_libName;
+	
+	QString getLibPath();
+	QString getLibName(QString &szLib, QString &szPath);
+	
+	bool loadLib(QString &szLib);
 	
 public:
-	static QList<QString> availableLibraries();
+	CXpkLibrarian(QObject *parent = 0);
+	virtual ~CXpkLibrarian();
 	
-	static xpkLibraryBase *getXpkInstance(QString &szLib, QLibrary &lib);
-	static xfdLibraryBase *getXfdInstance(QString &szLib, QLibrary &lib);
-	static xadLibraryBase *getXadInstance(QString &szLib, QLibrary &lib);
+	QList<QString> availableLibraries();
+	
+	xpkLibraryBase *getXpkInstance(QString &szLib);
+	xfdLibraryBase *getXfdInstance(QString &szLib);
+	xadLibraryBase *getXadInstance(QString &szLib);
 };
 
 
