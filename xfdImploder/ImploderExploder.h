@@ -38,12 +38,15 @@ struct tImploderHeader
 	uint32_t m_id;
 	uint32_t m_out_len;
 	uint32_t m_end_off;
+
+	uint32_t m_comp_len; // <- filled in later..
 	
 	tImploderHeader()
 	{
 		m_id = 0;
 		m_out_len = 0;
 		m_end_off = 0;
+		m_comp_len = 0;
 	}
 
 	// must be 12 bytes or more (caller must check)
@@ -104,13 +107,23 @@ protected:
 	// metadata at start of file (header)
 	struct tImploderHeader m_HeaderMetadata;
 	
+	//uint32_t compressed_size; // <- added to header metadata
+	//uint32_t uncompressed_size; // <- already in header metadata
+
+	void init_matchbase(uint32_t *match_base, const uint8_t *table) const
+	{
+		for (uint32_t x = 0; x < 8; x++) 
+		{
+			match_base[x] = (table[x*2] << 8) | table[x*2 + 1];
+		}
+	}
+	
 	//inline void Explode_Getbit(uchar &bit_buffer, uchar &bit, uchar &bit2);
 
 	// TODO: use member buffers instead..	
-	bool explode(unsigned char *buffer,
-		    unsigned char *table,
-		    unsigned int comp_len,
-		    unsigned int uncomp_len);
+	bool explode(uint8_t *buffer,
+				uint8_t *table,
+				uint32_t comp_len);
 	
 	
 	// actual decompressing
@@ -131,12 +144,21 @@ protected:
 			m_out_list.ptr = 0;
 		}
 	}
+
+	//CIOBuffer *m_pInput;
+	//CIOBuffer *m_pOutput;
 	
 public:
+	/*
+	CImploderExploder(CIOBuffer *pInput)
+		: m_pInput(pInput)
+		*/
     CImploderExploder()
 		: m_HeaderMetadata()
 		, m_in_list()
 		, m_out_list()
+		//, compressed_size(0)
+		//, uncompressed_size(0)
 	{}
 	~CImploderExploder()
 	{

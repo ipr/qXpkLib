@@ -17,19 +17,8 @@
 
 void CPowerPacker::UnPowerpack()
 {
-	uint bit = 0;
-	uint len = 0;
-	uint ptr = 0;
-
-	ulong code = 0;
-	uint shift = 32;
-
-	// pointers for processing
-	m_in_list.pos = m_in_list.ptr + m_in_list.size; 
-	m_in_list.pos_end = m_in_list.ptr;
-	m_out_list.pos = m_out_list.ptr + m_out_list.size; 
-	m_out_list.pos_end = m_out_list.ptr;
-
+	uint32_t code = 0;
+	uint32_t shift = 32;
 	if (Peek(m_MetaBits.bitrot, m_in_list, code, shift) == false)
 	{
 		return;
@@ -41,7 +30,8 @@ void CPowerPacker::UnPowerpack()
 		return;
 	}
 
-	uint protect = code >> 31;
+	uint32_t len = 0;
+	uint32_t protect = code >> 31;
 	for(;;) 
 	{
 		if (Peek(3, m_in_list, code, shift) == false)
@@ -49,7 +39,7 @@ void CPowerPacker::UnPowerpack()
 			return;
 		}
 
-		bit = code >> 31; 
+		uint32_t bit = code >> 31; 
 		Shift(1, code, shift);
 		if(bit == protect) 
 		{
@@ -104,7 +94,7 @@ void CPowerPacker::UnPowerpack()
 			return;
 		}
 
-		ptr = (code >> (32 - bit)) + 1;
+		uint32_t ptr = (code >> (32 - bit)) + 1;
 
 		Shift(bit, code, shift);
 
@@ -132,7 +122,7 @@ void CPowerPacker::UnPowerpack()
 			throw PPException("bad string length");
 		}
 
-		uchar *str = m_out_list.pos + ptr;
+		uint8_t *str = m_out_list.pos + ptr;
 		while(len > 0) 
 		{
 			*--m_out_list.pos = *--str; /* copy string */
@@ -146,7 +136,7 @@ void CPowerPacker::UnPowerpack()
 	}
 }
 
-void CPowerPacker::LoadBuffer(const uchar *pData, const ulong nSize)
+void CPowerPacker::LoadBuffer(const uint8_t *pData, const uint32_t nSize)
 {
 	// keep first four, check type
 	::memcpy(m_Meta.meta, pData, 4);
@@ -170,7 +160,7 @@ void CPowerPacker::LoadBuffer(const uchar *pData, const ulong nSize)
 	}
 
 	// allocate separate buffer (should remove this..)
-	m_in_list.ptr = (uchar*)malloc(m_in_list.size);
+	m_in_list.ptr = (uint8_t*)malloc(m_in_list.size);
 	::memcpy(m_in_list.ptr, pData + 8, m_in_list.size);
 
 	// size is in last 4 bytes?
@@ -191,10 +181,16 @@ void CPowerPacker::LoadBuffer(const uchar *pData, const ulong nSize)
 	}
 
 	// allocate output (TODO: change..)
-	m_out_list.ptr = (uchar*)malloc(m_out_list.size);
+	m_out_list.ptr = (uint8_t*)malloc(m_out_list.size);
 	if (m_out_list.ptr == 0) 
 	{
 		throw PPException("failed to allocate memory for output");
 	}
+	
+	// pointers for unpacking
+	m_in_list.pos = m_in_list.ptr + m_in_list.size; 
+	m_in_list.pos_end = m_in_list.ptr;
+	m_out_list.pos = m_out_list.ptr + m_out_list.size; 
+	m_out_list.pos_end = m_out_list.ptr;
 }
 

@@ -45,8 +45,9 @@
 // -> change to inline method..
 // (simplifies debugging)
 /*
-void CImploderExploder::Explode_Getbit(uchar &bit_buffer, uchar &bit, uchar &bit2)
+uint8_t *CImploderExploder::Explode_Getbit(uchar &bit_buffer, uchar &bit, uchar &bit2, uint8_t *in)
 {
+	uint8_t *i = in;
 	do
 	{
 		bit = bit_buffer & 0x80;
@@ -63,14 +64,15 @@ void CImploderExploder::Explode_Getbit(uchar &bit_buffer, uchar &bit, uchar &bit
 			}
 	    }
 	} while (0);
+	return i;
 }
 */
 
-static unsigned char explode_literal_base[4] = {
+static uint8_t explode_literal_base[4] = {
   6, 10, 10, 18
 };
  
-static unsigned char explode_literal_extrabits[12] = {
+static uint8_t explode_literal_extrabits[12] = {
   1, 1, 1, 1,
   2, 3, 3, 4,
   4, 5, 7, 14
@@ -95,24 +97,24 @@ static unsigned char explode_literal_extrabits[12] = {
  * @return zero on error, non-zero on success. If successful, the
  * buffer contains the decompressed data.
  */
-bool CImploderExploder::explode(unsigned char *buffer,
-	    unsigned char *table,
-	    unsigned int comp_len,
-	    unsigned int uncomp_len)
+bool CImploderExploder::explode(uint8_t *buffer,
+							uint8_t *table,
+							uint32_t comp_len)
 {
-	unsigned char *i  = buffer + comp_len - 5; /* input pointer  */
-	unsigned char *o  = buffer + uncomp_len;   /* output pointer */
-	unsigned char *match;                      /* match pointer  */
-	unsigned char bit_buffer, bit, bit2;
-	unsigned int literal_len, match_len, selector, x, y;
-	unsigned int match_base[8];
+	// i = input pointer
+	uint8_t *i  = buffer + comp_len - 5;
+	
+	// o = output pointer
+	// TODO: should use m_out_list.ptr
+	uint8_t *out = buffer + m_HeaderMetadata.m_out_len;
+	
+	uint8_t bit_buffer, bit, bit2;
+	uint32_t literal_len, match_len, selector;
+	uint32_t match_base[8];
  
 	/* read the 'base' part of the explosion table into native byte order,
 	* for speed */
-	for (x = 0; x < 8; x++) 
-	{
-		match_base[x] = (table[x*2] << 8) | table[x*2 + 1];
-	}
+	init_matchbase(match_base, table);
  
 	/* get initial bit buffer contents, and first literal length */
 	if (comp_len & 1) 
@@ -128,188 +130,191 @@ bool CImploderExploder::explode(unsigned char *buffer,
  
 	while (1) 
 	{
-    /* copy literal run */
-    if ((o - buffer) < literal_len) 
-	{
-		throw ImplException("not enough space?");
-		//return 0; /* enough space? */
-	}
-    while (literal_len--) 
-	{
-		*--o = *--i;
-	}
+		/* copy literal run */
+		if ((out - buffer) < literal_len) 
+		{
+			throw ImplException("not enough space?");
+		}
+		while (literal_len--) 
+		{
+			*--out = *--i;
+		}
+	 
+		/* main exit point - after the literal copy */
+		if (out <= buffer) 
+		{
+			break;
+		}
  
-    /* main exit point - after the literal copy */
-    if (o <= buffer) 
-	{
-		break;
-	}
- 
-    /* static Huffman encoding of the match length and selector: 
-     * 
-     * 0     -> selector = 0, match_len = 1
-     * 10    -> selector = 1, match_len = 2
-     * 110   -> selector = 2, match_len = 3
-     * 1110  -> selector = 3, match_len = 4
-     * 11110 -> selector = 3, match_len = 5 + next three bits (5-12)
-     * 11111 -> selector = 3, match_len = (next input byte)-1 (0-254)
-     * 
-     */
-	EXPLODE_GETBIT;
-	if (bit) 
-	{
+		/* static Huffman encoding of the match length and selector: 
+		 * 
+		 * 0     -> selector = 0, match_len = 1
+		 * 10    -> selector = 1, match_len = 2
+		 * 110   -> selector = 2, match_len = 3
+		 * 1110  -> selector = 3, match_len = 4
+		 * 11110 -> selector = 3, match_len = 5 + next three bits (5-12)
+		 * 11111 -> selector = 3, match_len = (next input byte)-1 (0-254)
+		 * 
+		 */
 		EXPLODE_GETBIT;
 		if (bit) 
 		{
 			EXPLODE_GETBIT;
 			if (bit) 
 			{
-				selector = 3;
 				EXPLODE_GETBIT;
 				if (bit) 
 				{
+					selector = 3;
 					EXPLODE_GETBIT;
 					if (bit) 
 					{
-						match_len = *--i;
-						if (match_len == 0) 
+						EXPLODE_GETBIT;
+						if (bit) 
 						{
-							throw ImplException("bad input");
-							//return 0; /* bad input */
+							match_len = *--i;
+							if (match_len == 0) 
+							{
+								throw ImplException("bad input");
+								//return 0; /* bad input */
+							}
+							match_len--;
 						}
-						match_len--;
+						else 
+						{
+							match_len = 0;   EXPLODE_GETBIT; 
+							if (bit) 
+							{
+								match_len++;
+							}
+							match_len <<= 1; EXPLODE_GETBIT; 
+							if (bit) 
+							{
+								match_len++;
+							}
+							match_len <<= 1; EXPLODE_GETBIT; 
+							if (bit)
+							{
+								match_len++;
+							}
+							match_len += 5;
+						}
 					}
 					else 
 					{
-						match_len = 0;   EXPLODE_GETBIT; 
-						if (bit) 
-						{
-							match_len++;
-						}
-						match_len <<= 1; EXPLODE_GETBIT; 
-						if (bit) 
-						{
-							match_len++;
-						}
-						match_len <<= 1; EXPLODE_GETBIT; 
-						if (bit)
-						{
-							match_len++;
-						}
-						match_len += 5;
+						match_len = 4;
 					}
 				}
 				else 
 				{
-					match_len = 4;
+					selector = 2;
+					match_len = 3;
 				}
+			}
+			else
+			{
+				selector = 1;
+				match_len = 2;
+			}
+		}
+		else 
+		{
+			selector = 0;
+			match_len = 1;
+		}
+ 
+		/* another Huffman tuple, for deciding the base value (y) and number
+		 * of extra bits required from the input stream (x) to create the
+		 * length of the next literal run. Selector is 0-3, as previously
+		 * obtained.
+		 *
+		 * 0  -> base = 0,                      extra = {1,1,1,1}[selector]
+		 * 10 -> base = 2,                      extra = {2,3,3,4}[selector]
+		 * 11 -> base = {6,10,10,18}[selector]  extra = {4,5,7,14}[selector]
+		 */
+		uint32_t y = 0;
+		uint32_t x = selector;
+		EXPLODE_GETBIT;
+		if (bit) 
+		{
+			EXPLODE_GETBIT;
+			if (bit) 
+			{
+				y = explode_literal_base[x];
+				x += 8;
 			}
 			else 
 			{
-				selector = 2;
-				match_len = 3;
+				y = 2;
+				x += 4;
 			}
 		}
-		else
-		{
-			selector = 1;
-			match_len = 2;
-		}
-	}
-	else 
-	{
-		selector = 0;
-		match_len = 1;
-	}
+		x = explode_literal_extrabits[x];
  
-    /* another Huffman tuple, for deciding the base value (y) and number
-     * of extra bits required from the input stream (x) to create the
-     * length of the next literal run. Selector is 0-3, as previously
-     * obtained.
-     *
-     * 0  -> base = 0,                      extra = {1,1,1,1}[selector]
-     * 10 -> base = 2,                      extra = {2,3,3,4}[selector]
-     * 11 -> base = {6,10,10,18}[selector]  extra = {4,5,7,14}[selector]
-     */
-	y = 0;
-	x = selector;
-	EXPLODE_GETBIT;
-	if (bit) 
-	{
+		/* next literal run length: read [x] bits and add [y] */
+		literal_len = 0;
+		while (x--) 
+		{
+			literal_len <<= 1;
+			EXPLODE_GETBIT;
+			if (bit) 
+			{
+				literal_len++;
+			}
+		}
+		literal_len += y;
+ 
+		/* another Huffman tuple, for deciding the match distance: _base and
+		 * _extra are from the explosion table, as passed into the explode
+		 * function.
+		 *
+		 * 0  -> base = 1                        extra = _extra[selector + 0]
+		 * 10 -> base = 1 + _base[selector + 0]  extra = _extra[selector + 4]
+		 * 11 -> base = 1 + _base[selector + 4]  extra = _extra[selector + 8]
+		 */
+		uint8_t *match = out + 1; /* match pointer */
+		x = selector;
 		EXPLODE_GETBIT;
 		if (bit) 
 		{
-			y = explode_literal_base[x];
-			x += 8;
+			EXPLODE_GETBIT;
+			if (bit) 
+			{
+				match += match_base[selector + 4];
+				x += 8;
+			}
+			else 
+			{
+				match += match_base[selector];
+				x += 4;
+			}
 		}
-		else 
-		{
-			y = 2;
-			x += 4;
-		}
-	}
-	x = explode_literal_extrabits[x];
+		x = table[x + 16];
  
-	/* next literal run length: read [x] bits and add [y] */
-	literal_len = 0;
-	while (x--) 
-	{
-		literal_len <<= 1;
-		EXPLODE_GETBIT;
-		if (bit) 
+		/* obtain the value of the next [x] extra bits and
+		 * add it to the match offset */
+		y = 0;
+		while (x--) 
 		{
-			literal_len++;
+			y <<= 1; EXPLODE_GETBIT; 
+			if (bit) 
+			{
+				y++;
+			}
 		}
-	}
-	literal_len += y;
- 
-    /* another Huffman tuple, for deciding the match distance: _base and
-     * _extra are from the explosion table, as passed into the explode
-     * function.
-     *
-     * 0  -> base = 1                        extra = _extra[selector + 0]
-     * 10 -> base = 1 + _base[selector + 0]  extra = _extra[selector + 4]
-     * 11 -> base = 1 + _base[selector + 4]  extra = _extra[selector + 8]
-     */
-	match = o + 1;
-	x = selector;
-	EXPLODE_GETBIT;
-	if (bit) 
-	{
-		EXPLODE_GETBIT;
-		if (bit) 
+		match += y;
+	 
+		/* copy match */
+		if ((out - buffer) < match_len) 
 		{
-			match += match_base[selector + 4];
-			x += 8;
+			throw ImplException("not enough space?");
+			//return 0; /* enough space? */
 		}
-		else 
-		{
-			match += match_base[selector];
-			x += 4;
-		}
-	}
-	x = table[x + 16];
- 
-    /* obtain the value of the next [x] extra bits and
-     * add it to the match offset */
-	y = 0;
-	while (x--) 
-	{
-		y <<= 1; EXPLODE_GETBIT; 
-		if (bit) 
-		{
-			y++;
-		}
-	}
-	match += y;
- 
-    /* copy match */
-    if ((o - buffer) < match_len) 
-	{
-		throw ImplException("not enough space?");
-		//return 0; /* enough space? */
-	}
-    do { *--o = *--match; } while (match_len--);
+		do 
+		{ 
+			*--out = *--match; 
+		} 
+		while (match_len--);
 	}
  
 	/* return 1 if we used up all input bytes (as we should) */
@@ -336,7 +341,7 @@ void CImploderExploder::DeplodeImploder()
 		throw ImplException("unknown file format");
 	}
 
-	/*	
+	/*	disk-imploder: same unpacking could be used for crunched trackdisk-image?
 	if (m_HeaderMetadata.m_id == 0x44494D50)
 	{
 		if (m_HeaderMetadata.m_out_len < 4
@@ -384,16 +389,29 @@ void CImploderExploder::DeplodeImploder()
 	memcpy(&out[0x0C],    &in[0x0C], end_off - 0x0C);
 	memcpy(&out[end_off], &in[end_off + 0x0C], 4);
  
+	//m_HeaderMetadata.m_comp_len = &in[end_off + 0x12];
+	uint8_t *table = &in[end_off + 0x12];
+	
 	bool ok = false;
 	if (in[end_off + 0x10] & 0x80) 
 	{
 		out[end_off + 4] = in[end_off + 0x11];
-		ok = explode(out, &in[end_off + 0x12], end_off + 5, m_HeaderMetadata.m_out_len);
+	
+		// keep for later..	
+		m_HeaderMetadata.m_comp_len = end_off + 5;
+		ok = explode(out, 
+					table, 
+					end_off + 5);
 	}
 	else 
 	{
 		out[end_off - 1] = in[end_off + 0x11];
-		ok = explode(out, &in[end_off + 0x12], end_off + 4, m_HeaderMetadata.m_out_len);
+		
+		// keep for later..	
+		m_HeaderMetadata.m_comp_len = end_off + 4;
+		ok = explode(out, 
+					table, 
+					end_off + 4);
 	}
   
 	if (ok == false)
@@ -410,7 +428,8 @@ void CImploderExploder::LoadBuffer(const uint8_t *pData, const uint32_t nSize)
 		throw ImplException("too short to be a FImp file");
 	}
 	
-	// allocate separate buffer (should remove this..)
+	// allocate separate buffer (should remove this..),
+	// keep copy for now
 	m_in_list.ptr = (uint8_t*)malloc(m_in_list.size);
 	::memcpy(m_in_list.ptr, pData, m_in_list.size);
 }

@@ -22,6 +22,9 @@
 #ifndef _POWERPACKER_H_
 #define _POWERPACKER_H_
 
+// use standard typedefs whenever possible
+#include <stdint.h>
+
 #include <string>
 #include <exception>
 
@@ -42,10 +45,10 @@ public:
 
 
 // typedefs (note: check sizes..)
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long ulong;
+//typedef unsigned char uchar;
+//typedef unsigned short ushort;
+//typedef unsigned int uint;
+//typedef unsigned long ulong;
 
 // buffer descriptor for in/out buffers
 struct tBuffer 
@@ -59,12 +62,12 @@ struct tBuffer
 		pos_end = NULL;
 	};
 
-	uchar *ptr; // buffer of data
-	ulong size; // size of buffer
+	uint8_t *ptr; // buffer of data
+	uint32_t size; // size of buffer
 
 	// position pointers for decompression
-	uchar *pos;
-	uchar *pos_end;
+	uint8_t *pos;
+	uint8_t *pos_end;
 };
 
 // metadata used during uncompressing
@@ -79,11 +82,11 @@ struct tMetaBits
 		bitrot = 0;
 	};
 
-	uint ptrbit_2;
-	uint ptrbit_3;
-	uint ptrbit_4;
-	uint ptrbit_5;
-	uint bitrot;
+	uint32_t ptrbit_2;
+	uint32_t ptrbit_3;
+	uint32_t ptrbit_4;
+	uint32_t ptrbit_5;
+	uint32_t bitrot;
 
 	// note: there are five levels of compression supported,
 	// these check that file has one of those and that it can be unpacked:
@@ -117,7 +120,7 @@ struct tHeaderMetaData
 		::memset(meta, 0, 14);
 	};
 
-	uchar meta[14];
+	uint8_t meta[14];
 
 	// check file type ID if is supported file type
 	bool IsSupportedFiletype()
@@ -138,7 +141,7 @@ struct tHeaderMetaData
 	}
 
 	// get uncompressed size of file for buffer allocation
-	ulong GetUncompressedSize()
+	uint32_t GetUncompressedSize()
 	{
 		return (meta[10] << 16 | meta[11] << 8 | meta[12]);
 	}
@@ -169,8 +172,8 @@ protected:
 	struct tMetaBits m_MetaBits;
 
 	// table for reversing bits in a byte
-	uchar m_rev_table[256];
-	char m_rev_build;
+	uint8_t m_rev_table[256];
+	int8_t m_rev_build;
 
 	/* build a table to reverse the bits in a byte */
 	void rev_init()
@@ -180,9 +183,9 @@ protected:
 			return;
 		}
 
-		for (uint a = 0; a < 256; a++) 
+		for (uint32_t a = 0; a < 256; a++) 
 		{
-			uchar bit = a;
+			uint8_t bit = a;
 			bit = (bit & 0x0f) << 4 | (bit >> 4 & 0x0f);
 			bit = (bit & 0x33) << 2 | (bit >> 2 & 0x33);
 			bit = (bit & 0x55) << 1 | (bit >> 1 & 0x55);
@@ -191,7 +194,7 @@ protected:
 		m_rev_build = 1;
 	};
 
-	inline bool Peek(uint x, tBuffer &in_list, ulong &code, uint &shift) const
+	inline bool Peek(uint32_t x, tBuffer &in_list, uint32_t &code, uint32_t &shift) const
 	{
 		while (shift > 32 - (x)) 
 		{
@@ -206,14 +209,14 @@ protected:
 		return true;
 	};
 
-	inline void Shift(uint x, ulong &code, uint &shift) const
+	inline void Shift(uint32_t x, uint32_t &code, uint32_t &shift) const
 	{
 		shift += (x); 
 		code <<= (x); 
 		code &= 0xffffffff;
 	};
 
-	void BitSwitch(uint &bit, uint &len, ulong &code, uint &shift) const
+	void BitSwitch(uint32_t &bit, uint32_t &len, uint32_t &code, uint32_t &shift) const
 	{
 		bit = code >> 29;
 		switch (bit) 
@@ -259,10 +262,16 @@ protected:
 	// decompression, unpacking
 	void UnPowerpack();
 
-	void LoadBuffer(const uchar *pData, const ulong nSize);
+	void LoadBuffer(const uint8_t *pData, const uint32_t nSize);
 
+	//CIOBuffer *m_pInput;
+	//CIOBuffer *m_pOutput;
 	
 public:
+	/*
+	CPowerPacker(CIOBuffer *pInput)
+		: m_pInput(pInput)
+		*/
 	CPowerPacker(void)
 		: m_rev_build(0)
 		, m_in_list()
@@ -279,7 +288,7 @@ public:
 	}
 
 	// allow unpacking already read file from a buffer
-	bool UnpackBuffer(const uchar *pData, const ulong nSize)
+	bool UnpackBuffer(const uint8_t *pData, const uint32_t nSize)
 	{
 		LoadBuffer(pData, nSize);
 		UnPowerpack();
@@ -287,11 +296,11 @@ public:
 	}
 
 	// access unpacked data
-	uchar *GetUnpackedData()
+	uint8_t *GetUnpackedData()
 	{
 		return m_out_list.ptr;
 	}
-	ulong GetUnpackedSize()
+	uint32_t GetUnpackedSize()
 	{
 		return m_out_list.size;
 	}
