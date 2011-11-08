@@ -511,39 +511,72 @@ UJTable:
 	cmp.l	a2,a0			; |
 	blt	Compressed		; |
 	rts				;
-
+*/
 //;---------------------------------------
 FJTable:
-	moveq	#0,d0
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
+	//moveq	#0,d0
+	D0.l = 0;
+	
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	
+	// copy&increment loop
+	for (int i = 0; i < 12; i++)
+	{
+		A0.setb(A1);
+	}
+	//Tab15; // fallthrough (below)
 
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
+Tab15:
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	//move.b	(a1)+,(a0)+		; |
+	
+	for (int i = 0; i < 3; i++)
+	{
+		A0.setb(A1);
+	}
+	
+	//tst.b	d0
+	if (D0.b != 0)
+	{
+		//bne.s	TestCompressed
+		goto TestCompressed;
+	}
 
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-
-	move.b	(a1)+,(a0)+		; |
-Tab15	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-	tst.b	d0
-	bne.s	TestCompressed
-
-	dbra	d5,1$
-	moveq	#7,d5
-	move.l	(a5)+,d4
-	add.l	d4,d4
+/*
+	//dbra	d5,1$
+	while ((D5.l--) > -1)
+	{
+		goto 1$;
+	
+	}
+	
+	//moveq	#7,d5
+	D5.l = 7;
+	//move.l	(a5)+,d4
+	D4.l = A5.l();
+	//add.l	d4,d4
+	D4.l += D4.l;
 1$
-	moveq	#30,d0
-	and.w	d4,d0
-	roxr.l	#4,d4
+	//moveq	#30,d0
+	D0.l = 30;
+	//and.w	d4,d0
+	D0.w &= D4.w;
+	//roxr.l	#4,d4
+	XfdSlave::roxr(4,D4);
 
 	jmp	FJTable(pc,d0.w)
 */
