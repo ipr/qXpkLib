@@ -299,7 +299,8 @@ bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut,
 	//move.l	d0,a3
 	// ?? why is this in address-register?
 	// running out of data registers..?
-	// it's never changed anyway so use constant instead
+	// it's never changed anyway 
+	// -> use constant instead
 	//A3.src = 16; 
 	
 	//lea	modes,a6
@@ -326,7 +327,7 @@ bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut,
 	D7.l = 0;
 
 	//bsr	TestCompressed
-	goto TestCompressed;
+	goto TestCompressed; // uncond.
 	
 	//move.l	a0,d0
 	D0.l = A0.src; // ?? position for length? -> must change for 64-bit..
@@ -345,50 +346,109 @@ bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut,
 //; d6 xbits_data		a6 table
 //; d7 -xbits_in		a7
 
-/*
 Compressed:
-	dbra	d5,NoRead4		; 70	Read 4 bits (mode)
-	moveq	#7,d5			; 8
-	move.l	(a5)+,d4		; |
-	add.l	d4,d4			; |
-NoRead4:				;
-	moveq	#30,d0			; 70
-	and.w	d4,d0			; |
-	roxr.l	#4,d4			; |
-					; |
-	move.w	0(a6,d0.w),d1		; |
-					; |
-	clr.w	d6			; |
-	rol.l	d1,d6			; |	Read n bits (offset)
-	add.w	d1,d7			; |     ble jumps on N|(Z^V)
-	ble.s	NoReadN			; |	the add does never set V
-	moveq	#0,d1			; 35
-	move.w	(a5)+,d1		; |
-	asl.l	d7,d1			; |	
-	swap	d1			; |
-	or.l	d1,d6			; |
+	//dbra	d5,NoRead4		; 70	Read 4 bits (mode)
+	while ((D5.l--) > -1) // decr. test&branch
+	{
+		goto NoRead4;
+	}
+	
+	//moveq	#7,d5			; 8
+	D5.l = 7;
+	
+	//move.l	(a5)+,d4		; |
+	D4.l = A5.l(); // refence, copy & increment offset
+	
+	//add.l	d4,d4			; |
+	D4.l += D4.l;
+	
+NoRead4:				
+	//moveq	#30,d0			; 70
+	D0.l = 30;
+	//and.w	d4,d0			; |
+	D0.w &= D4.w;
+	
+	//roxr.l	#4,d4			; |
+	XfdSlave::roxl(4, D4); // 
+	
+	//move.w	0(a6,d0.w),d1		; |
+	D1.w = A6.w(d0.w);
+	
+	//clr.w	d6			; |
+	D6.w = 0;
+	
+	//rol.l	d1,d6			; |	Read n bits (offset)
+	XfdSlave::rol(D1.l, D6);
+	
+	//add.w	d1,d7			; |     ble jumps on N|(Z^V)
+	D7.w += D1.w;
+	
+	if ((D7.w - D1.w) <= 0) // branch (less or equal)
+	{
+		//ble.s	NoReadN			; |	the add does never set V
+		goto NoReadN;
+	}
+	
+	//moveq	#0,d1			; 35
+	D1.l = 0;
+	
+	//move.w	(a5)+,d1		; |
+	D1.w = A5.w(); // ref. move & increment address
+	
+	// arith. shift left:
+	// uses ccrc register bits as carry/overflow -> implement in base	
+	//asl.l	d7,d1			; |	
+	XfdSlave::asl(D7.l, D1); // TODO: finish this
+	//swap	d1			; |
+	XfdSlave::swap(D1); // swap halves of register
+	
+	//or.l	d1,d6			; |
+	D6.l |= D1.l; //
 	
 	//sub.w	a3,d7			; |
 	D7.w -= A3_val; // replaced with constant (see before)
 	
-NoReadN:				;
-	move.l	a0,a1			; 70
-	add.w	32(a6,d0.w),d6		; |
-	sub.w	d6,a1			; |
-					; |
-	move.w	64(a6,d0.w),d0		; |
-	jmp	TwoBitLen(pc,d0.w)
+NoReadN:				
+	//move.l	a0,a1			; 70
+	A1.src = A0.src; // address as-is
+	
+	//add.w	32(a6,d0.w),d6		; |
+	D6.w += A6.w(D0.w+32); // offset&add to register
+	
+	//sub.w	d6,a1			; |
+	A1.src -= D6.w;
+	
+	//move.w	64(a6,d0.w),d0		; |
+	D0.w = A6.w(D0.w+64);
+	
+/*
+	jmp	TwoBitLen(pc,d0.w) //
 
 TwoBitLen:
-	move.b	(a1)+,(a0)+		; 21
-	move.b	(a1)+,(a0)+		; |
-	move.b	(a1)+,(a0)+		; |
-					; |
-	moveq	#0,d0			; |	Read 2 bits (clen1)
-	add.w	d3,d3			; |
-	bne.s	NoRead2x		; |
-	move.w	(a5)+,d3		; 1
+	//move.b	(a1)+,(a0)+		; 21
+	A0.setb(A1); // copy&increment
+	//move.b	(a1)+,(a0)+		; |
+	A0.setb(A1); // copy&increment
+	//move.b	(a1)+,(a0)+		; |
+	A0.setb(A1); // copy&increment
+	
+	//moveq	#0,d0			; |	Read 2 bits (clen1)
+	D0.l = 0;
+	//add.w	d3,d3			; |
+	D3.w += D3.w;
+	
+	if (D3.w != 0)
+	{
+		//bne.s	NoRead2x		; |
+		goto NoRead2x;
+	}
+	
+	//move.w	(a5)+,d3		; 1
+	D3.w = A5.w(); // copy&increment
+	
+	// add extended: use ccr extend-bit..
 	addx.w	d3,d3			; |
+	
 NoRead2x:				;
 	addx.w	d0,d0			; 9
 	add.w	d3,d3			; |
