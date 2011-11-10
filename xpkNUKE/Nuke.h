@@ -12,6 +12,7 @@
 #define NUKE_H
 
 #include <stdint.h>
+#include <limits.h>
 
 // from master-project for buffer-class
 #include "AnsiFile.h"

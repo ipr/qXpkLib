@@ -197,14 +197,15 @@ NoReadN:
 	
 	//move.w	64(a6,d0.w),d0		; |
 	D0.w = A6.w(D0.w+64);
-	
+
+	// no need, only place using -> combine	
 	// jump instead of branch when absolute address 
 	// or offset longer than relative branch allows
 	// 
 	//jmp	TwoBitLen(pc,d0.w) //
-	goto TwoBitLen;
+	//goto TwoBitLen;
+//TwoBitLen:
 
-TwoBitLen:
 	//move.b	(a1)+,(a0)+		; 21
 	A0.setb(A1); // copy&increment
 	//move.b	(a1)+,(a0)+		; |
@@ -231,16 +232,20 @@ TwoBitLen:
 	
 NoRead2x:				;
 	addx.w	d0,d0			; 9
+
 	//add.w	d3,d3			; |
 	D3.w += D3.w;
+	
 	addx.w	d0,d0			; |
 
 	//add.w	d0,d0
 	D0.w += D0.w;
+	
+	// no need, only place using -> combine
 	//jmp	CJTable(pc,d0.w)
-	goto CJTable;
+	//goto CJTable;
+//CJTable:
 
-CJTable:
 	// "BRA" is unconditional branch 
 	// so labels below are never used..
 	//bra.s	Tab15
@@ -260,7 +265,6 @@ c2:
 //;----------------------------------------
 TestCompressed:				
 	//add.w	d2,d2			; 70	Read 1 (cbit)
-	
 	D2.w += D2.w;
 	
 	// carry clear -> not larger -> goto Uncompressed
@@ -278,16 +282,36 @@ TestCompressed:
 	bcs.s	Compressed		; 70
 //;----------------------------------------
 
-Uncompressed:				;
-	add.w	d2,d2			; 30	Read 1 (ulen1)
-	bne.s	1$			; |
-	move.w	(a5)+,d2		; 2
-	addx.w	d2,d2			; |
-1$					;
+Uncompressed:
+	//add.w	d2,d2			; 30	Read 1 (ulen1)
+	D2.w += D2.w;
+	
+	// reverse this..
+	//bne.s	uc1$			; | 1$
+	//if (D2.w != 0)
+	// goto uc1$;
+
+	// do compare other way around
+	// and reduce branching (part that was skipped)
+	if (D2.w == 0)
+	{
+		//move.w	(a5)+,d2		; 2
+		D2.w = A5.w(); // read more
+		
+		addx.w	d2,d2			; |
+	}
+
+//uc1$: //1$ // no need for label any more
+	
 	bcc.s	Copy3Entry		; 30
+	// cmp carry clear -> less than MAXWORD or MAXSHORT
+	// (check: signed or unsigned?
+	//if (D2.w < SHRT_MAX)
+	// goto Copy3Entry;
+	
 	move.b	-(a4),(a0)+		; 15
 
-TestExit:
+//TestExit: // fallthrough from above
 	// writepos - writeend <0 -> more compressed
 	//cmp.l	a2,a0			; |
 	if ((A0.src - A2.src) < 0)
@@ -310,27 +334,46 @@ Copy3Entry:
 	//add.w	d3,d3			; |
 	D3.w += D3.w;
 	
-	bne.s	NoRead2a		; |
-	move.w	(a5)+,d3		; 4
-	addx.w	d3,d3			; |
-NoRead2a:				;
+	//bne.s	NoRead2a		; |
+	// also reverse check to skip need for goto..label
+	if (D3.w == 0)	
+	{
+		//move.w	(a5)+,d3		; 4
+		D3.w = A5.w();
+		
+		addx.w	d3,d3			; |
+	}
+
+//NoRead2a: // no need for label any more
 	addx.w	d0,d0			; 30
 	add.w	d3,d3			; |
 	addx.w	d0,d0			; |
 	add.w	d0,d0			; |
-	
-	//jmp	UJTable(pc,d0.w)	; |
-	goto UJTable;
 
-UJTable:
-	bra.s	CopyThree		; 3
+	// no need, only place using it -> combine	
+	//jmp	UJTable(pc,d0.w)	; |
+	//goto UJTable;
+//UJTable:
+
+	//bra.s	CopyThree		; 3
+	goto CopyThree; // unconditional
+	
+	// below is never executed due to uncond. branch above ?
 	move.b	-(a4),(a0)+		; 7
 	move.b	-(a4),(a0)+		; 10
 	move.b	-(a4),(a0)+		; 15
 	move.b	-(a4),(a0)+		; 15
-	cmp.l	a2,a0			; |
-	blt	Compressed		; |
-	rts				;
+
+	// (see TestExit), check for more
+	//cmp.l	a2,a0			; |
+	if ((A0.src - A2.src) < 0)
+	{
+		//blt	Compressed		; |
+		goto Compressed;
+	}
+	
+	//rts				;
+	return; // -> back to caller from subroutine
 */
 //;---------------------------------------
 FJTable:
@@ -380,8 +423,7 @@ Tab15:
 	//dbra	d5,1$
 	while ((D5.l--) > -1)
 	{
-		goto 1$;
-	
+		goto tab151$;
 	}
 	
 	//moveq	#7,d5
@@ -390,8 +432,9 @@ Tab15:
 	D4.l = A5.l();
 	//add.l	d4,d4
 	D4.l += D4.l;
-	
-1$:
+
+//1$
+tab151$:
 	//moveq	#30,d0
 	D0.l = 30;
 	//and.w	d4,d0
