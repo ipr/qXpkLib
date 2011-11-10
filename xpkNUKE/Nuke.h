@@ -29,6 +29,7 @@ protected:
     {
 		return false;
 	}
+
 public:
 	CNuke(void)
 		: XfdSlave(nullptr)
@@ -38,6 +39,9 @@ public:
 	// (by XPK-master library)
     virtual bool decrunch(CReadBuffer *pIn, CReadBuffer *pOut, 
 				const uint32_t chunkIn, const uint32_t chunkOut);
+
+protected:
+	void TestCompressedF();
 };
 
 #endif // NUKE_H

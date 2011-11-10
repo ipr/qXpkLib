@@ -94,8 +94,11 @@ bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut,
 	//moveq	#0,d7
 	D7.l = 0;
 
+	// note: bsr allows rts back to caller
+	// -> can continue here after branch
+	//
 	//bsr	TestCompressed
-	goto TestCompressed; // uncond.
+	TestCompressedF(); // uncond.
 	
 	//move.l	a0,d0
 	D0.l = A0.src; // ?? position for length? -> must change for 64-bit..
@@ -103,6 +106,12 @@ bool CNuke::decrunch(CReadBuffer *pIn, CReadBuffer *pOut,
 	//movem.l	(a7)+,d2-d7/a3-a6 // restore stack
 	return true;
 	//rts
+}
+
+void CNuke::TestCompressedF()
+{
+	// start at label..
+	goto TestCompressed; // uncond.
 
 //; d0 mode		a0 writepos
 //; d1 offslen/offset	a1 copysrc
@@ -189,8 +198,11 @@ NoReadN:
 	//move.w	64(a6,d0.w),d0		; |
 	D0.w = A6.w(D0.w+64);
 	
-/*
-	jmp	TwoBitLen(pc,d0.w) //
+	// jump instead of branch when absolute address 
+	// or offset longer than relative branch allows
+	// 
+	//jmp	TwoBitLen(pc,d0.w) //
+	goto TwoBitLen;
 
 TwoBitLen:
 	//move.b	(a1)+,(a0)+		; 21
@@ -219,25 +231,49 @@ TwoBitLen:
 	
 NoRead2x:				;
 	addx.w	d0,d0			; 9
-	add.w	d3,d3			; |
+	//add.w	d3,d3			; |
+	D3.w += D3.w;
 	addx.w	d0,d0			; |
 
-	add.w	d0,d0
-	jmp	CJTable(pc,d0.w)
+	//add.w	d0,d0
+	D0.w += D0.w;
+	//jmp	CJTable(pc,d0.w)
+	goto CJTable;
+
 CJTable:
-	bra.s	Tab15
-c3:	move.b	(a1)+,(a0)+		; 21
-c2:	move.b	(a1)+,(a0)+		; 21
-	move.b	(a1)+,(a0)+		; |
+	// "BRA" is unconditional branch 
+	// so labels below are never used..
+	//bra.s	Tab15
+	goto Tab15; // unconditional
+	
+	// where are these used..?	
+	// -> nowhere ?
+c3:	
+	//move.b	(a1)+,(a0)+		; 21
+	A0.setb(A1); // copy&incr both addr pos
+c2:	
+	//move.b	(a1)+,(a0)+		; 21
+	A0.setb(A1); // copy&incr both addr pos
+	//move.b	(a1)+,(a0)+		; |
+	A0.setb(A1); // copy&incr both addr pos
 
 //;----------------------------------------
 TestCompressed:				
 	//add.w	d2,d2			; 70	Read 1 (cbit)
+	
 	D2.w += D2.w;
 	
+	// carry clear -> not larger -> goto Uncompressed
 	bcc.s	Uncompressed		; | 
+
+	// non-zero result -> goto Compressed
 	bne.s	Compressed		; | 
-	move.w	(a5)+,d2		; 4
+	
+	// zero result -> continue below and goto Compressed..
+	
+	//move.w	(a5)+,d2		; 4
+	D2.w = A5.w();
+	
 	addx.w	d2,d2			; |
 	bcs.s	Compressed		; 70
 //;----------------------------------------
@@ -250,6 +286,7 @@ Uncompressed:				;
 1$					;
 	bcc.s	Copy3Entry		; 30
 	move.b	-(a4),(a0)+		; 15
+
 TestExit:
 	// writepos - writeend <0 -> more compressed
 	//cmp.l	a2,a0			; |
@@ -258,8 +295,8 @@ TestExit:
 		//blt	Compressed		; |
 		goto Compressed;
 	}
-	return true;
 	//rts
+	return; // -> back to caller from subroutine
 
 CopyThree:
 	// copy in reverse, decr&incr addr pos
@@ -281,7 +318,9 @@ NoRead2a:				;
 	add.w	d3,d3			; |
 	addx.w	d0,d0			; |
 	add.w	d0,d0			; |
-	jmp	UJTable(pc,d0.w)	; |
+	
+	//jmp	UJTable(pc,d0.w)	; |
+	goto UJTable;
 
 UJTable:
 	bra.s	CopyThree		; 3
@@ -318,7 +357,7 @@ FJTable:
 	{
 		A0.setb(A1);
 	}
-	//Tab15; // fallthrough (below)
+	goto Tab15; // fallthrough (below)
 
 Tab15:
 	//move.b	(a1)+,(a0)+		; |
@@ -337,7 +376,7 @@ Tab15:
 		goto TestCompressed;
 	}
 
-/*
+
 	//dbra	d5,1$
 	while ((D5.l--) > -1)
 	{
@@ -351,7 +390,8 @@ Tab15:
 	D4.l = A5.l();
 	//add.l	d4,d4
 	D4.l += D4.l;
-1$
+	
+1$:
 	//moveq	#30,d0
 	D0.l = 30;
 	//and.w	d4,d0
@@ -359,7 +399,10 @@ Tab15:
 	//roxr.l	#4,d4
 	XfdSlave::roxr(4,D4);
 
-	jmp	FJTable(pc,d0.w)
-*/
+	// just long distance/absolute address needs
+	// -> counted pc-relative offset so just long distance?
+	//
+	//jmp	FJTable(pc,d0.w)
+	goto FJTable;
 
 }
