@@ -1,6 +1,6 @@
 //////////////////////////////////
 //
-// just interface for VDCO-decruncher
+// just interface for VDCO (Virtual Dreams) decruncher
 //
 // Ilkka Prusi <ilkka.prusi@gmail.com>
 //
@@ -25,6 +25,9 @@ public:
 		: XfdSlave(pIn)
 	{}
     virtual bool decrunch(CReadBuffer *pOut);
+
+protected:
+	bool DB_VDCO(CReadBuffer *pOut);
 };
 
 #endif // VDCO_H

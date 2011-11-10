@@ -70,10 +70,15 @@ bool VDCO::decrunch(CReadBuffer *pOut)
 	//MOVE.L	D0,xfdrr_MinSourceLen(A1)
 	//MOVEQ	#1,D0
 	//return true; // checking done (goto: RB_VDCO)
+	
+	return DB_VDCO(pOut);
+}
 
+bool VDCO::DB_VDCO(CReadBuffer *pOut)
+{
 	// actual decrunching starts.. (separate method?)
 //DB_VDCO		MOVEM.L	D2-D7/A2-A6,-(A7) // keep registers in stack
-DB_VDCO:
+//DB_VDCO:
 	// these we can skip and we can get pointers directly
 	//MOVE.L	A0,A5
 	//MOVE.L	xfdbi_UserTargetBuf(A5),A1
