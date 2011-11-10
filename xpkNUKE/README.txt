@@ -6,6 +6,8 @@ by: Dirk Stöcker (SDI) <stoecker@amigaworld.com>
 
 C-like rewrite by: Ilkka Prusi <ilkka.prusi@gmail.com>
 
+License: GPL v2 ? (check original M68k code),
+see ../COPYING.txt
 
 Summary:
 "NUKE" implementation for qXpkLib to load.
