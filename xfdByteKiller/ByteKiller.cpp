@@ -198,13 +198,28 @@ lbC0000C4:
 			goto lbC0000B6;
 		}
 		
-		cmpi.b	#2,d2
-		blt.s	lbC0000F6
-		cmpi.b	#3,d2
-		beq.s	lbC0000AA
-		moveq	#8,d1
-		subq.w	#1,d1
-		clr.w	d2
+		//cmpi.b	#2,d2
+		if ((D2.b - 2) < 0)
+		{
+			//blt.s	lbC0000F6
+			goto lbC0000F6;
+		}
+		
+		//cmpi.b	#3,d2
+		if ((D2.b - 3) == 0)
+		{
+			//beq.s	lbC0000AA
+			goto lbC0000AA;
+		}
+		
+		//moveq	#8,d1
+		moveq(8,D1);
+		
+		//subq.w	#1,d1
+		D1.w -= 1;
+		
+		//clr.w	d2
+		D2.w = 0;
 
 lbC0000DC:	
 		//lsr.l	#1,d0
@@ -251,7 +266,8 @@ lbC0000F6:
 lbC0000FE:	
 		//subq.w	#1,d1
 		D1.w -= 1;
-		clr.w	d2
+		//clr.w	d2
+		D2.w = 0;
 		goto lbC000102; // flow below
 
 lbC000102:	
@@ -284,9 +300,18 @@ lbC000116:
 		{
 			//subq.w	#1,a2
 			A2.src -= 1;
-			cmpa.l	a1,a2
-			blt.s	lbC00013A
-			move.b	0(a2,d2.w),(a2)		;move.b -1(A2,D2.W),-(A2)
+			
+			//cmpa.l	a1,a2
+			if ((A2.src - A1.src) < 0)
+			{
+				//blt.s	lbC00013A
+				goto lbC00013A;
+			}
+			
+			//move.b	0(a2,d2.w),(a2)		//;move.b -1(A2,D2.W),-(A2)
+
+			// copy byte, no offset change..
+			(*(A2.src)) = A2.b(D2.w);
 			
 			//dbra	d3,lbC000116
 		} while ((D3.l--) > -1);
@@ -294,10 +319,20 @@ lbC000116:
 		goto lbC000120; // flow below (for now)
 		
 lbC000120:	
-		cmpa.l	a2,a1
-		blt.w	lbC000046
-		tst.l	d5
-		bne.s	lbC00013A
+		//cmpa.l	a2,a1
+		if ((A1.src - A2.src) < 0)
+		{
+			//blt.w	lbC000046
+			goto lbC000046;
+		}
+		
+		//tst.l	d5
+		if (D5.l != 0)
+		{
+			//bne.s	lbC00013A
+			goto lbC00013A;
+		}
+		
 		//movem.l	(sp)+,d0-d7/a0-a6 // restore stack
 		//moveq	#0,d0
 		D0.l = 0;

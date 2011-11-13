@@ -217,7 +217,7 @@ void DeCrunchMania::FastDecruncher()
 	//moveq	#0,d4
 	D4.l = 0;
 	
-	/*
+	/**/
 DecrLoop:
 	//cmp.l	a5,a1
 	if ((A1.src - A5.src) <= 0)
@@ -228,7 +228,8 @@ DecrLoop:
 
 	//bsr.s	BitTest
 	BitTest();
-	
+
+	// carry-clear branch
 	bcc.s	InsertSeq		;1.Bit 0: Sequenz
 	
 	//moveq	#0,d4
@@ -236,9 +237,14 @@ DecrLoop:
 
 // ** einzelne Bytes einfügen ***
 InsertBytes:
-	moveq	#8,d1
-	bsr.w	GetBits
+	//moveq	#8,d1
+	D1.l = 8;
+	
+	//bsr.w	GetBits // <- branch to subroutine, return..
+	GetBits();
+	
 	move.b	d0,-(a1)
+	
 	dbf	d4,InsertBytes
 	//bra.s	DecrLoop
 	goto DecrLoop;
@@ -250,65 +256,118 @@ SpecialInsert:
 	//moveq	#5,d1
 	moveq(5, D1);
 	
-	bsr.s	BitTest
-	bcs.s	IB1
+	//bsr.s	BitTest
+	BitTest();
+	
+	bcs.s	IB1 // <- carry-set branch
 	//moveq	#14,d1
 	moveq(14, D1);
-IB1:	bsr.s	GetBits
-	add.w	d0,d4
+IB1:	
+	//bsr.s	GetBits
+	GetBits();
+	
+	//add.w	d0,d4
+	D4.w += D0.w;
+	
 	bra.s	InsertBytes
 // *------------
 InsertSeq:
 // ** Anzahl der gleichen Bits holen **
-	bsr.s	BitTest
+	//bsr.s	BitTest
+	BitTest();
+
 	bcs.s	AB1
-	moveq	#1,d1			;Maske: 0 (1 AB)
-	moveq	#1,d4			;normal: Summe 1
+	
+	//moveq	#1,d1			;Maske: 0 (1 AB)
+	moveq(1,D1);
+	//moveq	#1,d4			;normal: Summe 1
+	moveq(1,D4);
+	
 	bra.s	ABGet
 AB1:
-	bsr.s	BitTest
+	//bsr.s	BitTest
+	BitTest();
+	
 	bcs.s	AB2
-	moveq	#2,d1			;Maske: 01 (2 ABs)
-	moveq	#3,d4			;ab hier: Summe mindestens 3
+
+	moveq(2,D1); //			;Maske: 01 (2 ABs)
+	moveq(3,D4); //			;ab hier: Summe mindestens 3
 	bra.s	ABGet
 AB2:
-	bsr.s	BitTest
+	//bsr.s	BitTest
+	BitTest();
+	
 	bcs.s	AB3
-	moveq	#4,d1			;Maske: 011 (4 ABs)
-	moveq	#7,d4			;hier: Summe 11
+	
+	moveq(4,D1); //			;Maske: 011 (4 ABs)
+	moveq(7,D4); //			;hier: Summe 11
 	bra.s	ABGet
 AB3:
-	moveq	#8,d1			;Maske: 111 (8 ABs)
-	moveq	#$17,d4			;hier: Summe 11
+	moveq(8,D1); //			;Maske: 111 (8 ABs)
+	moveq(0x17,D4); //			;hier: Summe 11
 ABGet:
-	bsr.s	GetBits
-	add.w	d0,d4			;d0: Länge der Sequenz - 1
-	cmp.w	#22,d4
-	beq.s	SpecialInsert
-	blt.s	Cont
-	subq.w	#1,d4
-Cont:
+	//bsr.s	GetBits
+	GetBits();
+	
+	//add.w	d0,d4			;d0: Länge der Sequenz - 1
+	D4.w += D0.w;
+	
+	//cmp.w	#22,d4
+	if ((D4.w - 22) == 0)
+	{
+		//beq.s	SpecialInsert
+		goto SpecialInsert;
+	}
+
+	/* // reverse check, remove label	
+	if ((D4.w - 22) < 0)
+	{
+		//blt.s	Cont
+		goto Cont;
+	}
+	*/
+
+	// actually, reverse check to remove one goto..label
+	//
+	if ((D4.w - 22) > 0)
+	{
+		//subq.w	#1,d4
+		D4.w -= 1;
+	}
+	
+//Cont: // not needed, combined with above
+
 // ** SequenzAnbstand holen **
-	bsr.s	BitTest
+	//bsr.s	BitTest
+	BitTest();
+	
 	bcs.s	DB1
-	moveq	#9,d1			;Maske: 0 (9 DBs)
-	moveq	#$20,d2
+	moveq(9,D1); //			;Maske: 0 (9 DBs)
+	moveq(0x20,D2); 
 	bra.s	DBGet
 DB1:
-	bsr.s	BitTest
+	//bsr.s	BitTest
+	BitTest();
+	
 	bcs.s	DB2
-	moveq	#5,d1			;Maske: 01 (5 DBs)
-	moveq	#0,d2
+	moveq(5,D1); //			;Maske: 01 (5 DBs)
+	moveq(0,D2); 
 	bra.s	DBGet
 DB2:
-	moveq	#14,d1			;Maske: 11 (12 DBs)
-	move.w	#$220,d2
+	moveq(14,D1); //			;Maske: 11 (12 DBs)
+	//move.w	#$220,d2
+	D2.w = 0x220;
 DBGet:
-	bsr.s	GetBits
-	add.w	d2,d0
+	//bsr.s	GetBits
+	GetBits();
+	
+	//add.w	d2,d0
+	D0.w += D2.w;
+	
 	lea	0(a1,d0.w),a3		;a3 auf Anf zu kopierender Seq setzten
 InsSeqLoop:
 	move.b	-(a3),-(a1)		;Byte kopieren
+	
 	dbf	d4,InsSeqLoop
 
 	bra.w	DecrLoop
@@ -343,7 +402,7 @@ void DeCrunchMania::BitTest()
 	D0.w = D6.w;
 	
 	//lsr.l	#1,d6			;Bit rausschieben und Flags setzen
-	D6.l >>= 1;
+	lsr(1,D6);
 	
 	//swap	d6			;ror.l	#16,d6
 	swap(D6);
@@ -366,8 +425,10 @@ void DeCrunchMania::GetBits()
 //GetBits:				;d1:AnzBits->d0:Bits
 	//move.w	d6,d0			;d6:Akt Wort
 	D0.w = D6.w;
+	
 	//lsr.l	d1,d6			;nächste Bits nach vorne bringen
-	D6.l >>= D1.w;
+	lsr(D1.l, D6);
+	
 	//sub.w	d1,d7			;d7:Anz Bits, die noch im Wort sind
 	D7.w -= D1.w;
 	
