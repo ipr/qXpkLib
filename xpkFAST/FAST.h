@@ -40,6 +40,9 @@ protected:
     {
 		return false;
 	}
+	
+	void DOCOPY();
+	
 public:
 	CFAST(void)
 		: XfdSlave(nullptr)

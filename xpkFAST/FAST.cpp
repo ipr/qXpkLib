@@ -59,12 +59,72 @@
 ;  d7    Unused.
 */
 //
+
+// replace assembler-macro with method
+//
+void CFAST::DOCOPY()
+{
+DOCOPY_MACRO:
+	D4.w = A4.wM(); //move.w	-(a4),d4	;Grab the copy item description
+	
+	D3.l = 0x0F;	//moveq	#$0F,d3
+	
+	//and.b	d4,d3		;extract length.
+	D3.b &= D4.b;
+	
+	//add.b	d3,d3		;adjust length to length*2
+	D3.b += D3.b;
+	
+	//lsr.w	#4,d4		;extract offset
+	D4.w >>= 4;
+
+	//move.l	a1,a2		;Subtract the offset yielding the
+	A2.src = A1.src;
+	//suba.l	d4,a2		;address from which we copy.
+	A2.src -= D4.l;
+	
+	//jmp	MOVE\@(PC,d3.w)	;jump to the right place
+//MOVE\@	
+
+	// just copy&increment both -> loop for similarity below..
+	//move.b	(a2)+,(a1)+	;0
+	//move.b	(a2)+,(a1)+	;1
+	//move.b	(a2)+,(a1)+	;2
+	//move.b	(a2)+,(a1)+	;3
+	//move.b	(a2)+,(a1)+	;4
+	//move.b	(a2)+,(a1)+	;5
+	//move.b	(a2)+,(a1)+	;6
+	//move.b	(a2)+,(a1)+	;7
+	//move.b	(a2)+,(a1)+	;8
+	//move.b	(a2)+,(a1)+	;9
+	//move.b	(a2)+,(a1)+	;10
+	//move.b	(a2)+,(a1)+	;11
+	//move.b	(a2)+,(a1)+	;12
+	//move.b	(a2)+,(a1)+	;13
+	//move.b	(a2)+,(a1)+	;14
+	//move.b	(a2)+,(a1)+	;15
+	//move.b	(a2)+,(a1)+
+	//move.b	(a2)+,(a1)+
+	
+	// C-like version,
+	// actually we could just memcpy() but use loop for now..
+	// (are they overlapping regions?)
+	//
+	for (int i = 0; i <= 18; i++)
+	{
+		// auto-increment both and set
+		A1.setb(A2);
+	}
+	
+    //ENDM
+}
+
 bool CFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunkIn, const uint32_t chunkOut)
 {
 	// less typing this way (instead of R[n]..)
-	//
-	datareg D0,D1,D2,D3,D4,/*D5,D6,D7*/;
-	addrreg A0,A1,A2,/*A3,*/A4,/*A5,*/A6,A7; // SP == A7
+	// -> inherited members now..
+	//datareg D0,D1,D2,D3,D4,/*D5,D6,D7*/;
+	//addrreg A0,A1,A2,/*A3,*/A4,/*A5,*/A6,A7; // SP == A7
 	
 	A0.src = pIn->GetBegin();
 	D0.l = chunkIn;
@@ -77,59 +137,15 @@ bool CFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunkIn
 //decompress:
 	//movem.l	a0-a2/a4-a5/d1-d5,-(sp) // keep stack
 
-	//move.l	d0,a4
+	//move.l	d0,a4 // <- 32-bit into to address? -> replace
 	//add.l	a0,a4		;a4:=behind the end of input block
 	A4.src += D0.l;
 
 	//moveq.l	#0,d4		;d4:=0
 	D4.l = 0;
 
-/*
-DOCOPY_MACRO:
-	D4.w = A4.wM(); //move.w	-(a4),d4	;Grab the copy item description
-	
-	D3.l = 0x0F;	//moveq	#$0F,d3
-	
-	and.b	d4,d3		;extract length.
-	add.b	d3,d3		;adjust length to length*2
-	lsr.w	#4,d4		;extract offset
 
-	//move.l	a1,a2		;Subtract the offset yielding the
-	A2.src = A1.src;
-	//suba.l	d4,a2		;address from which we copy.
-	A2.src -= D4.l;
-	
-	jmp	MOVE\@(PC,d3.w)	;jump to the right place
-MOVE\@	
-	move.b	(a2)+,(a1)+	;0
-	move.b	(a2)+,(a1)+	;1
-	move.b	(a2)+,(a1)+	;2
-	move.b	(a2)+,(a1)+	;3
-	move.b	(a2)+,(a1)+	;4
-	move.b	(a2)+,(a1)+	;5
-	move.b	(a2)+,(a1)+	;6
-	move.b	(a2)+,(a1)+	;7
-	move.b	(a2)+,(a1)+	;8
-	move.b	(a2)+,(a1)+	;9
-	move.b	(a2)+,(a1)+	;10
-	move.b	(a2)+,(a1)+	;11
-	move.b	(a2)+,(a1)+	;12
-	move.b	(a2)+,(a1)+	;13
-	move.b	(a2)+,(a1)+	;14
-	move.b	(a2)+,(a1)+	;15
-	move.b	(a2)+,(a1)+
-	move.b	(a2)+,(a1)+
-	
-	// C-like version
-	for (int i = 0; i <= 18; i++)
-	{
-		// auto-increment both and set
-		A1.setb(A2);
-	}
-    ENDM
-*/
-
-/*
+/* // 
 DOLITERAL_MACRO:
 	move.b	(a0)+,(a1)+	;Literal item means copy a byte.
 	-> only two places using, replace with macro body
@@ -162,7 +178,7 @@ Lit0:
 	bcc.W	Lit1 // carry-clear branch -> goto Lit1;
 
 Copy1:	
-	DOCOPY
+	DOCOPY(); // <- method call replacing assembler macro
 	
 	D1.w += D1.w;	//add.w	d1,d1
 	
@@ -180,7 +196,7 @@ Copy1:
 	bcc.s	Lit0 // carry clear -> goto Lit0;
 
 Copy0:	
-	DOCOPY
+	DOCOPY(); // <- method call replacing assembler macro
 	
 	; uint32_t d1tmp = (D1.w + D1.w);
 	D1.w += D1.w; //add.w	d1,d1
