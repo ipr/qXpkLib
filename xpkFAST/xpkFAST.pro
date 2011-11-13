@@ -15,11 +15,11 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 INCLUDEPATH += ../qXpkLib
 
 SOURCES += xpkFAST.cpp \
-    XfdFAST.cpp
+    FAST.cpp
 
 HEADERS += xpkFAST.h\
         xpkFAST_global.h \
-    XfdFAST.h
+    FAST.h
 
 
 

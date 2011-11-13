@@ -25,7 +25,7 @@
 
 // our helper for decrunch-conversion,
 // reuse some code for ASM-to-C conversion..
-#include "XfdFAST.h"
+#include "FAST.h"
 
 ////////////////// xpkFAST : library interface
 
@@ -42,7 +42,6 @@ xpkLibraryBase *GetXpkInstance(void)
 
 xpkFAST::xpkFAST()
     : xpkLibraryBase()
-    , m_pFast(nullptr)
 {
 	// only to/from buffer supported here
 	m_XpkCaps.input.buffer = true;
@@ -53,11 +52,6 @@ xpkFAST::xpkFAST()
 
 xpkFAST::~xpkFAST()
 {
-	if (m_pFast != nullptr)
-	{
-		delete m_pFast;
-		m_pFast = nullptr;
-	}
 }
 
 /* 
@@ -71,10 +65,7 @@ bool xpkFAST::Crunch(XpkProgress *pProgress)
 
 bool xpkFAST::Decrunch(XpkProgress *pProgress)
 {
-	if (m_pFast == nullptr)
-	{
-		m_pFast = new XfdFAST();
-	}
+	CFAST fast; // pre-chunk decrunching -> no need to keep as member
 
 /*
 	unpack-call in xpkFAST.a is just setup and call 
@@ -93,6 +84,6 @@ bool xpkFAST::Decrunch(XpkProgress *pProgress)
 	
 	// we assume master-library allocated suitable buffer
 	// for unpacking chunk (known by XPK metadata)
-	return m_pFast->decrunch(pProgress->pInputBuffer, pProgress->pOutputBuffer, pProgress->xp_chunkIn, pProgress->xp_chunkOut);
+	return fast.decrunch(pProgress->pInputBuffer, pProgress->pOutputBuffer, pProgress->xp_chunkIn, pProgress->xp_chunkOut);
 }
 

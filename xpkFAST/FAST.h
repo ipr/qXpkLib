@@ -7,7 +7,7 @@
 // Original author unknown,
 // assuming: Dirk Stöcker <stoecker@amigaworld.com>
 //
-// C-like rewrite by: Ilkka Prusi <ilkka.prusi@gmail.com>
+// M68k asm to C-like rewrite by: Ilkka Prusi <ilkka.prusi@gmail.com>
 //
 // Some interesing info found on module:
 // FastName:	dc.b	'fasTcinator',0
@@ -15,8 +15,8 @@
 // Description:	dc.b	'LZ77-family, windowsize: 4095, no quotecount, 2 streams',0
 //
 
-#ifndef XFDFAST_H
-#define XFDFAST_H
+#ifndef FAST_H
+#define FAST_H
 
 // from master-project for buffer-class
 #include "AnsiFile.h"
@@ -25,14 +25,13 @@
 // (better way..? not much help here..)
 #include "XfdSlave.h"
 
-//////////////// XfdFAST : decrunch helper
 
 // this somewhat differences from normal use-case of XFD:
 // we are actually using per-chunk decrunching from XPK-chunks
 // instead of decrunchin a whole file at once.
 // this was not original intention but helps a bit (maybe..)
 //
-class XfdFAST : public XfdSlave
+class CFAST : public XfdSlave
 {
 protected:
 	// satisfy pure virtual method, use different in our case..
@@ -42,7 +41,7 @@ protected:
 		return false;
 	}
 public:
-	XfdFAST(void)
+	CFAST(void)
 		: XfdSlave(nullptr)
 	{}
 	
@@ -52,4 +51,4 @@ public:
 				const uint32_t chunkIn, const uint32_t chunkOut);
 };
 
-#endif // XFDFAST_H
+#endif // FAST_H

@@ -7,7 +7,7 @@
 // Original author unknown,
 // assuming: Dirk Stöcker <stoecker@amigaworld.com>
 //
-// C-like rewrite by: Ilkka Prusi <ilkka.prusi@gmail.com>
+// M68k asm to C-like rewrite by: Ilkka Prusi <ilkka.prusi@gmail.com>
 //
 // Some interesing info found on module:
 // FastName:	dc.b	'fasTcinator',0
@@ -16,7 +16,7 @@
 //
 
 
-#include "XfdFAST.h"
+#include "FAST.h"
 
 // start in decompress.a, xpkFAST.a is just setup for information to it.
 //
@@ -59,7 +59,7 @@
 ;  d7    Unused.
 */
 //
-bool XfdFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunkIn, const uint32_t chunkOut)
+bool CFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunkIn, const uint32_t chunkOut)
 {
 	// less typing this way (instead of R[n]..)
 	//
