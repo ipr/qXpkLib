@@ -34,6 +34,14 @@ xfdImploder::~xfdImploder()
 {
 }
 
+bool xfdImploder::isSupported(CReadBuffer *pInputBuffer)
+{
+}
+
+bool xfdImploder::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdImploder::Decrunch(XpkProgress *pProgress)
 {

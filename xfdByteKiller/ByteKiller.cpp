@@ -338,7 +338,8 @@ lbC000120:
 		D0.l = 0;
 		return;
 		//rts
-lbC00013A:	
+		
+lbC00013A:	// error return? (-1)
 		//movem.l	(sp)+,d0-d7/a0-a6 // restore stack
 		//moveq	#-1,d0
 		D0.l = -1;

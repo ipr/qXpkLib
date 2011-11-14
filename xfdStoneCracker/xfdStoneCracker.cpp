@@ -56,6 +56,10 @@ bool xfdStoneCracker::isSupported(CReadBuffer *pInputBuffer)
 	return false;
 }
 
+bool xfdStoneCracker::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdStoneCracker::Decrunch(XpkProgress *pProgress)
 {

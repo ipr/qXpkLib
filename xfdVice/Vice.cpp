@@ -91,7 +91,7 @@ bool Vice::decrunch(CReadBuffer *pOut)
 	//MOVE.L	A3,D2
 	//D2.l = (int32_t)(A3.src);
 	
-	//BSR.B	D_Vice
+	//BSR.B	D_Vice // <- may return here
 	//goto D_Vice;
 	//MOVE.W	#XFDERR_CORRUPTEDDATA,xfdbi_Error(A2)
 

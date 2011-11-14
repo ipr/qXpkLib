@@ -14,8 +14,11 @@ public:
     xfdZCompress();
     virtual ~xfdZCompress();
 
+    virtual bool isSupported(CReadBuffer *pInputBuffer);
+    
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
+	
 	virtual bool Decrunch(XpkProgress *pProgress);
-
 };
 
 #ifdef __cplusplus

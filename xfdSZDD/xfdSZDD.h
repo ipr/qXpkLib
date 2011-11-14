@@ -13,6 +13,10 @@ class XFDSZDDSHARED_EXPORT xfdSZDD : public xfdLibraryBase
 public:
     xfdSZDD();
     virtual ~xfdSZDD();
+
+    virtual bool isSupported(CReadBuffer *pInputBuffer);
+
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 	
 	virtual bool Decrunch(XpkProgress *pProgress);
 

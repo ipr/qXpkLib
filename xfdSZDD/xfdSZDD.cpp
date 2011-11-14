@@ -32,10 +32,12 @@ xfdSZDD::~xfdSZDD()
 {
 }
 
-// no packing support for this format
-bool xfdSZDD::Crunch(XpkProgress *pProgress)
+bool xfdSZDD::isSupported(CReadBuffer *pInputBuffer)
 {
-	return false;
+}
+
+bool xfdSZDD::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
 }
 
 // decrunching (unpacking) only supported for this format

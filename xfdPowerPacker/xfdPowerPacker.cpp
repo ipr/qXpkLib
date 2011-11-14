@@ -35,6 +35,14 @@ xfdPowerPacker::~xfdPowerPacker()
 {
 }
 
+bool xfdPowerPacker::isSupported(CReadBuffer *pInputBuffer)
+{
+}
+
+bool xfdPowerPacker::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdPowerPacker::Decrunch(XpkProgress *pProgress)
 {

@@ -55,6 +55,10 @@ bool xfdByteKiller::isSupported(CReadBuffer *pInputBuffer)
 
 }
 
+bool xfdByteKiller::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdByteKiller::Decrunch(XpkProgress *pProgress)
 {

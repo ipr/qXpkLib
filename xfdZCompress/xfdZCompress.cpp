@@ -25,10 +25,18 @@ xfdZCompress::xfdZCompress()
 	m_XpkCaps.input.buffer = true;
 	m_XpkCaps.output.buffer = true;
 	m_XpkCaps.m_LibIdentifier = "Z";
-	m_XpkCaps.m_LibDescription = "Z-compress unpacking library";
+	m_XpkCaps.m_LibDescription = "Uncompress Un*x Z-compressed files";
 }
 
 xfdZCompress::~xfdZCompress()
+{
+}
+
+bool xfdZCompress::isSupported(CReadBuffer *pInputBuffer)
+{
+}
+
+bool xfdZCompress::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
 }
 

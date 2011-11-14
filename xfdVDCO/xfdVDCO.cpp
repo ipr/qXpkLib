@@ -44,6 +44,10 @@ bool xfdVDCO::isSupported(CReadBuffer *pInputBuffer)
 	return false;
 }
 
+bool xfdVDCO::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdVDCO::Decrunch(XpkProgress *pProgress)
 {

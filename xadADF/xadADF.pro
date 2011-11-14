@@ -14,8 +14,12 @@ DEFINES += _CRT_SECURE_NO_WARNINGS
 
 INCLUDEPATH += ../qXpkLib
 
-SOURCES += xadADF.cpp
+SOURCES += xadADF.cpp \
+    UnADF.cpp
 
 HEADERS += xadADF.h\
-        xadADF_global.h
+        xadADF_global.h \
+    UnADF.h
+
+
 

@@ -51,6 +51,10 @@ bool xfdCrunchMania::isSupported(CReadBuffer *pInputBuffer)
 	return false;
 }
 
+bool xfdCrunchMania::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 // decrunching (unpacking) only supported for this format
 bool xfdCrunchMania::Decrunch(XpkProgress *pProgress)
 {
