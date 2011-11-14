@@ -1,24 +1,16 @@
 ///////////////////////////////////
 //
-// Actual decoder handling:
-// can load additional decoders as necessary,
-// see xpkLibraryBase
+// XPK-decrunching support:
+// should load additional decoders as necessary.
 //
-// CXpkMaster : main decrunch handler
+// Support for decrunching "native" chunk-based crunched files
+// via loadable libraries for given compression method.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
 
 #include "XpkMaster.h"
-
-#include <exception>
-#include <string>
-
-// reuse type detection,
-// multiple variations etc.
-//
-#include "FileType.h"
 
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
@@ -40,7 +32,6 @@ void CXpkMaster::release()
 		m_pSubLibrary = nullptr;
 	}
 }
-
 
 ///////// public
 
@@ -114,12 +105,15 @@ bool CXpkMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// get XPK-archive descriptor (file-header)
 	// 
 	const XpkStreamHeader *pHead = m_Tags.getHeader();
-	
+
+	// all necessary metadata known by XPK-master,
+	// sub-libraries only see compressed chunks of data..
+	//
 	info.m_bIsMultifile = false;
 	info.m_bIsMultiVolume = false;
-	info.m_archiveInfo.m_packing = QString::fromStdString(m_Tags.getTypename());
 	info.m_archiveInfo.m_ulPackedSize = pHead->xsh_CompressedLen;
 	info.m_archiveInfo.m_ulUnpackedSize = pHead->xsh_UnpackedLen;
+	info.m_archiveInfo.m_packing = QString::fromStdString(m_Tags.getTypename());
 	
 	return true;
 }
@@ -214,5 +208,4 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 	
 	return true;
 }
-
 

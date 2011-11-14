@@ -37,6 +37,8 @@ class CIoContext
 public:
     CIoContext(void)
 	{}
+	virtual ~CIoContext(void)
+	{}
 	
 	virtual size_t getFullSize() = 0;
 
@@ -123,7 +125,7 @@ public:
 			clear();
 		}
 	}
-	~CMemoryMappedIO()
+	virtual ~CMemoryMappedIO(void)
 	{
 		clear();
 	}
@@ -171,6 +173,8 @@ public:
 	CBufferIO(CIOBuffer *buffer)
 		: CIoContext()
 		, m_pBuffer(buffer)
+	{}
+	virtual ~CBufferIO(void)
 	{}
 	
 	virtual size_t getFullSize()
@@ -223,7 +227,7 @@ public:
 	    , m_Buffer(nBufferSize) // prepare minimum, grow when needed
 	    , m_File()
 	{}
-	~CBufferedFileIO()
+	virtual ~CBufferedFileIO(void)
 	{
 		m_File.Close();
 	}

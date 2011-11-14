@@ -618,6 +618,43 @@ protected:
 		}
     }
 
+	// logical shift right
+    void lsr(const int32_t count, datareg &reg)
+    {
+		reg.l >>= count;
+    }
+    
+	// logical shift left
+    void lsl(const int32_t count, datareg &reg)
+    {
+		reg.l <<= count;
+    }
+
+	// arithmetic shift right: uses ccr as overflow and carry
+    void asr(const int32_t count, datareg &reg)
+    {
+    }
+	// arithmetic shift left: uses ccr as overflow and carry
+    void asl(const int32_t count, datareg &reg)
+    {
+		for (int32_t i = 0; i < count; i++)
+		{
+			// keep high bit (in both carry&extend)
+			ccr.ccr.x = (reg.l & (1 << 31)) ? 1 : 0;
+			ccr.ccr.c = (reg.l & (1 << 31)) ? 1 : 0;
+			
+			// sign-change to ccr overflow
+			//ccr.ccr.v;
+			
+			// rotate bit
+			reg.l <<= 1;
+			
+			// lowest bit to highest rotated out
+			// only zero to lowest? -> no change
+			//reg.l &= ((ccr.ccr.c) ? 1 : 0);
+		}
+    }
+
 	// less typing this way (instead of R[n]..)
 	//
 	datareg D0,D1,D2,D3,D4,D5,D6,D7;

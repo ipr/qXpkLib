@@ -1,10 +1,10 @@
 ///////////////////////////////////
 //
-// Actual decoder handling:
-// can load additional decoders as necessary,
-// see xpkLibraryBase
+// XPK-decrunching support:
+// should load additional decoders as necessary.
 //
-// CXpkMaster : main decrunch handler
+// Support for decrunching "native" chunk-based crunched files
+// via loadable libraries for given compression method.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
@@ -16,8 +16,6 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-//#include <QByteArray>
-//#include <QLibrary>
 
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
@@ -34,6 +32,8 @@
 // for lower-level library (level 0)
 //
 #include "xpkLibraryBase.h"
+
+// status information (caller and decruncher)
 #include "XpkProgress.h"
 
 // temp.. move this here?

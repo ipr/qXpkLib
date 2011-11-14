@@ -31,16 +31,13 @@
 #include "AnsiFile.h"
 
 
-// fwd. decl.
-class xadLibraryBase;
-
 class xadLibraryBase
 {
 protected:
 	// only derived can be instantiated
 	xadLibraryBase(void) 
 		: m_XpkCaps()
-		, m_pDest(nullptr)
+		//, m_pDest(nullptr)
 	{}
 	virtual ~xadLibraryBase(void)
 	{}
@@ -53,8 +50,11 @@ protected:
 	// output chunks of decompressed data
 	// directly to another library
 	// (given by master-library?)
+	// -> better way needed,
+	// library might want help from other library
+	// and may have different base..
 	//
-	xadLibraryBase *m_pDest;
+	//xadLibraryBase *m_pDest;
 	
 public:
 
@@ -64,23 +64,12 @@ public:
 		return &m_XpkCaps;
 	}
 
-	// set sub-library destination (optional, if supported)
-	virtual bool setDestLibrary(xadLibraryBase *pDest) 
-	{
-		return false;
-	}
-
-	// should be given in XpkProgress-object?
-	// -> changed, included in IOContext
-	//virtual bool setArchive(QString &szArchive)=0;
+	// for detailed checking if format is supported..
+	// some formats can be a pain to check in a generic way
+    virtual bool isSupported(CIOBuffer *pInputBuffer)=0;
 
 	// list files in archive, get other metadata also..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
-	
-	// set path to uncompress files to
-	// (optionally specific file name if only one output?)
-	// -> changed, included in IOContext/pathname
-	//virtual bool setExtractPath(QString &szPath)=0;
 	
 	// test archive integrity
 	virtual bool testArchive()=0;

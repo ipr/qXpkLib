@@ -3,7 +3,8 @@
 // XFD-decrunching support:
 // should load additional decoders as necessary.
 //
-// May be called from XpkMaster when XFD-decruncher is needed.
+// Support for decrunching "foreign"/"alien" whole-file compressions
+// via loadable libraries.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
@@ -15,8 +16,6 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-//#include <QByteArray>
-//#include <QLibrary>
 
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
@@ -34,7 +33,6 @@
 
 // status information (caller and decruncher)
 #include "XpkProgress.h"
-
 
 
 class CXfdMaster : public QObject

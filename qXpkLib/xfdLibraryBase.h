@@ -54,13 +54,9 @@ public:
 	// list compressed file information..
 	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
 
-	//virtual QString GetPackerName()=0;
-	//virtual QString GetPackerLongName()=0;
-
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress)=0;
 	
 };
-
 
 #endif // XFDLIBRARYBASE_H

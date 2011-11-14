@@ -47,12 +47,6 @@ public:
 		return &m_XpkCaps;
 	}
 
-	// list compressed file information..
-	//virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
-
-	//virtual QString GetPackerName()=0;
-	//virtual QString GetPackerLongName()=0;
-
 	// pack/compress
 	// (optional, so far nowhere..)
 	//virtual bool Crunch(XpkProgress *pProgress)=0;
@@ -61,6 +55,5 @@ public:
 	virtual bool Decrunch(XpkProgress *pProgress)=0;
 	
 };
-
 
 #endif // XPKLIBRARYBASE_H

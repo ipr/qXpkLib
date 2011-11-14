@@ -3,14 +3,11 @@
 // XAD-library support:
 // should load additional decoders as necessary.
 //
-// Support multi-file archives unpacking via loadable libraries.
-//
-// May be called from XpkMaster when needed.
+// Support for unpacking multi-file archives via loadable libraries.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
-
 
 #ifndef XADMASTER_H
 #define XADMASTER_H
@@ -18,8 +15,6 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-//#include <QByteArray>
-//#include <QLibrary>
 
 // use ISO-standard typedefs (platform-independency)
 #include <stdint.h>
@@ -48,8 +43,6 @@ protected:
 	// -> load proper by archive type
 	xadLibraryBase *m_pSubLibrary;
 	
-	//QString m_archive;
-
 	void release();
 	
 public:

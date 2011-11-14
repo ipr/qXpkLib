@@ -3,14 +3,11 @@
 // XAD-library support:
 // should load additional decoders as necessary.
 //
-// Support multi-file archives unpacking via loadable libraries.
-//
-// May be called from XpkMaster when needed.
+// Support for unpacking multi-file archives via loadable libraries.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
-
 
 #include "XadMaster.h"
 
@@ -121,12 +118,14 @@ bool CXadMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 		//throw ArcException("Unsupported archive type", subType);
 		return false; // don't throw here, trying to determine if supported..
 	}
-	//return m_pSubLibrary->isSupported(pInputBuffer);
-	return true;
+	return m_pSubLibrary->isSupported(pInputBuffer);
 }
 
 bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
+	// only sub-library knows all info caller might want
+	// -> get it from sub-library
+	//
 	return m_pSubLibrary->archiveInfo(info);
 }
 

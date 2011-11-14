@@ -3,15 +3,14 @@
 // XFD-decrunching support:
 // should load additional decoders as necessary.
 //
-// May be called from XpkMaster when XFD-decruncher is needed.
+// Support for decrunching "foreign"/"alien" whole-file compressions
+// via loadable libraries.
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
 
 #include "XfdMaster.h"
-
-#include "FileType.h"
 
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
@@ -103,6 +102,15 @@ bool CXfdMaster::isSupported(CIOBuffer *pInputBuffer, CFileType &type)
 		return false; // don't throw here, trying to determine if supported..
 	}
 	return m_pSubLibrary->isSupported(pInputBuffer);
+}
+
+bool CXfdMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+	// only sub-library knows necessary metadata
+	// which caller might want..
+	// -> get it from library-code
+	//
+	return m_pSubLibrary->archiveInfo(info);
 }
 
 bool CXfdMaster::decrunch(XpkProgress *pProgress)
