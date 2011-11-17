@@ -30,6 +30,8 @@
 //
 #include "FileType.h"
 
+#include "PathHelper.h"
+
 // XPK-support
 #include "XpkMaster.h"
 
@@ -67,6 +69,7 @@ private:
 	CXadMaster *m_pXadMaster;
 	
 	CFileType m_fileType;
+	CPathHelper m_pathHelper;
 
 	// might keep necessary information already here per archive..?
 	QXpkLib::CArchiveInfo m_info;
@@ -91,6 +94,16 @@ public:
 		}
 		return nullptr;
 	}
+	
+	// single-file output or no name/path known
+	CIoContext *getOutput()
+	{
+		return m_pOutput;
+	}
+
+	// file name and path given:
+	// give output for that
+	CIoContext *getOutput(QString &filePath);
 
 public slots:
 	bool setInputBuffer(CIOBuffer *buffer);

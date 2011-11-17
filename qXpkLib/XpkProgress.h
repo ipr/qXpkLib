@@ -1,7 +1,11 @@
 ///////////////////////////////////
 //
-// This XpkProgress is mostly directly from XPKMaster sources
-// that existed already, this will be dropped in the future..
+// This XpkProgress is redesigned now
+// as interface for sub-libraries
+// to call methods in parent master-library.
+//
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
 //
 
 #ifndef XPKPROGRESS_H
@@ -14,13 +18,21 @@ class CIOBuffer;
 class CIoContext;
 class QString;
 
+class CLibMaster;
+
 class XpkProgress 
 {
-public:
-	// constructor
-	XpkProgress(CIoContext *pInput, CIoContext *pOutput = nullptr)
-		: pInputIo(pInput)
-		, pOutputIo(pOutput)
+private:
+	CLibMaster *m_pMaster;
+	
+protected:
+	// protected constructor:
+	// only friends allowed to create (master)
+	//
+	XpkProgress(CLibMaster *pMaster)
+		: m_pMaster(pMaster)
+		, pInputIo(nullptr)
+		, pOutputIo(nullptr)
 		, pInputBuffer(nullptr)
 		, pOutputBuffer(nullptr)
 		, xp_chunkIn(0)
@@ -31,6 +43,7 @@ public:
 		, xp_UnpackedSize(0)
 	{}
 
+public:
 	// TODO: replace buffers by context:
 	// this way can wrap in/out to/from file/buffer..
 	//
@@ -41,20 +54,22 @@ public:
 	CIOBuffer *pInputBuffer;
 	CIOBuffer *pOutputBuffer;
 	
-	// for multi-file archives
-	QString m_extractPath;
-
-	// TODO: 
-	// multi-file and multi-volume archives 
-	// may want multiple outputs and multiple inputs
-	// -> give master-instance to library
-	// for necessary IO-helping 
-	//CLibMaster *parent; 
-	
-	// TODO: alternate:
-	/*
-	CIoContext *getOut(QString &filePath)
+	// get output-context for given file with path,
+	// parent-path will be added to extract to correct location.
+	// use for multi-file archive output.
+	//
+	CIoContext *getOutput(QString &filePath)
 	{
+		return m_pMaster->getOutput(filePath);
+	}
+
+	// get output-context for when no name known
+	// or single file/chunk output.
+	//
+	/*
+	CIoContext *getOutput()
+	{
+		return m_pMaster->getOutput();
 	}
 	*/
 
@@ -77,6 +92,7 @@ public:
 	/* size of unpacked data in total */
 	size_t	 xp_UnpackedSize;
 	
+	friend class CLibMaster;
 };
 
 #endif // XPKPROGRESS_H

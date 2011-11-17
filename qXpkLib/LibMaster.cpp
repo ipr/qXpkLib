@@ -9,10 +9,7 @@
 
 #include "LibMaster.h"
 
-#include <exception>
-#include <string>
-
-#include "XpkLibrarian.h"
+#include "PathHelper.h"
 
 
 ///////// public
@@ -25,6 +22,7 @@ CLibMaster::CLibMaster(QObject *parent)
     , m_pXfdMaster(nullptr)
     , m_pXadMaster(nullptr)
     , m_fileType()
+    , m_pathHelper()
     , m_info()
     , m_pProgress(nullptr)
 {
@@ -164,6 +162,27 @@ bool CLibMaster::archiveUnpack()
 	return true;
 }
 
+// file name and path given:
+// give output for that
+CIoContext *CLibMaster::getOutput(QString &filePath)
+{
+	QString tempOut = m_outputPath;
+	if (tempOut.at(tempOut.length() - 1) != '/')
+	{
+		tempOut += "/";
+	}
+	tempOut.append(filePath);
+	m_pathHelper.MakePathToFile(tempOut.toStdString());
+	
+	m_pOutput = new CBufferedFileIO(tempOut);
+	if (m_pProgress != nullptr)
+	{
+		m_pProgress->pOutputIo = m_pOutput;
+	}
+	return m_pOutput;
+}
+
+
 // buffer for stuff from user of library,
 // can we detect type of compression or do we need user info..?
 bool CLibMaster::setInputBuffer(CIOBuffer *buffer)
@@ -182,7 +201,7 @@ bool CLibMaster::setInputBuffer(CIOBuffer *buffer)
 		delete m_pProgress;
 	}
 	// setup info for decrunch later
-	m_pProgress = new XpkProgress(m_pInput);
+	m_pProgress = new XpkProgress(this);
 	
 	return true;
 }
@@ -203,7 +222,7 @@ bool CLibMaster::setInputFile(QString &szFile)
 	}
 	
 	// setup info for decrunch later
-	m_pProgress = new XpkProgress(m_pInput);
+	m_pProgress = new XpkProgress(this);
 
 	m_pProgress->xp_WholePackedFileSize = m_pInput->getFullSize(); // info to decruncher
 
@@ -250,10 +269,12 @@ bool CLibMaster::setOutputFile(QString &szFile)
 void CLibMaster::setOutputPath(QString &szPath)
 {
 	m_outputPath = szPath;
+	/*
 	if (m_pProgress != nullptr)
 	{
 		m_pProgress->m_extractPath = szPath;
 	}
+	*/
 	
 	// TODO: ?
 	//m_pOutput = new CVolumeIO(szPath);
