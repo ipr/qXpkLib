@@ -26,7 +26,7 @@ Generally GPL v2, see COPYING.txt
 Note extension-libraries may have different requirements, 
 see each respective library README.txt for details.
 
-Current status of qXpkLib:
+qXpkLib status, see respective README for details:
 * XPK file format chunks read (seems to be correct..)
 * initial support for loading libraries
  - may need to change interface from C++ style to C-style for correct/simpler loading..
@@ -39,6 +39,11 @@ Current status of qXpkLib:
  - also possible "chaining" of libraries
 * plan includes support for 64-bit builds also
 * ...
+
+qXpkTool status:
+* mostly done
+* just simple GUI to use, test and demonstrate integrating with the library
+* some improvements and features planned, maybe later..
 
 Sub-library status, see respective README for details:
 * LhA/Lzh (xadLha): 
