@@ -2,16 +2,16 @@
 //
 // CXpkLibrarian : sub-library loader&handler
 // can load additional decoders as necessary,
-// see xpkLibraryBase
+// see related sub-library base for interface:
+// - xpkLibraryBase, chunk-based XPK-format
+// - xfdLibraryBase, single file decrunching
+// - xadLibraryBase, archive unpacking
 //
 // Ilkka Prusi
 // ilkka.prusi@gmail.com
 //
 
-
 #include "XpkLibrarian.h"
-
-//#include <QDir>
 
 #ifdef _WIN32
 // fix missing definition (both needed)
@@ -35,7 +35,8 @@ QString CXpkLibrarian::getLibPath()
 {
 	QString szLibPath;
 	
-	// we want module-path (where loaded) and not working directory,
+	// we want module-path (where master-library was loaded) 
+	// and NOT working directory of application:
 	// is there any way to get it on different platforms
 	// or must we assume sub-libraries will be in some global path always??
 	
@@ -55,10 +56,16 @@ QString CXpkLibrarian::getLibPath()
 
 	int iIndex = szLibPath.lastIndexOf('/');
 	szLibPath = szLibPath.left(iIndex); // remove module (dll) name
+#endif // _WIN32
 	
-#else
+#ifdef UNIX
 	// Unix-equivalent?
 	// TODO: use plugins-path?
+#endif
+
+#ifdef AMIGAOS
+	// global "LIBS:" with sub-directory for sub-libraries,
+	// at least used to be..
 #endif
 
 	return szLibPath;
@@ -127,6 +134,8 @@ CXpkLibrarian::~CXpkLibrarian()
 	m_SubLib.unload();
 }
 
+/*
+// TODO: enumeration of available sub-libraries
 QList<QString> CXpkLibrarian::availableLibraries()
 {
 	QList<QString> lstTypes;
@@ -136,17 +145,40 @@ QList<QString> CXpkLibrarian::availableLibraries()
 	
 	return lstTypes;
 }
+*/
+
+///////
+//
+// Notes about library interface handling for "getXYZInstance" methods:
+//
+// * on Windows, DLL ABI has name decorations, which are a pain to deal with
+//  - if "stub" linking is used it's not an issue
+//  - downside of "stub" linking is that we would effectively require
+//   each and every sub-library to exist when using master-library
+//   -> this would be impossible to extend without dependencies on sub-libraries
+//  - instead of trying to access C++ objects directly from DLL
+//   we only need single method to give us that object
+//   -> simple and should work just about always on other platforms also
+//
+// * on Linux ..
+// * on Mac OS ..
+//
 
 xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib)
 {
 	loadLib(szLib);
 	
+	// get function pointer by symbol for accessing object from library
+	// (note type)
 	GetXpkInstance *pGetInstance = (GetXpkInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
 		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
+	
+	// call library method and get instance of contained object from library
+	// (note type)
 	return (xpkLibraryBase*)(*pGetInstance)();
 }
 
@@ -154,12 +186,17 @@ xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib)
 {
 	loadLib(szLib);
 	
+	// get function pointer by symbol for accessing object from library
+	// (note type)
 	GetXfdInstance *pGetInstance = (GetXfdInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
 		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
+	
+	// call library method and get instance of contained object from library
+	// (note type)
 	return (xfdLibraryBase*)(*pGetInstance)();
 }
 
@@ -167,12 +204,17 @@ xadLibraryBase *CXpkLibrarian::getXadInstance(QString &szLib)
 {
 	loadLib(szLib);
 	
+	// get function pointer by symbol for accessing object from library
+	// (note type)
 	GetXadInstance *pGetInstance = (GetXadInstance*)m_SubLib.resolve("GetXpkInstance");
 	if (pGetInstance == nullptr)
 	{
 		QString szError = m_SubLib.errorString();
 		throw ArcException("Failed locating symbol", szError.toStdString());
 	}
+	
+	// call library method and get instance of contained object from library
+	// (note type)
 	return (xadLibraryBase*)(*pGetInstance)();
 }
 
