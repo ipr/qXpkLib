@@ -15,6 +15,9 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+// for parent-container, access helpers
+#include "LibMaster.h"
+
 #include "IoContext.h"
 
 
@@ -115,11 +118,19 @@ bool CXfdMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 
 bool CXfdMaster::decrunch(XpkProgress *pProgress)
 {
-	CIoContext *pIn = pProgress->pInputIo;
-	CIoContext *pOut = pProgress->pOutputIo;
+	// might as well check it..
+	//CLibMaster *plm = dynamic_cast<CLibMaster>(parent());
+	
+	CLibMaster *plm = (CLibMaster*)parent();
+	CIoContext *pIn = plm->getInput();
+	CIoContext *pOut = plm->getOutput();
 
 	// get simple accessor for whole file to be processed:
 	// XFD wants whole file access usually and outputs whole file decrunched
+	//	
+	// TODO: just give ptr as method param instead?
+	// should simplify whole lot of handling..
+	//
 	pProgress->pInputBuffer = pIn->getBuffer();
 	pProgress->pOutputBuffer = pOut->getBuffer();
 	pProgress->xp_chunkIn = pProgress->xp_WholePackedFileSize;

@@ -14,6 +14,9 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+// for parent-container, access helpers
+#include "LibMaster.h"
+
 #include "IoContext.h"
 
 
@@ -131,6 +134,13 @@ bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 
 bool CXadMaster::decrunch(XpkProgress *pProgress)
 {
+	// might as well check it..
+	//CLibMaster *plm = dynamic_cast<CLibMaster>(parent());
+	
+	CLibMaster *plm = (CLibMaster*)parent();
+	//CIoContext *pIn = plm->getInput();
+	//CIoContext *pOut = plm->getOutput();
+
 	// get simple accessor for whole archive,
 	// sub-library may or might not want to use it..
 	//CIoContext *pIn = pProgress->pInputIo;
@@ -141,6 +151,9 @@ bool CXadMaster::decrunch(XpkProgress *pProgress)
 	// -> better simplify generic cases, setup here already..
 	pProgress->pInputBuffer = pProgress->pInputIo->getBuffer();
 	pProgress->pOutputBuffer = pProgress->pOutputIo->getBuffer();
+
+	//pProgress->pInputBuffer = pIn->getBuffer();
+	//pProgress->pOutputBuffer = pOut->getBuffer();
 	
 	// TODO: for multi-volume cases, need multiple input-files..
 	// allow library to ask for different input from lib-master?

@@ -15,6 +15,9 @@
 // reuse librarian for loading decrunchers
 #include "XpkLibrarian.h"
 
+// for parent-container, access helpers
+#include "LibMaster.h"
+
 #include "IoContext.h"
 
 
@@ -127,12 +130,19 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 	// XPK-container, process into tags
 	// and chunk-nodes
 	m_Tags.ParseChunks(pProgress->pInputBuffer);
-
-	CIoContext *pIn = pProgress->pInputIo;
-	CIoContext *pOut = pProgress->pOutputIo;
 	
+	// might as well check it..
+	//CLibMaster *plm = dynamic_cast<CLibMaster>(parent());
+	
+	CLibMaster *plm = (CLibMaster*)parent();
+	CIoContext *pIn = plm->getInput();
+	CIoContext *pOut = plm->getOutput();
+
 	// result unpacked size
 	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_UnpackedLen;
+	
+	// TODO: just give ptr as method param instead?
+	// should simplify whole lot of handling..
 	pProgress->pOutputBuffer = pOut->getBuffer();
 	
 	XpkChunk *pChunk = m_Tags.getFirst();

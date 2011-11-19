@@ -18,11 +18,11 @@
 #define XPKLIBRARYBASE_H
 
 #include <QString>
-#include "qxpklib.h"
+#include "qxpklib.h" // for info-container only
 
 #include "XpkCapabilities.h"
 #include "XpkProgress.h"
-#include "AnsiFile.h"
+#include "AnsiFile.h" // for IOBuffer only
 
 
 class xpkLibraryBase

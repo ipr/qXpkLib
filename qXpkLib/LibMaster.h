@@ -94,6 +94,12 @@ public:
 		}
 		return nullptr;
 	}
+
+	// single-file output or no name/path known
+	CIoContext *getInput()
+	{
+		return m_pInput;
+	}
 	
 	// single-file output or no name/path known
 	CIoContext *getOutput()

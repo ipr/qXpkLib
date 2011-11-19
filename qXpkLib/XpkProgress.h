@@ -20,6 +20,8 @@ class QString;
 
 class CLibMaster;
 
+// TODO: continue changes for cleaner use in different cases
+
 class XpkProgress 
 {
 private:

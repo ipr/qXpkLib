@@ -172,6 +172,16 @@ CIoContext *CLibMaster::getOutput(QString &filePath)
 		tempOut += "/";
 	}
 	tempOut.append(filePath);
+	
+	// clear old
+	if (m_pOutput != nullptr)
+	{
+		if (m_pOutput->getName() != tempOut)
+		{
+			delete m_pOutput;
+		}
+	}
+	
 	m_pathHelper.MakePathToFile(tempOut.toStdString());
 	
 	m_pOutput = new CBufferedFileIO(tempOut);
