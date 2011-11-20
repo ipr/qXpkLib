@@ -115,7 +115,7 @@ bool CXfdMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// also need to give input to library..
 	//
 	CLibMaster *plm = (CLibMaster*)parent();
-	CIoContext *pIn = plm->getInput();
+	CIoContext *pIn = plm->getCurrentInput();
 	return m_pSubLibrary->archiveInfo(pIn, info);
 }
 
@@ -125,8 +125,8 @@ bool CXfdMaster::decrunch(XpkProgress *pProgress)
 	//CLibMaster *plm = dynamic_cast<CLibMaster>(parent());
 	
 	CLibMaster *plm = (CLibMaster*)parent();
-	CIoContext *pIn = plm->getInput();
-	CIoContext *pOut = plm->getOutput();
+	CIoContext *pIn = plm->getCurrentInput();
+	CIoContext *pOut = plm->getCurrentOutput();
 
 	// get simple accessor for whole file to be processed:
 	// XFD wants whole file access usually and outputs whole file decrunched

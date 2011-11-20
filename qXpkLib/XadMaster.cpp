@@ -131,7 +131,7 @@ bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// also need to give input to library..
 	//
 	CLibMaster *plm = (CLibMaster*)parent();
-	CIoContext *pIn = plm->getInput();
+	CIoContext *pIn = plm->getCurrentInput();
 	return m_pSubLibrary->archiveInfo(pIn, info);
 }
 

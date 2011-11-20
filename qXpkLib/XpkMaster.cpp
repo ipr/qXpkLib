@@ -135,8 +135,8 @@ bool CXpkMaster::decrunch(XpkProgress *pProgress)
 	//CLibMaster *plm = dynamic_cast<CLibMaster>(parent());
 	
 	CLibMaster *plm = (CLibMaster*)parent();
-	CIoContext *pIn = plm->getInput();
-	CIoContext *pOut = plm->getOutput();
+	CIoContext *pIn = plm->getCurrentInput();
+	CIoContext *pOut = plm->getCurrentOutput();
 
 	// result unpacked size
 	pProgress->xp_UnpackedSize = m_Tags.getHeader()->xsh_UnpackedLen;
