@@ -163,7 +163,9 @@ bool CLibMaster::archiveUnpack()
 }
 
 // file name and path given:
-// give output for that
+// give output for that,
+// changes current output: not usable with user-buffer output..
+//
 CIoContext *CLibMaster::getOutput(QString &filePath)
 {
 	QString tempOut = m_outputPath;

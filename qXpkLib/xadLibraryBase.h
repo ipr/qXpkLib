@@ -69,12 +69,16 @@ public:
     virtual bool isSupported(CIOBuffer *pInputBuffer)=0;
 
 	// list files in archive, get other metadata also..
-	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
+	// need input for library..
+	virtual bool archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info)=0;
 	
 	// test archive integrity
-	virtual bool testArchive()=0;
+	// TODO: check parameters needed.. input at least.. 
+	virtual bool testArchive(CIoContext *pInput)=0;
 	
-	// unpack/decompress
+	// unpack/decompress,
+	// need input and output and way for multi-file handling..
+	//
 	virtual bool Decrunch(XpkProgress *pProgress)=0;
 	
 };

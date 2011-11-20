@@ -52,7 +52,12 @@ public:
     virtual bool isSupported(CIOBuffer *pInputBuffer)=0;
 
 	// list compressed file information..
-	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info)=0;
+	virtual bool archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info)=0;
+
+	// test archive integrity,
+	// mostly just test of decompression for error detection, can we use it generally here?
+	// TODO: check parameters needed.. input at least.. 
+	//virtual bool testArchive(CIoContext *pInput)=0;
 
 	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress)=0;

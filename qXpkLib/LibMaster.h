@@ -95,20 +95,22 @@ public:
 		return nullptr;
 	}
 
-	// single-file output or no name/path known
-	CIoContext *getInput()
+	// current input
+	CIoContext *getCurrentInput()
 	{
 		return m_pInput;
 	}
 	
-	// single-file output or no name/path known
-	CIoContext *getOutput()
+	// current output
+	CIoContext *getCurrentOutput()
 	{
 		return m_pOutput;
 	}
 
 	// file name and path given:
-	// give output for that
+	// give output for that,
+	// changes current output: not usable with user-buffer output..
+	//
 	CIoContext *getOutput(QString &filePath);
 
 public slots:

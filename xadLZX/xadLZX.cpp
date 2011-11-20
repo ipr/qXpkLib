@@ -29,6 +29,10 @@ xadLZX::~xadLZX()
 	}
 }
 
+bool xadLZX::isSupported(CIOBuffer *pInputBuffer)
+{
+}
+
 // TODO: something like this needed?
 virtual bool xadLZX::setArchive(QString &file)
 {
@@ -49,7 +53,7 @@ virtual bool xadLZX::setArchive(QString &file)
 	return false;
 }
 
-bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
+bool xadLZX::archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info)
 {
 	if (m_pArchive == nullptr)
 	{
@@ -118,19 +122,9 @@ bool xadLZX::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return true;
 }
 
-// set path to uncompress files to
-bool xadLZX::setExtractPath(QString &szPath)
-{
-	if (m_pArchive == nullptr)
-	{
-		return false;
-	}
-	m_pArchive->SetExtractPath(szPath.toStdString());
-	return true;
-}
 
 // test archive integrity
-bool xadLZX::testArchive()
+bool xadLZX::testArchive(CIoContext *pInput)
 {
 	// not implemented yet
 	return false;

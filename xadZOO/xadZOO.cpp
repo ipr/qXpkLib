@@ -1,5 +1,10 @@
 #include "xadZOO.h"
 
+// fulfill fwd. declarations
+#include "qxpklib.h"
+#include "XpkCapabilities.h"
+#include "XpkProgress.h"
+
 #include "ZooStructures.h"
 #include "UnZoo.h"
 
@@ -32,28 +37,12 @@ xadZOO::~xadZOO()
 	}
 }
 
-// TODO:
-bool xadZOO::setArchive(QString &file)
+bool xadZOO::isSupported(CIOBuffer *pInputBuffer)
 {
-	if (m_pArchive != nullptr)
-	{
-		delete m_pArchive;
-	}
-	
-	try
-	{
-		m_pArchive = new CUnZoo(file.toStdString());
-		return m_pArchive->ListContents();
-	}
-	catch (std::exception &exp) // catch by base-type
-	{
-		//emit fatal_error(exp.what());
-	}
-	return false;
 }
 
 // list files in archive, get other metadata also..
-bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
+bool xadZOO::archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info)
 {
 	if (m_pArchive == nullptr)
 	{
@@ -113,19 +102,8 @@ bool xadZOO::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return true;
 }
 
-// set path to uncompress files to
-bool xadZOO::setExtractPath(QString &szPath)
-{
-	if (m_pArchive == nullptr)
-	{
-		return false;
-	}
-
-	return m_pArchive->SetExtractPath(szPath.toStdString());
-}
-
 // test archive integrity
-bool xadZOO::testArchive()
+bool xadZOO::testArchive(CIoContext *pInput)
 {
 	if (m_pArchive == nullptr)
 	{
@@ -151,6 +129,7 @@ bool xadZOO::Decrunch(XpkProgress *pProgress)
 		return false;
 	}
 
+	m_pArchive->SetExtractPath(pProgress->m_extractPath.toStdString());
 	try
 	{
 		return m_pArchive->Extract();

@@ -128,8 +128,11 @@ bool CXadMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 {
 	// only sub-library knows all info caller might want
 	// -> get it from sub-library
+	// also need to give input to library..
 	//
-	return m_pSubLibrary->archiveInfo(info);
+	CLibMaster *plm = (CLibMaster*)parent();
+	CIoContext *pIn = plm->getInput();
+	return m_pSubLibrary->archiveInfo(pIn, info);
 }
 
 bool CXadMaster::decrunch(XpkProgress *pProgress)

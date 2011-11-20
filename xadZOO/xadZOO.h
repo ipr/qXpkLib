@@ -4,6 +4,7 @@
 #include "xadZOO_global.h"
 
 #include <QObject>
+#include <QString>
 
 // base for library interface
 #include "xadLibraryBase.h"
@@ -19,19 +20,10 @@ public:
     xadZOO();
     virtual ~xadZOO();
 
-	// TODO: something like this needed to interface-base?    
-	virtual bool setArchive(QString &file);
-
-	// list files in archive, get other metadata also..
-	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
-
-	// set path to uncompress files to
-	virtual bool setExtractPath(QString &szPath);
+    virtual bool isSupported(CIOBuffer *pInputBuffer);
+	virtual bool archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info);
+	virtual bool testArchive(CIoContext *pInput);
 	
-	// test archive integrity
-	virtual bool testArchive();
-	
-	// unpack/decompress
 	virtual bool Decrunch(XpkProgress *pProgress);
 	
 private:

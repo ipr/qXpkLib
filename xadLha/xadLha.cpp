@@ -53,18 +53,11 @@ xadLha::~xadLha()
 	}
 }
 
-// TODO: something like this needed?
-bool xadLha::setArchive(QString &file)
+bool xadLha::isSupported(CIOBuffer *pInputBuffer)
 {
-	if (m_pArchive == nullptr)
-	{
-		delete m_pArchive;
-	}
-	m_pArchive = new CLhArchive(file);
-	return true;
 }
 
-bool xadLha::archiveInfo(QXpkLib::CArchiveInfo &info)
+bool xadLha::archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info)
 {
 	if (m_pArchive == nullptr)
 	{
@@ -120,20 +113,8 @@ bool xadLha::archiveInfo(QXpkLib::CArchiveInfo &info)
 	return false;
 }
 
-// set path to uncompress files to
-bool xadLha::setExtractPath(QString &szPath)
-{
-	if (m_pArchive == nullptr)
-	{
-		return false;
-	}
-
-	m_pArchive->SetExtractPath(szPath);
-	return true;
-}
-
 // test archive integrity
-bool xadLha::testArchive()
+bool xadLha::testArchive(CIoContext *pInput)
 {
 	if (m_pArchive == nullptr)
 	{

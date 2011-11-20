@@ -112,8 +112,11 @@ bool CXfdMaster::archiveInfo(QXpkLib::CArchiveInfo &info)
 	// only sub-library knows necessary metadata
 	// which caller might want..
 	// -> get it from library-code
+	// also need to give input to library..
 	//
-	return m_pSubLibrary->archiveInfo(info);
+	CLibMaster *plm = (CLibMaster*)parent();
+	CIoContext *pIn = plm->getInput();
+	return m_pSubLibrary->archiveInfo(pIn, info);
 }
 
 bool CXfdMaster::decrunch(XpkProgress *pProgress)
