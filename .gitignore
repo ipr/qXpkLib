@@ -1,3 +1,6 @@
 # ignore Qt Creatore .user files in git
 *.pro.user
 
+# ignore build-directories
+*-build-desktop
+
