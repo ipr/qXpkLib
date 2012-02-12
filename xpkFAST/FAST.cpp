@@ -139,7 +139,7 @@ bool CFAST::decrunch(CReadBuffer *pIn, CReadBuffer *pOut, const uint32_t chunkIn
 
 	//move.l	d0,a4 // <- 32-bit into to address? -> replace
 	//add.l	a0,a4		;a4:=behind the end of input block
-	A4.src += D0.l;
+	A4.src += D0.l; // <- count pointer to end of input
 
 	//moveq.l	#0,d4		;d4:=0
 	D4.l = 0;
@@ -161,13 +161,14 @@ DOLITERAL_MACRO:
 	D1.w = 0x8000;	//move.w	#$8000,d1
 	D1.w += D1.w;	// add.w	d1,d1
 	
-/*
 oloop:	
 
 	D1.w = A4.wM(); // auto-decrement //move.w	-(a4),d1
 	
+	TODO: handle addx
 	addx.w	d1,d1 ; add extended, source+dest+x-bit
 	bcs.s	Copy0 // carry-set branch -> goto Copy0;
+
 
 Lit0:	
 	//DOLITERAL // 	move.b	(a0)+,(a1)+	;Literal item means copy a byte.
@@ -192,6 +193,7 @@ Copy1:
 	
 	D1.w = A4.wM(); // auto-decrement //move.w	-(a4),d1
 	
+	TODO: handle addx
 	addx.w	d1,d1 ; add extended, source+dest+x-bit
 	bcc.s	Lit0 // carry clear -> goto Lit0;
 
@@ -209,19 +211,30 @@ Lit1:
 
 	D1.w += D1.w;	//add.w	d1,d1
 	bcc.W	Lit0 // carry-clear branch -> goto Lit0;
+	// ?? if D1.w <= MAXWORD ??
 	bne.s	Copy0 // not equal branch -> goto Copy0;
-	
-	cmp.l	a4,a0
-	bcs.W	oloop // carry-set branch -> goto oloop;
+	// ?? if D1.w != 0 ??
 
-*/
-	
+	/*
+	// check of end of input
+	//cmp.l	a4,a0
+	if ((A0.src - A4.src) < 0)
+	{
+		//bcs.W	oloop // carry-set branch -> resume loop
+		goto oloop;
+	}
+	*/
+	// simplified: position before end of input -> resume
+	if (A0.src < A4.src)
+	{
+		goto oloop;
+	}
 
 finish:	
-//	movem.l	(sp)+,a0-a2/a4-a5/d1-d5 // restore stack
+//	movem.l	(sp)+,a0-a2/a4-a5/d1-d5 // restore stack -> no need
 //	rts
 	return true;
-	
+
 err:
 	return false;
 }

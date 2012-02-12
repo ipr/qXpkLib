@@ -662,7 +662,9 @@ protected:
 
 	//statusreg sr;
 	ccreg ccr; // keep this at least?
-	
+
+	// constructor is protected:
+	// must use derived
     XfdSlave(CIOBuffer *pIn)
 		: m_pIn(pIn)
 		, D0(),D1(),D2(),D3(),D4(),D5(),D6(),D7()
