@@ -14,9 +14,9 @@ public:
     xfdSZDD();
     virtual ~xfdSZDD();
 
-    virtual bool isSupported(CReadBuffer *pInputBuffer);
+    virtual bool isSupported(CIOBuffer *pInputBuffer);
 
-	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
+	virtual bool archiveInfo(CIoContext *pInput, QXpkLib::CArchiveInfo &info);
 	
 	virtual bool Decrunch(XpkProgress *pProgress);
 

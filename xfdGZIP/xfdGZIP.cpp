@@ -33,6 +33,14 @@ xfdGZIP::~xfdGZIP()
 {
 }
 
+bool xfdGZIP::isSupported(CReadBuffer *pInputBuffer)
+{
+}
+
+bool xfdGZIP::archiveInfo(QXpkLib::CArchiveInfo &info)
+{
+}
+
 bool xfdGZIP::Decrunch(XpkProgress *pProgress)
 {
 	return false;

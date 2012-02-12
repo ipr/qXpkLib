@@ -20,8 +20,11 @@ public:
     xfdGZIP();
     virtual ~xfdGZIP();
 
-	virtual bool Decrunch(XpkProgress *pProgress);
+    virtual bool isSupported(CReadBuffer *pInputBuffer);
+    
+	virtual bool archiveInfo(QXpkLib::CArchiveInfo &info);
 
+	virtual bool Decrunch(XpkProgress *pProgress);
 };
 
 #ifdef __cplusplus
