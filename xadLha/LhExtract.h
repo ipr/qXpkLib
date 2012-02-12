@@ -41,8 +41,8 @@ protected:
 	
 	CCrcIo m_crcio;
 	
-	CReadBuffer m_ReadBuf; // packed data from archive
-	CReadBuffer m_WriteBuf; // unpacked data for writing
+    CIOBuffer m_ReadBuf; // packed data from archive
+    CIOBuffer m_WriteBuf; // unpacked data for writing
 	
 	// kept and updated when extracting file
 	//unsigned int m_uiCrc; // TODO: cumulative of all files? anywhere to check?

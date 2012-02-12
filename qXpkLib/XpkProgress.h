@@ -71,10 +71,14 @@ public:
 	/*
 	CIoContext *getOutput()
 	{
-		return m_pMaster->getOutput();
+        return m_pMaster->getCurrentOutput();
 	}
 	*/
 
+    CIoContext *getInput()
+    {
+        return m_pMaster->getCurrentInput();
+    }
 
 	/* size of compressed chunk to decruncher */
 	size_t	 xp_chunkIn;

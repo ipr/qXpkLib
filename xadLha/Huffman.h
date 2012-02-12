@@ -39,8 +39,8 @@ public:
 
 	// helper for accessing same data
 	// in decoder and extract-handling
-	CReadBuffer *m_pReadBuf;
-	CReadBuffer *m_pWriteBuf;
+    CIOBuffer *m_pReadBuf;
+    CIOBuffer *m_pWriteBuf;
 	
 	uint16_t peekbits(const uint8_t count)
 	{

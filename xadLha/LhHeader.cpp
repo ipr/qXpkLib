@@ -36,7 +36,7 @@ void CLhHeader::ParseHeaders(CAnsiFile &ArchiveFile)
 	if (m_pReadBuffer == nullptr)
 	{
 		// emulate old style, read 4096 max. at a time
-		m_pReadBuffer = new CReadBuffer(4096); // default bufsize
+        m_pReadBuffer = new CIOBuffer(4096); // default bufsize
 	}
 	m_pReadBuffer->PrepareBuffer(4096, false);
 

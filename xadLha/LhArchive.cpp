@@ -63,6 +63,11 @@ void CLhArchive::Clear()
 
 void CLhArchive::SeekHeader(CAnsiFile &ArchiveFile)
 {
+    // note: primary reason for "header seek" is
+    // when file is self-extracting executable
+    // where actual archive-part starts somewhere later than expected..
+    // check suitable size (different kinds in different platforms)
+    //
 	//size_t nMaxSeekSize = 64 * 1024; // max seek size
 	size_t nMaxSeekSize = 4096; // max seek size
 	size_t nFileSize = ArchiveFile.GetSize();
@@ -81,7 +86,7 @@ void CLhArchive::SeekHeader(CAnsiFile &ArchiveFile)
 		nMaxSeekSize = nFileSize;
 	}
 	
-	CReadBuffer Buffer(nMaxSeekSize);
+    CIOBuffer Buffer(nMaxSeekSize);
 	if (ArchiveFile.Read(Buffer.GetBegin(), nMaxSeekSize) == false)
 	{
 		throw IOException("Failed reading header");

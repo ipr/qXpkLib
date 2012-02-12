@@ -67,7 +67,7 @@ protected:
 	size_t m_decode_count;
 	
 	// buffer for dictionary text
-	CReadBuffer m_DictionaryText;
+    CIOBuffer m_DictionaryText;
 	
 	// dictionary-related
 	unsigned long m_dicsiz;
@@ -134,7 +134,7 @@ public:
 	}
 	
 	// need to implement in inherited (bitio by inheritance..)
-	virtual void InitBitIo(const size_t nPackedSize, const size_t nOriginalSize, CReadBuffer *pReadBuf, CReadBuffer *pWriteBuf)
+    virtual void InitBitIo(const size_t nPackedSize, const size_t nOriginalSize, CIOBuffer *pReadBuf, CIOBuffer *pWriteBuf)
 	{
 		// call implementation in inherited class
 		BitIo *pIo = GetBitIo();
@@ -150,8 +150,8 @@ public:
 	}
 	
 	// may be used during decoding
-	virtual CReadBuffer *GetReadBuf() = 0;
-	virtual CReadBuffer *GetWriteBuf() = 0;
+    virtual CIOBuffer *GetReadBuf() = 0;
+    virtual CIOBuffer *GetWriteBuf() = 0;
 	virtual BitIo *GetBitIo() = 0;
 	
 	virtual void DecodeStart() = 0; // keep public
@@ -198,11 +198,11 @@ public:
 	virtual ~CLhDecodeLh1(void)
 	{}
 
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}
@@ -229,11 +229,11 @@ public:
 	virtual ~CLhDecodeLh2(void)
 	{}
 
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}
@@ -260,11 +260,11 @@ public:
 	virtual ~CLhDecodeLh3(void)
 	{}
 
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}
@@ -299,11 +299,11 @@ public:
 	virtual ~CLhDecodeLh7(void)
 	{}
 
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}
@@ -337,11 +337,11 @@ public:
 	virtual ~CLhDecodeLzs(void)
 	{}
 	
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}
@@ -375,11 +375,11 @@ public:
 	virtual ~CLhDecodeLz5(void)
 	{}
 	
-	virtual CReadBuffer *GetReadBuf()
+    virtual CIOBuffer *GetReadBuf()
 	{
 		return m_BitIo.m_pReadBuf;
 	}
-	virtual CReadBuffer *GetWriteBuf()
+    virtual CIOBuffer *GetWriteBuf()
 	{
 		return m_BitIo.m_pWriteBuf;
 	}

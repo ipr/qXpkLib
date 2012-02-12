@@ -34,8 +34,12 @@
 //
 class CIoContext
 {
+protected:
+    bool m_isReadOnly;
+
 public:
-    CIoContext(void)
+    CIoContext(bool isReadOnly = true)
+        : m_isReadOnly(isReadOnly)
 	{}
 	virtual ~CIoContext(void)
 	{}

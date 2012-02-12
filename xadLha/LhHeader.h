@@ -715,7 +715,7 @@ protected:
 	CCrcIo m_crcio;
 	
 	QTextCodec *m_pTextCodec;
-	CReadBuffer *m_pReadBuffer;
+    CIOBuffer *m_pReadBuffer;
 
 	int calc_sum(unsigned char *p, size_t len) const
 	{
@@ -763,7 +763,7 @@ public:
 	}
 
 	// If true, archive is msdos SFX (executable)
-	bool IsMsdosSFX1(CReadBuffer &Buffer) const
+    bool IsMsdosSFX1(CIOBuffer &Buffer) const
 	{
 		// "MZ..", 0x4D5A9000
 		// -> MSDOS, OS/2 or MS-Windows executable/DLL
@@ -778,7 +778,7 @@ public:
 	}
 
 	// If true, archive is Amiga 'run' (executable)
-	bool IsAmigaRun(CReadBuffer &Buffer) const
+    bool IsAmigaRun(CIOBuffer &Buffer) const
 	{
 		// 0x000003F3 -> AmigaDOS executable
 		unsigned char *p = Buffer.GetBegin();
@@ -796,7 +796,7 @@ public:
 	
 	// if file is self-decompressing exectuable,
 	// we need to seek to actual archive header..
-	unsigned char *SeekArchiveHeader(CReadBuffer &Buffer) const
+    unsigned char *SeekArchiveHeader(CIOBuffer &Buffer) const
 	{
 		unsigned char *p = Buffer.GetBegin();
 		unsigned char *pEnd = Buffer.GetEnd();
@@ -827,7 +827,7 @@ public:
 	// is valid lha type: verify "-l??-" keyword
 	// (e.g. -lh5- -lz0- etc.)
 	//
-	bool IsValidLha(CReadBuffer &Buffer) const
+    bool IsValidLha(CIOBuffer &Buffer) const
 	{
 		bool bHeaderValid = false;
 
