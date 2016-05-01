@@ -43,9 +43,9 @@ protected:
 	QString m_libName;
 	
 	QString getLibPath();
-	QString getLibName(QString &szLib, QString &szPath);
+    QString getLibName(const QString &szLib, const QString &szPath);
 	
-	bool loadLib(QString &szLib);
+    bool loadLib(const QString &szLib);
 	
 public:
 	CXpkLibrarian(QObject *parent = 0);
@@ -56,9 +56,9 @@ public:
 	QList<QString> availableLibraries();
 	*/
 	
-	xpkLibraryBase *getXpkInstance(QString &szLib);
-	xfdLibraryBase *getXfdInstance(QString &szLib);
-	xadLibraryBase *getXadInstance(QString &szLib);
+    xpkLibraryBase *getXpkInstance(const QString &szLib);
+    xfdLibraryBase *getXfdInstance(const QString &szLib);
+    xadLibraryBase *getXadInstance(const QString &szLib);
 };
 
 

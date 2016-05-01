@@ -1,4 +1,5 @@
 #include "FileType.h"
+#include <cstring>
 
 /*
 tHeaderType CFileType::SubTypeFromHeader(const tHeaderType enType, const uint8_t *pBuffer, const uint32_t ulLength)

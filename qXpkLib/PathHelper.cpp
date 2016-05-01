@@ -18,7 +18,9 @@
 
 #include "PathHelper.h"
 
+#ifdef _WIN32
 #include <direct.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 

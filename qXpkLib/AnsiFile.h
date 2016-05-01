@@ -9,7 +9,7 @@
 #ifndef _ANSIFILE_H_
 #define _ANSIFILE_H_
 
-#include <string>
+#include <cstring>
 #include <memory>
 
 class CIOBuffer

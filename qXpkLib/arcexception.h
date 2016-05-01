@@ -22,6 +22,11 @@ public:
         , m_message(szMessage)
     {
     }
+
+    virtual const char* what() const noexcept
+    {
+        return m_message.c_str();
+    }
 };
 
 class ArcException : public std::exception
@@ -45,6 +50,12 @@ public:
         // TODO:
         //m_szData = std::lexical_cast<std::string>(nData);
     }
+
+    virtual const char* what() const noexcept
+    {
+        return m_message.c_str();
+    }
+
     std::string GetData()
     {
         return m_data;

@@ -13,6 +13,8 @@
 // checksum functions
 #include "xpkmaster_checksum.h"
 
+#include "arcexception.h"
+
 
 // verify chunk header according to size of it
 bool XpkTags::verifyHeaderLong(XpkChunkHdrLong *pChunkHeader)

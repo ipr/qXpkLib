@@ -13,6 +13,8 @@
 
 #include "XpkLibrarian.h"
 
+#include "arcexception.h"
+
 #ifdef _WIN32
 // fix missing definition (both needed)
 #ifdef UNICODE
@@ -71,7 +73,7 @@ QString CXpkLibrarian::getLibPath()
 	return szLibPath;
 }
 
-QString CXpkLibrarian::getLibName(QString &szLib, QString &szPath)
+QString CXpkLibrarian::getLibName(const QString &szLib, const QString &szPath)
 {
 	QString szLibName = szPath;
 	if (szLibName.at(szLibName.length() -1) != '/')
@@ -104,7 +106,7 @@ QString CXpkLibrarian::getLibName(QString &szLib, QString &szPath)
 
 }
 
-bool CXpkLibrarian::loadLib(QString &szLib)
+bool CXpkLibrarian::loadLib(const QString &szLib)
 {
 	if (m_SubLib.isLoaded() == true)
 	{
@@ -164,7 +166,7 @@ QList<QString> CXpkLibrarian::availableLibraries()
 // * on Mac OS ..
 //
 
-xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib)
+xpkLibraryBase *CXpkLibrarian::getXpkInstance(const QString &szLib)
 {
 	loadLib(szLib);
 	
@@ -182,7 +184,7 @@ xpkLibraryBase *CXpkLibrarian::getXpkInstance(QString &szLib)
 	return (xpkLibraryBase*)(*pGetInstance)();
 }
 
-xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib)
+xfdLibraryBase *CXpkLibrarian::getXfdInstance(const QString &szLib)
 {
 	loadLib(szLib);
 	
@@ -200,7 +202,7 @@ xfdLibraryBase *CXpkLibrarian::getXfdInstance(QString &szLib)
 	return (xfdLibraryBase*)(*pGetInstance)();
 }
 
-xadLibraryBase *CXpkLibrarian::getXadInstance(QString &szLib)
+xadLibraryBase *CXpkLibrarian::getXadInstance(const QString &szLib)
 {
 	loadLib(szLib);
 	
