@@ -10,41 +10,7 @@
 #define _ANSIFILE_H_
 
 #include <string>
-#include <exception>
-
-// exception-classes for error cases
-class IOException : public std::exception
-{
-public:
-	IOException(const char *szMessage)
-		: std::exception(szMessage)
-	{
-	}
-};
-
-class ArcException : public std::exception
-{
-protected:
-	std::string m_szData;
-public:
-	ArcException(const char *szMessage, const std::string &szData)
-		: std::exception(szMessage)
-		, m_szData(szData)
-	{
-	}
-	ArcException(const char *szMessage, const size_t nData)
-		: std::exception(szMessage)
-		, m_szData()
-	{
-		// TODO:
-		//m_szData = std::lexical_cast<std::string>(nData);
-	}
-	std::string GetData()
-	{
-		return m_szData;
-	}
-};
-
+#include <memory>
 
 class CIOBuffer
 {

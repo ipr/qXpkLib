@@ -24,6 +24,7 @@
 #include <QFile> // cross-platform mmap() implementation
 
 #include "AnsiFile.h"
+#include "arcexception.h"
 
 #include "XpkCapabilities.h"
 #include "XpkProgress.h"

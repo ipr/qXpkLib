@@ -9,6 +9,7 @@
 
 #include "LibMaster.h"
 
+#include "arcexception.h"
 #include "PathHelper.h"
 
 
@@ -116,7 +117,8 @@ bool CLibMaster::archiveUnpack()
 	{
 		//m_pInput->Close();
 		// error for now..
-		throw ArcException("Output same as input", m_pInput->getName().toStdString());
+        throw ArcException("Output same as input", m_pInput->getName().toStdString());
+        //return false;
 	}
 
 	bool bRet = false;
@@ -148,8 +150,9 @@ bool CLibMaster::archiveUnpack()
 	
 	if (bRet == false)
 	{
-		throw ArcException("Decrunching failed", m_pInput->getName().toStdString());
-	}
+        throw ArcException("Decrunching failed", m_pInput->getName().toStdString());
+        //return false;
+    }
 	
 	// overwrite existing file?
 	// -> 

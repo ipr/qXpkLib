@@ -48,6 +48,7 @@ HEADERS += qxpklib.h\
     xfdLibraryBase.h \
     LibMaster.h \
     XpkCapabilities.h \
-    PathHelper.h
+    PathHelper.h \
+    arcexception.h
 
 

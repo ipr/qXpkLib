@@ -55,15 +55,22 @@ public:
 	/* input and output buffers for sub-library (decruncher) */
 	CIOBuffer *pInputBuffer;
 	CIOBuffer *pOutputBuffer;
+
+    CLibMaster *getMaster()
+    {
+        return m_pMaster;
+    }
 	
 	// get output-context for given file with path,
 	// parent-path will be added to extract to correct location.
 	// use for multi-file archive output.
 	//
+    /*
 	CIoContext *getOutput(QString &filePath)
 	{
 		return m_pMaster->getOutput(filePath);
 	}
+    */
 
 	// get output-context for when no name known
 	// or single file/chunk output.
@@ -75,10 +82,12 @@ public:
 	}
 	*/
 
+    /*
     CIoContext *getInput()
     {
         return m_pMaster->getCurrentInput();
     }
+    */
 
 	/* size of compressed chunk to decruncher */
 	size_t	 xp_chunkIn;
@@ -98,6 +107,7 @@ public:
 	/* size of unpacked data in total */
 	size_t	 xp_UnpackedSize;
 	
+    // only master can create (access constructor)
 	friend class CLibMaster;
 };
 
