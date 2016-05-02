@@ -19,9 +19,9 @@ protected:
     std::string m_message;
 
 public:
-    IOException(const char *szMessage)
+    IOException(const char *message)
         : std::exception()
-        , m_message(szMessage)
+        , m_message(message)
     {
     }
 
@@ -38,19 +38,19 @@ protected:
     std::string m_data;
 
 public:
-    ArcException(const char *szMessage, const std::string &szData)
+    ArcException(const char *message, const std::string &data)
         : std::exception()
-        , m_message(szMessage)
-        , m_data(szData)
+        , m_message(message)
+        , m_data(data)
     {
     }
-    ArcException(const char *szMessage, const size_t nData)
+    ArcException(const char *message, const size_t data)
         : std::exception()
-        , m_message(szMessage)
+        , m_message(message)
         , m_data()
     {
-        // TODO:
-        //m_szData = std::lexical_cast<std::string>(nData);
+        // since C++11
+        m_data = std::to_string(data);
     }
 
     virtual const char* what() const noexcept
@@ -58,7 +58,7 @@ public:
         return m_message.c_str();
     }
 
-    std::string GetData()
+    std::string getData()
     {
         return m_data;
     }
