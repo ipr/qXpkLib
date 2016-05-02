@@ -25,6 +25,9 @@
 // -> must build into those libraries without reference to parent-library 
 class CPathHelper
 {
+protected:
+    bool MakeDir(const std::string &szPath);
+
 public:
 	// no members, just code
     CPathHelper() {}

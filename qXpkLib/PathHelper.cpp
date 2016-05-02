@@ -20,10 +20,30 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#else
+#include <sys/stat.h>
 #endif
 #include <stdlib.h>
 #include <stdio.h>
 
+// quick fix around stupid naming in Win32 API
+bool CPathHelper::MakeDir(const std::string &szPath)
+{
+#ifdef _WIN32
+    if (_mkdir(szPath.c_str()) == 0)
+    {
+        return true;
+
+    }
+#else
+    // also add some placeholder for umask (check functionality)
+    if (mkdir(szPath.c_str(), 0600) == 0)
+    {
+        return true;
+    }
+#endif
+    return false;
+}
 
 // expects path only without file name
 bool CPathHelper::MakePath(const std::string &szPath)
@@ -41,7 +61,7 @@ bool CPathHelper::MakePath(const std::string &szPath)
 		// -> create what we have
 
 		// don't care if it succeeds of not..
-		_mkdir(szPath.c_str());
+        MakeDir(szPath);
 		return true;
 	}
 
@@ -51,7 +71,7 @@ bool CPathHelper::MakePath(const std::string &szPath)
 		std::string szTmpPath = szPath.substr(0, nPos +1);
 
 		// don't care if it succeeds of not..
-		_mkdir(szTmpPath.c_str());
+        MakeDir(szTmpPath);
 
 		nPrevPos = nPos +1;
 		// locate next separator (after current)
@@ -63,8 +83,8 @@ bool CPathHelper::MakePath(const std::string &szPath)
 		// use remaining also (if it doesn't end with path separator)
 		std::string szTmpPath = szPath.substr(nPrevPos);
 		// don't care if it succeeds of not..
-		_mkdir(szTmpPath.c_str());
-	}
+        MakeDir(szTmpPath);
+    }
 	return true;
 }
 
@@ -91,7 +111,7 @@ bool CPathHelper::MakePathToFile(const std::string &szOutFile)
 		std::string szPath = szOutFile.substr(0, nPos +1);
 
 		// don't care if it succeeds of not..
-		_mkdir(szPath.c_str());
+        MakeDir(szPath);
 
 		// locate next separator (after current)
 		nPos = szOutFile.find('/', nPos +2);
