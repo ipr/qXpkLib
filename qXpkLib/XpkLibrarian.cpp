@@ -63,6 +63,8 @@ QString CXpkLibrarian::getLibPath()
 #ifdef UNIX
 	// Unix-equivalent?
 	// TODO: use plugins-path?
+
+    // might need full path (from root '/') to avoid searching pointlessly?
 #endif
 
 #ifdef AMIGAOS

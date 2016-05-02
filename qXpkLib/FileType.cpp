@@ -1,3 +1,11 @@
+//////////////////////////////////
+//
+// CFileType : file type detection
+//
+// Ilkka Prusi, 2010
+// ilkka.prusi@gmail.com
+//
+
 #include "FileType.h"
 #include <cstring>
 

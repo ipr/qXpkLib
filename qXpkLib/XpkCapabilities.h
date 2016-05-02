@@ -7,6 +7,9 @@
 // master-library may access this information
 // to decide how IO is done. 
 //
+// Ilkka Prusi
+// ilkka.prusi@gmail.com
+//
 
 #ifndef XPKCAPABILITIES_H
 #define XPKCAPABILITIES_H
