@@ -77,8 +77,8 @@ void MainWindow::onFileSelected(QString szFile)
 
 	m_pXpkLib->setInputFile(szFile);
 
-	setWindowTitle(m_szBaseTitle + " - " + szArchiveFile);
-	m_szCurrentArchive = szArchiveFile;
+    setWindowTitle(m_szBaseTitle + " - " + szFile);
+    m_szCurrentArchive = szFile;
 
 	QXpkLib::CArchiveInfo info;
 	if (m_pXpkLib->xpkInfo(info) == false)
@@ -99,8 +99,8 @@ void MainWindow::onFileSelected(QString szFile)
 			.append(" Packing: ").append(info.m_archiveInfo.m_packing);
 	ui->statusBar->showMessage(szMessage);
 	
-	auto it = info.m_archiveInfo.begin();
-	auto itEnd = info.m_archiveInfo.end();
+    auto it = info.m_fileList.begin();
+    auto itEnd = info.m_fileList.end();
 	while (it != itEnd)
 	{
 		QXpkLib::CEntryInfo &Entry = (*it);
@@ -206,10 +206,12 @@ void MainWindow::on_actionDecrunch_triggered()
 
 void MainWindow::on_actionTest_triggered()
 {
+    /*
 	if (m_pXpkLib->xpkTest() == true)
 	{
 		ui->statusBar->showMessage("Test completed successfully", 10000);
 	}
+    */
 }
 
 void MainWindow::on_actionAbout_triggered()

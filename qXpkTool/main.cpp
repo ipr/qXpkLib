@@ -1,4 +1,6 @@
-#include <QtGui/QApplication>
+// switch to Qt5 support
+//#include <QtGui/QApplication>
+#include <QApplication>
 #include "mainwindow.h"
 
 int main(int argc, char *argv[])

@@ -6,9 +6,14 @@
 
 QT       += core gui
 
+# for Qt5 support
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TARGET = qXpkTool
 TEMPLATE = app
 
+# GCC4
+QMAKE_CXXFLAGS += -std=c++0x
 
 SOURCES += main.cpp\
         mainwindow.cpp
