@@ -11,6 +11,7 @@
 
 #include <cstring>
 #include <memory>
+#include <string>
 
 class CIOBuffer
 {

@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #include <string>
-using namespace std;
+//using namespace std;
 
 
 // type of file data
