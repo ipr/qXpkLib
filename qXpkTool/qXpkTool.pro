@@ -28,9 +28,15 @@ FORMS    += mainwindow.ui
 INCLUDEPATH += ../qXpkLib
 LIBS += -lqXpkLib
 
-CONFIG (debug, debug|release) 
+# something like this?
+#include(../qXpkLib/qXpkLib.pri)
+
+#buildpath../build-%{CurrentProject:Name}-%{CurrentKit:FileSystemName}-%{CurrentBuild:Name}
+CONFIG (debug, debug|release)
 {
-    LIBS += -L../qXpkLib-build-desktop/debug
+    #LIBS += -L../qXpkLib-build-desktop/debug
+    LIBS += -LC:/build/qXpkLib-Debug
+    #LIBS += -Lc:/build/build-qXpkLib-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug
 } 
 CONFIG (release, debug|release) 
 {
