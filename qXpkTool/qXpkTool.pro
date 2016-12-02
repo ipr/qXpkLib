@@ -12,8 +12,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = qXpkTool
 TEMPLATE = app
 
-# GCC4
-QMAKE_CXXFLAGS += -std=c++0x
+!win32
+{
+    # GCC4
+    gcc:QMAKE_CXXFLAGS += -std=c++0x
+}
 
 SOURCES += main.cpp\
         mainwindow.cpp
