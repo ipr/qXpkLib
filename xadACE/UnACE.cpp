@@ -12,6 +12,7 @@
 //
 
 #include "UnACE.h"
+#include "arcexception.h"
 
 ////////////// protected methods
 
@@ -74,7 +75,7 @@ bool CUnACE::readArchiveHeader(CAnsiFile &archive)
 	m_ReadBuffer.SetCurrentPos(m_ReadBuffer.GetCurrentPos()); // skip acesign, checked already
 	
 	// count header CRC upto current position
-	m_Crc.updatecrc(m_ReadBuffer.GetBegin(), m_ReadBuffer.GetCurrentPos();
+    m_Crc.updatecrc(m_ReadBuffer.GetBegin(), m_ReadBuffer.GetCurrentPos());
 	
 	// read rest of archive header according to size
 	// TODO: check size, does it include fields above?

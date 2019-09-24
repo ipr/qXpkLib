@@ -69,8 +69,8 @@ private:
 	std::string m_szExtractionPath;
 
 	// internal buffer for read information
-	CReadBuffer m_ReadBuffer;
-	CReadBuffer m_DecrunchBuffer;
+    CIOBuffer m_ReadBuffer;
+    CIOBuffer m_DecrunchBuffer;
 
 	// for header checksumming at least..
 	// see about sharing if data&header share same checksum..
