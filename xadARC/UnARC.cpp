@@ -1,5 +1,7 @@
 #include "UnARC.h"
 
+#include "arcexception.h"
+
 
 ////////////// protected methods
 

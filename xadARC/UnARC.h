@@ -118,14 +118,14 @@ private:
 	std::string m_szExtractionPath;
 
 	// internal buffer for read information
-	CReadBuffer m_ReadBuffer;
-	CReadBuffer m_DecrunchBuffer;
+    CIOBuffer m_ReadBuffer;
+    CIOBuffer m_DecrunchBuffer;
 
 protected:
 
 	// archive-file metadata (file header)
 	ArcMetadataInfo m_metadata;
-	void parseMetadata(const CReadBuffer *pBuf)
+    void parseMetadata(CIOBuffer *pBuf)
 	{
 		m_metadata.m_id = pBuf->GetNextByte();
 		m_metadata.compression_mode = (ArcCompressionMode)pBuf->GetNextByte();
@@ -239,12 +239,6 @@ public:
 	{ 
 		return m_ulTotalFiles; 
 	}
-};
-
-class CUnARC
-{
-public:
-    CUnARC();
 };
 
 #endif // UNARC_H
